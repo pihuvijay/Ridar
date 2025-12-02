@@ -1,0 +1,7 @@
+// TypeScript configuration for Expo React Native frontend
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true
+  }
+}
