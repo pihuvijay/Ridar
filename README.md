@@ -34,10 +34,23 @@ cd backend && npm run dev         # Start Express server
 - `shared/` - Shared TypeScript types
 
 
+# Git Account Setup
+
+```bash
+# Ensure you're on correct GitHub account
+git config user.name "pihuvijay"
+git config user.email "pihuvijay06@gmail.com"
+
+# Check current account
+git config user.name
+git config user.email
+```
+
 # Git Workflow
 
 ```bash
 # Create feature branch
+cd Ridar
 git checkout -b feature/your-feature-name
 
 # Make changes and commit
