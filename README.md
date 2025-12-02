@@ -1,4 +1,4 @@
-# Ridar - Full Stack Mobile App
+# Rydar - Full Stack Mobile App
 
 Expo React Native frontend + Node.js Express backend + Supabase
 
