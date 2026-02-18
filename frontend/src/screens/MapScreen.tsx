@@ -3,31 +3,57 @@ import type { JSX } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  ScrollView,
-  Image,
   StyleSheet,
   SafeAreaView,
+  Modal,
+  Pressable,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface MapScreenProps {
   onViewRideGroups?: () => void;
   onCreateRideGroup?: () => void;
-  onCenterMap?: () => void;
   onMenuPress?: () => void;
+  onSettingsPress?: () => void;
   onProfilePress?: () => void;
+  userName?: string;
 }
 
 export const MapScreen = ({
   onViewRideGroups,
   onCreateRideGroup,
-  onCenterMap,
   onMenuPress,
+  onSettingsPress,
   onProfilePress,
+  userName = "Rhys Leonard",
 }: MapScreenProps): JSX.Element => {
-  const [pickupLocation, setPickupLocation] = useState("");
-  const [dropoffLocation, setDropoffLocation] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleMenuToggle = () => {
+    setIsMenuOpen(!isMenuOpen);
+    if (onMenuPress) onMenuPress();
+  };
+
+  const handleSettingsClick = () => {
+    console.log("Settings clicked");
+    if (onSettingsPress) onSettingsPress();
+  };
+
+  const handleProfileClick = () => {
+    console.log("Profile clicked");
+    if (onProfilePress) onProfilePress();
+  };
+
+  const handleViewRideGroups = () => {
+    console.log("View Available Ride Groups clicked");
+    if (onViewRideGroups) onViewRideGroups();
+  };
+
+  const handleCreateRideGroup = () => {
+    console.log("Create New Ride Group clicked");
+    if (onCreateRideGroup) onCreateRideGroup();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -36,93 +62,120 @@ export const MapScreen = ({
         <View style={styles.headerLeft}>
           <TouchableOpacity
             style={styles.menuButton}
-            onPress={onMenuPress}
-            accessibilityLabel="Open menu"
+            onPress={handleMenuToggle}
+            activeOpacity={0.7}
           >
             <Text style={styles.menuIcon}>☰</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Find a Ride</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={onProfilePress}
-          accessibilityLabel="User profile: sofiaijaz05"
-        >
-          <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>👤</Text>
-          </View>
-          <Text style={styles.profileName}>sofiaijaz05</Text>
-        </TouchableOpacity>
+        <View style={styles.headerNav}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={handleSettingsClick}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.settingsIcon}>⚙️</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={handleProfileClick}
+            activeOpacity={0.7}
+          >
+            <LinearGradient
+              colors={["#2B7FFF", "#9810FA"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.avatarGradient}
+            >
+              <Text style={styles.avatarText}>R</Text>
+            </LinearGradient>
+            <Text style={styles.userName}>{userName}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {/* Menu Modal */}
+      <Modal
+        visible={isMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsMenuOpen(false)}
+      >
+        <Pressable
+          style={styles.menuOverlay}
+          onPress={() => setIsMenuOpen(false)}
+        >
+          <View style={styles.menuContent}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                handleViewRideGroups();
+              }}
+            >
+              <Text style={styles.menuItemText}>View Ride Groups</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                handleCreateRideGroup();
+              }}
+            >
+              <Text style={styles.menuItemText}>Create Ride Group</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                handleSettingsClick();
+              }}
+            >
+              <Text style={styles.menuItemText}>Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+              }}
+            >
+              <Text style={styles.menuItemText}>Close Menu</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Map Area */}
       <View style={styles.mapContainer}>
         <View style={styles.mapPlaceholder}>
-          <Text style={styles.mapPlaceholderText}>Map View</Text>
-        </View>
-
-        {/* Center Location Button */}
-        <TouchableOpacity
-          style={styles.centerButton}
-          onPress={onCenterMap}
-          accessibilityLabel="Center map on current location"
-        >
-          <Text style={styles.centerButtonText}>📍</Text>
-        </TouchableOpacity>
-
-        {/* Location Input Card */}
-        <View style={styles.locationCard}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputIcon}>📍</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Where are you?"
-              placeholderTextColor="#0a0a0a80"
-              value={pickupLocation}
-              onChangeText={setPickupLocation}
-              accessibilityLabel="Pickup location"
-            />
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputIcon}>🎯</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Where to?"
-              placeholderTextColor="#0a0a0a80"
-              value={dropoffLocation}
-              onChangeText={setDropoffLocation}
-              accessibilityLabel="Dropoff location"
-            />
-          </View>
+          <Text style={styles.mapPlaceholderText}>🗺️ Map View</Text>
+          <Text style={styles.mapSubtext}>Ride groups displayed on map</Text>
         </View>
       </View>
 
-      {/* Action Panel */}
-      <View style={styles.actionPanel}>
+      {/* Footer with Actions */}
+      <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.viewGroupsButton}
-          onPress={onViewRideGroups}
-          accessibilityLabel="View Available Ride Groups"
+          style={styles.primaryButton}
+          onPress={handleViewRideGroups}
+          activeOpacity={0.8}
         >
-          <Text style={styles.viewGroupsIcon}>👥</Text>
-          <Text style={styles.viewGroupsText}>View Available Ride Groups</Text>
+          <Text style={styles.primaryButtonIcon}>👥</Text>
+          <Text style={styles.primaryButtonText}>View Available Ride Groups</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.createGroupButton}
-          onPress={onCreateRideGroup}
-          accessibilityLabel="Create New Ride Group"
+          style={styles.secondaryButton}
+          onPress={handleCreateRideGroup}
+          activeOpacity={0.8}
         >
-          <Text style={styles.createGroupText}>Create New Ride Group</Text>
+          <Text style={styles.secondaryButtonText}>Create New Ride Group</Text>
         </TouchableOpacity>
 
-        <Text style={styles.availabilityText}>
-          3 ride groups available near you
-        </Text>
+        <Text style={styles.availabilityText}>3 ride groups available near you</Text>
       </View>
     </SafeAreaView>
   );
@@ -131,16 +184,16 @@ export const MapScreen = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#f9fafb",
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
+    paddingVertical: 12,
+    backgroundColor: "#ffffff",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -157,15 +210,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+    backgroundColor: "#ffffff",
   },
   menuIcon: {
     fontSize: 24,
-    color: "#1d2838",
+    color: "#1e2939",
+    fontWeight: "600",
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1d2838",
+    color: "#1e2939",
+  },
+  headerNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  settingsIcon: {
+    fontSize: 20,
   },
   profileButton: {
     flexDirection: "row",
@@ -173,146 +243,123 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
   },
-  profileAvatar: {
+  avatarGradient: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#155dfc",
     justifyContent: "center",
     alignItems: "center",
   },
-  profileAvatarText: {
-    fontSize: 20,
+  avatarText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#ffffff",
   },
-  profileName: {
-    fontSize: 16,
-    color: "#354152",
+  userName: {
+    fontSize: 14,
+    color: "#364153",
+    fontWeight: "500",
+    maxWidth: 150,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+  },
+  menuContent: {
+    backgroundColor: "#ffffff",
+    marginTop: 80,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  menuItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  menuItemText: {
+    fontSize: 14,
+    color: "#364153",
+    fontWeight: "500",
   },
   mapContainer: {
     flex: 1,
-    backgroundColor: "#d1d5db",
-    position: "relative",
+    backgroundColor: "#e5e7eb",
+    justifyContent: "center",
+    alignItems: "center",
   },
   mapPlaceholder: {
-    flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#d1d5db",
+    gap: 8,
   },
   mapPlaceholderText: {
-    fontSize: 24,
+    fontSize: 32,
+  },
+  mapSubtext: {
+    fontSize: 14,
     color: "#6b7280",
   },
-  centerButton: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  centerButtonText: {
-    fontSize: 20,
-  },
-  locationCard: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    width: 297,
-    backgroundColor: "#fff",
-    borderRadius: 10,
+  footer: {
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-    gap: 12,
-  },
-  inputGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  inputIcon: {
-    fontSize: 18,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#0a0a0a",
-    paddingVertical: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#0000001a",
-  },
-  actionPanel: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    gap: 12,
     borderTopWidth: 1,
     borderTopColor: "#0000001a",
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 4,
+    gap: 12,
   },
-  viewGroupsButton: {
+  primaryButton: {
     backgroundColor: "#155dfc",
     borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#000",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  viewGroupsIcon: {
-    fontSize: 18,
+  primaryButtonIcon: {
+    fontSize: 20,
   },
-  viewGroupsText: {
-    color: "#fff",
+  primaryButtonText: {
+    color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
   },
-  createGroupButton: {
-    backgroundColor: "#fff",
+  secondaryButton: {
+    backgroundColor: "#ffffff",
     borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1.64,
-    borderColor: "#155cfb",
+    borderWidth: 2,
+    borderColor: "#155dfc",
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  createGroupText: {
-    color: "#155cfb",
+  secondaryButtonText: {
+    color: "#155dfc",
     fontSize: 16,
     fontWeight: "600",
   },
   availabilityText: {
     fontSize: 16,
-    color: "#495565",
+    color: "#4a5565",
     textAlign: "center",
-    marginTop: 4,
+    fontWeight: "500",
   },
 });
