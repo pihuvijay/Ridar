@@ -1,8 +1,9 @@
 ## running tests
 
-bash ' 
+''' bash
 cd backend
-npm test '
+npm test 
+'''
 
 ## parties tests
 
