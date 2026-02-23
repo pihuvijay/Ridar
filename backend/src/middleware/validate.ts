@@ -1,21 +1,20 @@
-import { AnyZodObject, ZodError } from "zod";
+import { ZodError, type ZodType } from "zod";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/http";
 
 export const validate =
-  (schema: AnyZodObject) => (req: Request, _res: Response, next: NextFunction) => {
+  (schema: ZodType) => (req: Request, _res: Response, next: NextFunction) => {
     try {
       const parsed = schema.parse({
         body: req.body,
         query: req.query,
         params: req.params,
         headers: req.headers,
-      });
+      }) as { body?: unknown; query?: Record<string, string>; params?: Record<string, string> };
 
-      // assign parsed values back (optional but nice)
-      req.body = parsed.body;
-      req.query = parsed.query;
-      req.params = parsed.params;
+      if (parsed.body !== undefined) req.body = parsed.body;
+      if (parsed.query !== undefined) (req as Request & { query: Record<string, string> }).query = parsed.query;
+      if (parsed.params !== undefined) (req as Request & { params: Record<string, string> }).params = parsed.params;
 
       next();
     } catch (err) {
