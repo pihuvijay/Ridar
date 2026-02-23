@@ -12,6 +12,10 @@ const EnvSchema = z.object({
 
   // Optional: if you verify JWT yourself
   SUPABASE_JWT_SECRET: z.string().min(1).optional(),
+
+  // Stripe
+  STRIPE_SECRET_KEY: z.string().min(1),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
