@@ -13,6 +13,7 @@ import { logger } from "./utils/logger";
 // import { partiesRouter } from "./models/parties/parties.routes";
 // import { reportsRouter } from "./models/reports/reports.routes";
 // import { walletRouter } from "./models/wallet/wallet.routes";
+import { stripeRouter } from "./routes/stripe.routes";
 
 export const app = express();
 
@@ -29,6 +30,7 @@ app.get("/health", (_req, res) => res.json({ ok: true, status: "up" }));
 // app.use("/parties", partiesRouter);
 // app.use("/reports", reportsRouter);
 // app.use("/wallet", walletRouter);
+app.use("/stripe", stripeRouter);
 
 app.use(errorHandler);
 
