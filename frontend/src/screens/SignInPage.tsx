@@ -9,8 +9,11 @@ import {
   Image,
   StyleSheet,
   ImageSourcePropType,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { authService } from "../services/api";
 
 interface SignInPageProps {
   onSignUp?: () => void;
@@ -26,24 +29,52 @@ export const SignInPage = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const handleSubmit = () => {
-    console.log("Sign in submitted", { email, password, rememberMe });
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      Alert.alert("Missing Fields", "Please enter both email and password");
+      return;
+    }
+
+    setIsSigningIn(true);
+    try {
+      const response = await authService.signIn({
+        email,
+        password,
+      });
+
+      if (response.success) {
+        // TODO: Store token securely
+        if (response.token) {
+          console.log("Auth token:", response.token);
+          // Store token in secure storage (e.g., expo-secure-store)
+        }
+        Alert.alert("Success", "Signed in successfully");
+        // Navigate to next screen
+      } else {
+        Alert.alert("Sign In Failed", response.message || "Invalid credentials");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to sign in"
+      );
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   const handleSignUp = () => {
     if (onSignUp) onSignUp();
-    console.log("Navigate to sign up");
   };
 
   const handleForgotPassword = () => {
     if (onForgotPassword) onForgotPassword();
-    console.log("Navigate to forgot password");
   };
 
   const handleModeratorLogin = () => {
     if (onModeratorLogin) onModeratorLogin();
-    console.log("Navigate to moderator login");
   };
 
   return (
@@ -122,8 +153,17 @@ export const SignInPage = ({
             </View>
 
             {/* Sign In Button */}
-            <TouchableOpacity style={styles.signInButton} onPress={handleSubmit}>
-              <Text style={styles.signInButtonText}>Sign In</Text>
+            <TouchableOpacity
+              style={[styles.signInButton, isSigningIn && styles.signInButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={isSigningIn}
+              activeOpacity={0.8}
+            >
+              {isSigningIn ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              )}
             </TouchableOpacity>
 
             {/* Sign Up Link */}
@@ -286,6 +326,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  signInButtonDisabled: {
+    backgroundColor: "#d1d5dc",
+    opacity: 0.6,
   },
   signInButtonText: {
     color: "#fff",

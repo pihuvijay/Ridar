@@ -11,8 +11,11 @@ import {
   Image,
   Pressable,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { authService } from "../services/api";
 
 interface SignUpPageProps {
   onSignIn?: () => void;
@@ -29,11 +32,14 @@ export const SignUpPage = ({
     age: "",
     gender: "",
     email: "",
+    password: "",
     agreedToTerms: false,
   });
 
   const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -52,27 +58,72 @@ export const SignUpPage = ({
     return email.endsWith(".ac.uk");
   };
 
-  const handleVerifyEmail = () => {
-    if (validateEmail(formData.email)) {
-      setEmailVerified(true);
-      console.log("Email verified:", formData.email);
-    } else {
-      console.log("Invalid email. Must end in .ac.uk");
+  const handleVerifyEmail = async () => {
+    if (!validateEmail(formData.email)) {
+      Alert.alert("Invalid Email", "Email must end in .ac.uk");
+      return;
+    }
+
+    setIsVerifyingEmail(true);
+    try {
+      const response = await authService.verifyEmail(formData.email);
+      if (response.isValid) {
+        setEmailVerified(true);
+        Alert.alert("Success", "Email verified successfully");
+      } else {
+        Alert.alert("Error", response.message || "Email could not be verified");
+        setEmailVerified(false);
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to verify email"
+      );
       setEmailVerified(false);
+    } finally {
+      setIsVerifyingEmail(false);
     }
   };
 
-  const handleCreateAccount = () => {
-    if (isFormValid && emailVerified) {
-      console.log("Create account:", formData);
-      if (onCreateAccount) onCreateAccount();
-    } else {
-      console.log("Form is not valid or email not verified");
+  const handleCreateAccount = async () => {
+    if (!isFormValid || !emailVerified) {
+      Alert.alert("Incomplete Form", "Please verify your email and fill all fields");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      Alert.alert("Weak Password", "Password must be at least 8 characters");
+      return;
+    }
+
+    setIsCreatingAccount(true);
+    try {
+      const response = await authService.signUp({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        courseMajor: formData.courseMajor,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+      });
+
+      if (response.success) {
+        Alert.alert("Success", "Account created successfully");
+        if (onCreateAccount) onCreateAccount();
+      } else {
+        Alert.alert("Error", response.message || "Failed to create account");
+      }
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error instanceof Error ? error.message : "Failed to create account"
+      );
+    } finally {
+      setIsCreatingAccount(false);
     }
   };
 
   const handleSignIn = () => {
-    console.log("Navigate to sign in");
     if (onSignIn) onSignIn();
   };
 
@@ -82,6 +133,7 @@ export const SignUpPage = ({
     formData.age &&
     formData.gender &&
     formData.email &&
+    formData.password &&
     formData.agreedToTerms;
 
   return (
@@ -258,17 +310,21 @@ export const SignUpPage = ({
                       emailVerified && styles.verifyButtonVerified,
                     ]}
                     onPress={handleVerifyEmail}
-                    disabled={emailVerified}
+                    disabled={emailVerified || isVerifyingEmail}
                     activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.verifyButtonText,
-                        emailVerified && styles.verifyButtonTextVerified,
-                      ]}
-                    >
-                      {emailVerified ? "✓ Verified" : "Verify"}
-                    </Text>
+                    {isVerifyingEmail ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.verifyButtonText,
+                          emailVerified && styles.verifyButtonTextVerified,
+                        ]}
+                      >
+                        {emailVerified ? "✓ Verified" : "Verify"}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
                 {!emailVerified && formData.email && !formData.email.endsWith(".ac.uk") && (
@@ -281,6 +337,25 @@ export const SignUpPage = ({
                     Email verified successfully
                   </Text>
                 )}
+              </View>
+
+              {/* Password */}
+              <View style={styles.formColumn}>
+                <Text style={styles.label}>Password * (min 8 characters)</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#0a0a0a80"
+                    value={formData.password}
+                    onChangeText={(value) =>
+                      handleInputChange("password", value)
+                    }
+                    secureTextEntry
+                    accessibilityLabel="Password"
+                  />
+                </View>
               </View>
 
               {/* Terms Checkbox */}
@@ -305,15 +380,19 @@ export const SignUpPage = ({
               <TouchableOpacity
                 style={[
                   styles.createButton,
-                  !isFormValid && styles.createButtonDisabled,
+                  (!isFormValid || !emailVerified || isCreatingAccount) && styles.createButtonDisabled,
                 ]}
                 onPress={handleCreateAccount}
-                disabled={!isFormValid}
+                disabled={!isFormValid || !emailVerified || isCreatingAccount}
                 activeOpacity={0.8}
               >
-                <Text style={styles.createButtonText}>
-                  Create Account & Connect Uber
-                </Text>
+                {isCreatingAccount ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.createButtonText}>
+                    Create Account & Connect Uber
+                  </Text>
+                )}
               </TouchableOpacity>
 
               {/* Sign In Link */}
