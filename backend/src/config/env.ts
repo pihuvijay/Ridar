@@ -16,6 +16,12 @@ const EnvSchema = z.object({
   // Stripe
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+
+  // Optional: use in-memory store for parties (no Supabase table required). For local testing only.
+  MOCK_PARTIES: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
