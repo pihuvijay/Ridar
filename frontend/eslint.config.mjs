@@ -5,7 +5,7 @@ import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"], 
+  { files: ["**/*.{js,ts,jsx,tsx}"], 
     plugins: { js }, 
     extends: ["js/recommended"], 
     languageOptions: { globals: globals.browser } 
@@ -16,10 +16,7 @@ export default defineConfig([
 
   {
     rules: {
-      "no-console": "warn",              // allow logs but warn
-      "no-debugger": "warn",
-      "no-duplicate-imports": "error",
-      "no-unused-vars": "off",           // turn off base rule (TS handles this)
+
     },
   },
 ]);
