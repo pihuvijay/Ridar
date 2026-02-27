@@ -16,7 +16,8 @@ export default defineConfig([
 
   {
     rules: {
-
+      'semi': ['error', 'always'],
+      'indent': ['error', 2],
     },
   },
 ]);
