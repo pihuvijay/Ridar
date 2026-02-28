@@ -17,6 +17,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
 interface MapScreenProps {
   onViewRideGroups?: () => void;
   onCreateRideGroup?: () => void;
@@ -99,7 +101,7 @@ export const MapScreen = ({
 
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=AIzaSyClesU_tA8zhdeUY_QJpqNgZ-q8mGSTkhk`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API_KEY}`
       );
 
       const data = await response.json();
@@ -132,7 +134,7 @@ export const MapScreen = ({
       const response = await fetch(
         "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
         "input=" + encodeURIComponent(input) +
-        "&key=AIzaSyClesU_tA8zhdeUY_QJpqNgZ-q8mGSTkhk"
+        "&key=" + GOOGLE_MAPS_API_KEY
       );
 
       const data = await response.json();
@@ -160,7 +162,7 @@ export const MapScreen = ({
         "https://maps.googleapis.com/maps/api/place/details/json?" +
         "place_id=" + encodeURIComponent(placeId) +
         "&fields=geometry" +
-        "&key=AIzaSyClesU_tA8zhdeUY_QJpqNgZ-q8mGSTkhk"
+        "&key=" + GOOGLE_MAPS_API_KEY
       );
 
       const data = await response.json();
