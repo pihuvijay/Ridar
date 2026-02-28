@@ -2,11 +2,27 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { SignUpPage } from './SignUpPage';
 
-test('renders SignUpPage correctly (snapshot)', () => {
+/*
+tests to write:
+1. checks if a .ac.uk email is entered as verified.
+2. disables verification if a non .ac.uk email is entered 
+3. creates an account if all inputs are valid and entered
+4. doesn't create an account if they don't press to verify their email
+5. cann't press the 'create account' button if inputs aren't filled in
+6. redirects to the signin page if the 'sign in' button is pressed
+7. can't press 'verify' for email if its already been verified
+*/
+
+
+
+// snapshot test
+test('renders SignUpPage correctly (snapshot test)', () => {
   const { toJSON } = render(<SignUpPage />);
   expect(toJSON()).toMatchSnapshot(); 
 });
 
+
+// test 1
 test('Verifies if its a valid university email', () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
   
@@ -16,6 +32,8 @@ test('Verifies if its a valid university email', () => {
   expect(getByText("Email verified successfully")).toBeTruthy(); // could also be "✓ Verified"
 });
 
+
+// test 2
 test("Rejects if its not a valid university email", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
   
@@ -25,11 +43,11 @@ test("Rejects if its not a valid university email", () => {
   );
 
   fireEvent.press(getByText("Verify"));
-
   expect(getByText("Email must end in .ac.uk")).toBeTruthy();
 });
 
 
+// test 3
 test('Fills form and verifies email', () => {
   const mockCreateAccount = jest.fn();
   const { getByLabelText, getByText } = render(
@@ -55,6 +73,8 @@ test('Fills form and verifies email', () => {
   expect(mockCreateAccount).toHaveBeenCalledTimes(1);
 });
 
+
+// test 4
 test("If they don't press 'verify' for their email, their account isn't created", () => {
   const mockCreateAccount = jest.fn();
   const { getByLabelText, getByText } = render(
@@ -78,15 +98,25 @@ test("If they don't press 'verify' for their email, their account isn't created"
 });
 
 
-// this test failed
+// test 5 | this test failed, im unsure why
 test('Create Account button is disabled if form incomplete', () => {
   const mockCreateAccount = jest.fn();
   const { getByText } = render(<SignUpPage onCreateAccount={mockCreateAccount} />);
   const createButton = getByText("Create Account & Connect Uber");
-  expect(createButton.props.disabled).toBe(true);
+  expect(createButton.props.accessibilityState.disabled).toBe(true);
+});
+
+// continuation of test 5, if some fields are filled but not all.
+test("Create button disabled when form partially filled", () => {
+  const { getByLabelText, getByText } = render(<SignUpPage />);
+
+  fireEvent.changeText(getByLabelText("Full Name"), "Dave");
+  const createButton = getByText("Create Account & Connect Uber");
+  expect(createButton.props.accessibilityState.disabled).toBe(true);
 });
 
 
+// test 6
 test("Calls onSignIn when Sign in pressed", () => {
   const mockSignIn = jest.fn();
   const { getByText } = render(
@@ -98,7 +128,7 @@ test("Calls onSignIn when Sign in pressed", () => {
 });
 
 
-// this failed
+// test 7 | this failed
 test("Verify button is disabled after email is verified", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
