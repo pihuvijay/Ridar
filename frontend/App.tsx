@@ -43,11 +43,15 @@ export default function App() {
     setCurrentScreen('map');
   };
 
+  const handleModeratorLogin = () => {
+    setCurrentScreen('map');
+  };
+
   return (
     <StripeProvider publishableKey={publishableKey}>
       <>
         {currentScreen === 'signin' ? (
-          <SignInPage onSignUp={handleSignUp} />
+          <SignInPage onSignUp={handleSignUp} onModeratorLogin={handleModeratorLogin} />
         ) : currentScreen === 'signup' ? (
           <SignUpPage onSignIn={handleBackToSignIn} onCreateAccount={handleCreateAccount} />
         ) : currentScreen === 'connectaccounts' ? (
