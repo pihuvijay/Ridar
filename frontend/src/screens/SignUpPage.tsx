@@ -11,6 +11,8 @@ import {
   Image,
   Pressable,
   Modal,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../theme/colors";
@@ -30,12 +32,16 @@ export const SignUpPage = ({
     age: "",
     gender: "",
     email: "",
+    password: "",
     agreedToTerms: false,
   });
 
   const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+
+  const { signUp, loading: isCreatingAccount, error: signUpError } = useSignUp();
+  const { verifyEmail, loading: isVerifyingEmail, error: verifyError } = useVerifyEmail();
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -53,27 +59,55 @@ export const SignUpPage = ({
     return email.endsWith(".ac.uk");
   };
 
-  const handleVerifyEmail = () => {
-    if (validateEmail(formData.email)) {
+  const handleVerifyEmail = async () => {
+    if (!validateEmail(formData.email)) {
+      Alert.alert("Invalid Email", "Email must end in .ac.uk");
+      return;
+    }
+
+    const isValid = await verifyEmail(formData.email);
+    if (isValid) {
       setEmailVerified(true);
-      console.log("Email verified:", formData.email);
+      Alert.alert("Success", "Email verified successfully");
     } else {
-      console.log("Invalid email. Must end in .ac.uk");
       setEmailVerified(false);
+      if (verifyError) {
+        Alert.alert("Error", verifyError);
+      } else {
+        Alert.alert("Error", "Email could not be verified");
+      }
     }
   };
 
-  const handleCreateAccount = () => {
-    if (isFormValid && emailVerified) {
-      console.log("Create account:", formData);
+  const handleCreateAccount = async () => {
+    if (!isFormValid || !emailVerified) {
+      Alert.alert("Incomplete Form", "Please verify your email and fill all fields");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      Alert.alert("Weak Password", "Password must be at least 8 characters");
+      return;
+    }
+
+    const success = await signUp({
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      courseMajor: formData.courseMajor,
+      age: parseInt(formData.age),
+      gender: formData.gender,
+    });
+
+    if (success) {
+      Alert.alert("Success", "Account created successfully");
       if (onCreateAccount) onCreateAccount();
-    } else {
-      console.log("Form is not valid or email not verified");
+    } else if (signUpError) {
+      Alert.alert("Error", signUpError);
     }
   };
 
   const handleSignIn = () => {
-    console.log("Navigate to sign in");
     if (onSignIn) onSignIn();
   };
 
@@ -83,6 +117,7 @@ export const SignUpPage = ({
     formData.age &&
     formData.gender &&
     formData.email &&
+    formData.password &&
     formData.agreedToTerms;
 
   return (
@@ -259,17 +294,21 @@ export const SignUpPage = ({
                       emailVerified && styles.verifyButtonVerified,
                     ]}
                     onPress={handleVerifyEmail}
-                    disabled={emailVerified}
+                    disabled={emailVerified || isVerifyingEmail}
                     activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.verifyButtonText,
-                        emailVerified && styles.verifyButtonTextVerified,
-                      ]}
-                    >
-                      {emailVerified ? "✓ Verified" : "Verify"}
-                    </Text>
+                    {isVerifyingEmail ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.verifyButtonText,
+                          emailVerified && styles.verifyButtonTextVerified,
+                        ]}
+                      >
+                        {emailVerified ? "✓ Verified" : "Verify"}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 </View>
                 {!emailVerified && formData.email && !formData.email.endsWith(".ac.uk") && (
@@ -282,6 +321,25 @@ export const SignUpPage = ({
                     Email verified successfully
                   </Text>
                 )}
+              </View>
+
+              {/* Password */}
+              <View style={styles.formColumn}>
+                <Text style={styles.label}>Password * (min 8 characters)</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#0a0a0a80"
+                    value={formData.password}
+                    onChangeText={(value) =>
+                      handleInputChange("password", value)
+                    }
+                    secureTextEntry
+                    accessibilityLabel="Password"
+                  />
+                </View>
               </View>
 
               {/* Terms Checkbox */}
@@ -306,15 +364,19 @@ export const SignUpPage = ({
               <TouchableOpacity
                 style={[
                   styles.createButton,
-                  !isFormValid && styles.createButtonDisabled,
+                  (!isFormValid || !emailVerified || isCreatingAccount) && styles.createButtonDisabled,
                 ]}
                 onPress={handleCreateAccount}
-                disabled={!isFormValid}
+                disabled={!isFormValid || !emailVerified || isCreatingAccount}
                 activeOpacity={0.8}
               >
-                <Text style={styles.createButtonText}>
-                  Create Account & Connect Uber
-                </Text>
+                {isCreatingAccount ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.createButtonText}>
+                    Create Account & Connect Uber
+                  </Text>
+                )}
               </TouchableOpacity>
 
               {/* Sign In Link */}

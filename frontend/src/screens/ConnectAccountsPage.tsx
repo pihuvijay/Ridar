@@ -4,14 +4,20 @@ import {
   View,
   Text,
   TextInput,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { CardField, useStripe } from "@stripe/stripe-react-native";
+import { useAddPaymentMethod, useUberConnection } from "../hooks";
+import * as WebBrowser from "expo-web-browser";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import { useAddPaymentMethod, useUberConnection } from "../hooks";
 import * as WebBrowser from "expo-web-browser";
@@ -62,6 +68,10 @@ export const ConnectAccountsPage = ({
   userName = "User",
   onNavigateHome,
 }: ConnectAccountsPageProps): JSX.Element => {
+  const { createToken } = useStripe();
+  const [cardholderName, setCardholderName] = useState("");
+  const { addPaymentMethod, loading: isProcessing, error: paymentError } = useAddPaymentMethod();
+  const { isConnected: uberConnected, loading: uberLoading, connectUber, getAuthUrl } = useUberConnection();
   const { createToken } = useStripe();
   const [cardholderName, setCardholderName] = useState("");
   const { addPaymentMethod, loading: isProcessing, error: paymentError } = useAddPaymentMethod();
@@ -182,6 +192,7 @@ export const ConnectAccountsPage = ({
           {/* Footer Info */}
           <Text style={styles.footerText}>
             Complete all fields to continue
+            Complete all fields to continue
           </Text>
 
           {/* Continue Button */}
@@ -189,8 +200,18 @@ export const ConnectAccountsPage = ({
             style={[styles.continueButton, !isPaymentComplete && styles.continueButtonDisabled]}
             onPress={handleAddPaymentMethod}
             disabled={!isPaymentComplete || isProcessing}
+            style={[styles.continueButton, !isPaymentComplete && styles.continueButtonDisabled]}
+            onPress={handleAddPaymentMethod}
+            disabled={!isPaymentComplete || isProcessing}
             activeOpacity={0.8}
           >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.continueButtonText}>
+                {isPaymentComplete ? "Complete Setup" : "Add Payment Method"}
+              </Text>
+            )}
             {isProcessing ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (

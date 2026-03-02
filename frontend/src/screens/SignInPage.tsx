@@ -9,6 +9,8 @@ import {
   Image,
   StyleSheet,
   ImageSourcePropType,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../theme/colors";
@@ -42,17 +44,14 @@ export const SignInPage = ({
 
   const handleSignUp = () => {
     if (onSignUp) onSignUp();
-    console.log("Navigate to sign up");
   };
 
   const handleForgotPassword = () => {
     if (onForgotPassword) onForgotPassword();
-    console.log("Navigate to forgot password");
   };
 
   const handleModeratorLogin = () => {
     if (onModeratorLogin) onModeratorLogin();
-    console.log("Navigate to moderator login");
   };
 
   return (
@@ -131,8 +130,17 @@ export const SignInPage = ({
             </View>
 
             {/* Sign In Button */}
-            <TouchableOpacity style={styles.signInButton} onPress={handleSubmit}>
-              <Text style={styles.signInButtonText}>Sign In</Text>
+            <TouchableOpacity
+              style={[styles.signInButton, isSigningIn && styles.signInButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={isSigningIn}
+              activeOpacity={0.8}
+            >
+              {isSigningIn ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              )}
             </TouchableOpacity>
 
             {/* Sign Up Link */}
@@ -295,6 +303,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  signInButtonDisabled: {
+    backgroundColor: "#d1d5dc",
+    opacity: 0.6,
   },
   signInButtonText: {
     color: "#fff",

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import type { JSX } from "react";
 import {
   View,
@@ -8,6 +9,11 @@ import {
   SafeAreaView,
   Modal,
   Pressable,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  ScrollView,
   TextInput,
   ActivityIndicator,
   Alert,
@@ -68,6 +74,36 @@ export const MapScreen = ({
     latitudeDelta: 0.5,
     longitudeDelta: 0.5,
   };
+  const [startLocation, setStartLocation] = useState("");
+  const [endLocation, setEndLocation] = useState("");
+  const [startCoords, setStartCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [endCoords, setEndCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [startSuggestions, setStartSuggestions] = useState<Array<{ placeId: string; description: string }>>([]);
+  const [endSuggestions, setEndSuggestions] = useState<Array<{ placeId: string; description: string }>>([]);
+  const [activeSearchField, setActiveSearchField] = useState<"start" | "end" | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<MapView>(null);
+
+  // Sample ride group markers - replace with real data from your API
+  const rideGroups: Array<{
+    id: string;
+    latitude: number;
+    longitude: number;
+    title: string;
+    description: string;
+  }> = [];
+
+
+  // Default map region (San Francisco Bay Area)
+  const defaultRegion = {
+    latitude: 37.7749,
+    longitude: -122.4194,
+    latitudeDelta: 0.5,
+    longitudeDelta: 0.5,
+  };
 
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -92,6 +128,178 @@ export const MapScreen = ({
   const handleCreateRideGroup = () => {
     console.log("Create New Ride Group clicked");
     if (onCreateRideGroup) onCreateRideGroup();
+  };
+
+  const geocodeLocation = async (location: string): Promise<{ latitude: number; longitude: number } | null> => {
+    if (!location.trim()) {
+      Alert.alert("Error", "Please enter a location");
+      return null;
+    }
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return { latitude: lat, longitude: lng };
+      } else {
+        Alert.alert("Location Not Found", "Could not find '" + location + "'. Try a different search.");
+        return null;
+      }
+    } catch (error) {
+      Alert.alert("Error", error instanceof Error ? error.message : "Failed to search location");
+      return null;
+    }
+  };
+
+  const fetchPlacesPredictions = async (input: string, isStartField: boolean) => {
+    if (!input || input.length < 2) {
+      if (isStartField) {
+        setStartSuggestions([]);
+      } else {
+        setEndSuggestions([]);
+      }
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    try {
+      const response = await fetch(
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json?" +
+        "input=" + encodeURIComponent(input) +
+        "&key=" + GOOGLE_MAPS_API_KEY
+      );
+
+      const data = await response.json();
+
+      const suggestions = data.predictions?.map((prediction: any) => ({
+        placeId: prediction.place_id,
+        description: prediction.description,
+      })) || [];
+
+      if (isStartField) {
+        setStartSuggestions(suggestions);
+      } else {
+        setEndSuggestions(suggestions);
+      }
+    } catch (error) {
+      console.log("Error fetching suggestions:", error);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handlePlaceSelection = async (placeId: string, description: string, isStartField: boolean) => {
+    try {
+      const response = await fetch(
+        "https://maps.googleapis.com/maps/api/place/details/json?" +
+        "place_id=" + encodeURIComponent(placeId) +
+        "&fields=geometry" +
+        "&key=" + GOOGLE_MAPS_API_KEY
+      );
+
+      const data = await response.json();
+
+      if (data.result?.geometry?.location) {
+        const { lat, lng } = data.result.geometry.location;
+        const coords = { latitude: lat, longitude: lng };
+
+        if (isStartField) {
+          setStartLocation(description);
+          setStartCoords(coords);
+          setStartSuggestions([]);
+        } else {
+          setEndLocation(description);
+          setEndCoords(coords);
+          setEndSuggestions([]);
+        }
+      }
+    } catch (error) {
+      console.log("Error getting place details:", error);
+    }
+  };
+
+  const handleLocationInputChange = (text: string, isStartField: boolean) => {
+    if (isStartField) {
+      setStartLocation(text);
+    } else {
+      setEndLocation(text);
+    }
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      fetchPlacesPredictions(text, isStartField);
+    }, 300);
+  };
+
+  const handleSearchLocations = async () => {
+    if (!startLocation && !endLocation) {
+      Alert.alert("Error", "Please enter at least one location");
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      let newStart = startCoords;
+      let newEnd = endCoords;
+
+      if (startLocation && !startCoords) {
+        const start = await geocodeLocation(startLocation);
+        if (start) {
+          setStartCoords(start);
+          newStart = start;
+        }
+      }
+
+      if (endLocation && !endCoords) {
+        const end = await geocodeLocation(endLocation);
+        if (end) {
+          setEndCoords(end);
+          newEnd = end;
+        }
+      }
+
+      setShowSearchPanel(false);
+
+      // Fit map to show both markers
+      setTimeout(() => {
+        if (newStart && newEnd) {
+          mapRef.current?.fitToCoordinates(
+            [newStart, newEnd],
+            { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true }
+          );
+        } else if (newStart) {
+          mapRef.current?.animateToRegion({
+            ...newStart,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }, 500);
+        } else if (newEnd) {
+          mapRef.current?.animateToRegion({
+            ...newEnd,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }, 500);
+        }
+      }, 300);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleClearLocations = () => {
+    setStartLocation("");
+    setEndLocation("");
+    setStartCoords(null);
+    setEndCoords(null);
   };
 
   const geocodeLocation = async (location: string): Promise<{ latitude: number; longitude: number } | null> => {
@@ -423,6 +631,119 @@ export const MapScreen = ({
           </View>
         </View>
       )}
+      {/* Search Panel Modal */}
+      <Modal
+        visible={showSearchPanel}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSearchPanel(false)}
+      >
+        <SafeAreaView style={styles.searchPanelContainer}>
+          <ScrollView style={styles.searchPanelContent}>
+            <View style={styles.searchHeader}>
+              <Text style={styles.searchHeaderTitle}>Search Locations</Text>
+              <TouchableOpacity onPress={() => setShowSearchPanel(false)}>
+                <Text style={styles.searchCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchInputContainer}>
+              <Text style={styles.searchLabel}>Starting Point</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Enter starting location"
+                placeholderTextColor="#999"
+                value={startLocation}
+                onChangeText={(text) => handleLocationInputChange(text, true)}
+                onFocus={() => setActiveSearchField("start")}
+              />
+              {activeSearchField === "start" && startSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  {loadingSuggestions ? (
+                    <ActivityIndicator size="small" color="#155dfc" />
+                  ) : (
+                    startSuggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => handlePlaceSelection(suggestion.placeId, suggestion.description, true)}
+                      >
+                        <Text style={styles.suggestionText}>📍 {suggestion.description}</Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.searchInputContainer}>
+              <Text style={styles.searchLabel}>Destination</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Enter destination"
+                placeholderTextColor="#999"
+                value={endLocation}
+                onChangeText={(text) => handleLocationInputChange(text, false)}
+                onFocus={() => setActiveSearchField("end")}
+              />
+              {activeSearchField === "end" && endSuggestions.length > 0 && (
+                <View style={styles.suggestionsContainer}>
+                  {loadingSuggestions ? (
+                    <ActivityIndicator size="small" color="#155dfc" />
+                  ) : (
+                    endSuggestions.map((suggestion, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.suggestionItem}
+                        onPress={() => handlePlaceSelection(suggestion.placeId, suggestion.description, false)}
+                      >
+                        <Text style={styles.suggestionText}>📍 {suggestion.description}</Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={handleSearchLocations}
+              disabled={isSearching}
+            >
+              {isSearching ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.searchButtonText}>Apply</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.clearButton} onPress={handleClearLocations}>
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Location Search Overlay */}
+      {!showSearchPanel && (startCoords || endCoords) && (
+        <View style={styles.locationOverlay}>
+          <Text style={styles.locationOverlayText}>
+            {startLocation && endLocation
+              ? startLocation + " -> " + endLocation
+              : startLocation
+              ? "From: " + startLocation
+              : "To: " + endLocation}
+          </Text>
+          <View style={styles.locationOverlayButtons}>
+            <TouchableOpacity style={styles.editLocationButton} onPress={() => setShowSearchPanel(true)}>
+              <Text style={styles.editLocationButtonText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.clearLocationButton} onPress={handleClearLocations}>
+              <Text style={styles.clearLocationButtonText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       <Modal
         visible={isMenuOpen}
         transparent
@@ -550,6 +871,7 @@ export const MapScreen = ({
         </TouchableOpacity>
 
         <Text style={styles.availabilityText}>Use the search feature to find ride groups near you</Text>
+        <Text style={styles.availabilityText}>Use the search feature to find ride groups near you</Text>
       </View>
     </SafeAreaView>
   );
@@ -669,6 +991,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
+  },
+  map: {
+    flex: 1,
+    width: "100%",
   },
   map: {
     flex: 1,
