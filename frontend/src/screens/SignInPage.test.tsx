@@ -15,7 +15,7 @@ tests to write:
 7. on pressing 'Moderator Login' it should redirect you to whatever the moderator login page becomes
 8. on pressing 'Forgot Password?', the user should be redirected to the appropriate page.
 
--- backend testing?
+-- backend testing/end to end testing?
 9. if the email and password are registered in database, successfully signin.
 10. if the email or password are not registered in database, fail signin.
 
@@ -90,4 +90,40 @@ test('Remember Me checkbox toggles when pressed', () => {
   expect(queryByText("✓")).toBeNull(); // before press
   fireEvent.press(getByLabelText("Remember me"));
   expect(getByText("✓")).toBeTruthy(); // after press
+});
+
+
+// test 6
+test("Goes to the onSignIn when Sign in pressed", () => {
+  const mockSignIn = jest.fn();
+  const { getByText } = render(<SignInPage onSignUp = {mockSignIn} />
+    
+  );
+
+  fireEvent.press(getByText("Sign up"));
+  expect(mockSignIn).toHaveBeenCalledTimes(1);
+});
+
+
+// test 7
+test("Goes to the Moderator Login when that section is pressed", () => {
+  const mockModeratorLogin = jest.fn();
+  const { getByText } = render(<SignInPage onModeratorLogin = {mockModeratorLogin} />
+    
+  );
+
+  fireEvent.press(getByText("Moderator Login"));
+  expect(mockModeratorLogin).toHaveBeenCalledTimes(1);
+});
+
+
+// test 8
+test("Goes to the forget password section when 'forget password pressed", () => {
+  const mockForgetPassword = jest.fn();
+  const { getByText } = render(<SignInPage onForgotPassword = {mockForgetPassword} />
+    
+  );
+
+  fireEvent.press(getByText("Forgot password?"));
+  expect(mockForgetPassword).toHaveBeenCalledTimes(1);
 });
