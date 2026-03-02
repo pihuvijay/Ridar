@@ -13,6 +13,7 @@ import {
   Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS } from "../theme/colors";
 
 interface SignUpPageProps {
   onSignIn?: () => void;
@@ -87,7 +88,7 @@ export const SignUpPage = ({
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={["#2B7FFF", "#9810FA"]}
+        colors={[COLORS.primary, "#2d7a52"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
@@ -129,7 +130,7 @@ export const SignUpPage = ({
                     <TextInput
                       style={styles.input}
                       placeholder="John Smith"
-                      placeholderTextColor="#0a0a0a80"
+                      placeholderTextColor={COLORS.textSecondary}
                       value={formData.fullName}
                       onChangeText={(value) =>
                         handleInputChange("fullName", value)
@@ -147,7 +148,7 @@ export const SignUpPage = ({
                     <TextInput
                       style={styles.input}
                       placeholder="Computer Science"
-                      placeholderTextColor="#0a0a0a80"
+                      placeholderTextColor={COLORS.textSecondary}
                       value={formData.courseMajor}
                       onChangeText={(value) =>
                         handleInputChange("courseMajor", value)
@@ -168,7 +169,7 @@ export const SignUpPage = ({
                     <TextInput
                       style={styles.input}
                       placeholder="21"
-                      placeholderTextColor="#0a0a0a80"
+                      placeholderTextColor={COLORS.textSecondary}
                       value={formData.age}
                       onChangeText={(value) =>
                         handleInputChange("age", value)
@@ -243,7 +244,7 @@ export const SignUpPage = ({
                   <TextInput
                     style={styles.emailInput}
                     placeholder="your.name@university.ac.uk"
-                    placeholderTextColor="#0a0a0a80"
+                    placeholderTextColor={COLORS.textSecondary}
                     value={formData.email}
                     onChangeText={(value) => {
                       handleInputChange("email", value);
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    color: "#daeafe",
+    color: COLORS.textLightSecondary,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -391,12 +392,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#1e2939",
+    color: COLORS.primary,
     marginBottom: 8,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: "#4a5565",
+    color: COLORS.textSecondary,
     marginBottom: 24,
   },
   form: {
@@ -412,14 +413,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#364153",
+    color: COLORS.primary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 0.95,
-    borderColor: "#d1d5dc",
+    borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
     paddingHorizontal: 10,
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: "#0a0a0a",
+    color: COLORS.text,
     paddingVertical: 8,
   },
   emailSection: {
@@ -446,18 +447,18 @@ const styles = StyleSheet.create({
   emailInput: {
     flex: 1,
     borderWidth: 0.95,
-    borderColor: "#d1d5dc",
+    borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
     paddingHorizontal: 12,
     fontSize: 14,
-    color: "#0a0a0a",
+    color: COLORS.text,
   },
   genderInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 0.95,
-    borderColor: "#d1d5dc",
+    borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
     paddingHorizontal: 12,
@@ -466,17 +467,17 @@ const styles = StyleSheet.create({
   },
   genderInputText: {
     fontSize: 14,
-    color: "#0a0a0a",
+    color: COLORS.text,
     fontWeight: "400",
     flex: 1,
   },
   genderDropdownIcon: {
     fontSize: 12,
-    color: "#6a7282",
+    color: COLORS.textSecondary,
     marginLeft: 8,
   },
   verifyButton: {
-    backgroundColor: "#d1d5dc",
+    backgroundColor: COLORS.primaryLight,
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -487,11 +488,11 @@ const styles = StyleSheet.create({
     minWidth: 87,
   },
   verifyButtonVerified: {
-    backgroundColor: "#0ea574",
+    backgroundColor: COLORS.success,
   },
   verifyButtonText: {
     fontSize: 14,
-    color: "#6a7282",
+    color: COLORS.textSecondary,
     fontWeight: "600",
   },
   verifyButtonTextVerified: {
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
   genderModalTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1e2939",
+    color: COLORS.primary,
     marginBottom: 12,
     textAlign: "center",
   },
@@ -537,18 +538,18 @@ const styles = StyleSheet.create({
   },
   genderOptionText: {
     fontSize: 14,
-    color: "#364153",
+    color: COLORS.primary,
     fontWeight: "500",
   },
   genderOptionSelected: {
-    color: "#155dfc",
+    color: COLORS.primary,
     fontWeight: "600",
   },
   genderCloseButton: {
     marginTop: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: "#155dfc",
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     alignItems: "center",
   },
@@ -576,11 +577,11 @@ const styles = StyleSheet.create({
   termsText: {
     flex: 1,
     fontSize: 12,
-    color: "#4a5565",
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
   createButton: {
-    backgroundColor: "#155dfc",
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
@@ -610,11 +611,11 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 14,
-    color: "#4a5565",
+    color: COLORS.textSecondary,
   },
   signInLink: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#155dfc",
+    color: COLORS.primary,
   },
 });

@@ -11,24 +11,33 @@ import {
   ImageSourcePropType,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS } from "../theme/colors";
 
 interface SignInPageProps {
   onSignUp?: () => void;
   onForgotPassword?: () => void;
   onModeratorLogin?: () => void;
+  onLogin?: (name: string) => void;
 }
 
 export const SignInPage = ({
   onSignUp,
   onForgotPassword,
   onModeratorLogin,
+  onLogin,
 }: SignInPageProps): JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = () => {
-    console.log("Sign in submitted", { email, password, rememberMe });
+    if (email && password) {
+      if (onLogin) {
+        const name = email.split("@")[0];
+        onLogin(name);
+      }
+      console.log("Sign in submitted", { email, password, rememberMe });
+    }
   };
 
   const handleSignUp = () => {
@@ -49,7 +58,7 @@ export const SignInPage = ({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <LinearGradient
-        colors={["#2B7FFF", "#9810FA"]}
+        colors={[COLORS.primary, "#2d7a52"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientContainer}
@@ -76,7 +85,7 @@ export const SignInPage = ({
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor="#0a0a0a80"
+                  placeholderTextColor={COLORS.textSecondary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -93,7 +102,7 @@ export const SignInPage = ({
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
-                  placeholderTextColor="#0a0a0a80"
+                  placeholderTextColor={COLORS.textSecondary}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -194,7 +203,7 @@ const styles = StyleSheet.create({
   },
   appSubtitle: {
     fontSize: 16,
-    color: "#daeafe",
+    color: COLORS.textLightSecondary,
   },
   card: {
     backgroundColor: "#fff",
@@ -210,7 +219,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1d2838",
+    color: COLORS.primary,
     marginBottom: 24,
   },
   inputGroup: {
@@ -219,14 +228,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#354152",
+    color: COLORS.primary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.64,
-    borderColor: "#d0d5db",
+    borderColor: COLORS.border,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 51,
@@ -238,7 +247,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: "#0a0a0a",
+    color: COLORS.text,
   },
   optionsRow: {
     flexDirection: "row",
@@ -254,7 +263,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#d0d5db",
+    borderColor: COLORS.border,
     borderRadius: 4,
     justifyContent: "center",
     alignItems: "center",
@@ -262,21 +271,21 @@ const styles = StyleSheet.create({
   },
   checkboxInner: {
     fontSize: 14,
-    color: "#155cfb",
+    color: COLORS.primary,
     fontWeight: "bold",
   },
   rememberMeText: {
     fontSize: 13,
-    color: "#495565",
+    color: COLORS.textSecondary,
     marginLeft: 0,
   },
   forgotPasswordText: {
     fontSize: 13,
-    color: "#155cfb",
+    color: COLORS.primary,
     textDecorationLine: "underline",
   },
   signInButton: {
-    backgroundColor: "#155dfc",
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
     padding: 12,
     alignItems: "center",
@@ -298,24 +307,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 16,
     borderTopWidth: 1.64,
-    borderTopColor: "#0000001a",
+    borderTopColor: COLORS.border,
     marginBottom: 16,
   },
   signUpPromptText: {
     fontSize: 14,
-    color: "#495565",
+    color: COLORS.textSecondary,
     marginRight: 4,
   },
   signUpLink: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#155cfb",
+    color: COLORS.primary,
     textDecorationLine: "underline",
   },
   moderatorSection: {
     paddingTop: 8,
     borderTopWidth: 1.64,
-    borderTopColor: "#0000001a",
+    borderTopColor: COLORS.border,
   },
   moderatorButton: {
     flexDirection: "row",
@@ -328,6 +337,6 @@ const styles = StyleSheet.create({
   },
   moderatorText: {
     fontSize: 14,
-    color: "#495565",
+    color: COLORS.textSecondary,
   },
 });

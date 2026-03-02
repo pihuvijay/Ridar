@@ -11,10 +11,11 @@ import {
   Switch,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { COLORS } from "../theme/colors";
 
 interface CreateGroupPageProps {
   onBack?: () => void;
-  onCreateGroup?: () => void;
+  onCreateGroup: (rideData: any) => void; // <-- Update this line
 }
 
 export const CreateGroupPage = ({
@@ -48,7 +49,19 @@ export const CreateGroupPage = ({
       femaleOnly,
       alcoholFree,
     });
-    if (onCreateGroup) onCreateGroup();
+    if (onCreateGroup) onCreateGroup({
+      pickupPoint,
+      optionalStops,
+      finalDestination,
+      departureTime,
+      maxRiders,
+      pricePerPerson,
+      minRating,
+      maxWaitTime,
+      allowCustomStops,
+      femaleOnly,
+      alcoholFree
+    });
   };
 
   const handleBack = () => {
@@ -85,7 +98,7 @@ export const CreateGroupPage = ({
               <TextInput
                 style={styles.input}
                 placeholder="Where will you pick up riders?"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor={COLORS.textSecondary}
                 value={pickupPoint}
                 onChangeText={setPickupPoint}
                 accessibilityLabel="Pickup point"
@@ -106,7 +119,7 @@ export const CreateGroupPage = ({
               <TextInput
                 style={styles.input}
                 placeholder="Add intermediate stops"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor={COLORS.textSecondary}
                 value={optionalStops}
                 onChangeText={setOptionalStops}
                 accessibilityLabel="Optional stops"
@@ -125,7 +138,7 @@ export const CreateGroupPage = ({
               <TextInput
                 style={styles.input}
                 placeholder="Where are you heading?"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor={COLORS.textSecondary}
                 value={finalDestination}
                 onChangeText={setFinalDestination}
                 accessibilityLabel="Final destination"
@@ -146,7 +159,7 @@ export const CreateGroupPage = ({
               <TextInput
                 style={styles.input}
                 placeholder="Select departure time"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor={COLORS.textSecondary}
                 value={departureTime}
                 onChangeText={setDepartureTime}
                 accessibilityLabel="Departure time"
@@ -163,7 +176,7 @@ export const CreateGroupPage = ({
                 <TextInput
                   style={styles.input}
                   placeholder="4"
-                  placeholderTextColor="#0a0a0a80"
+                  placeholderTextColor={COLORS.textSecondary}
                   value={maxRiders}
                   onChangeText={setMaxRiders}
                   keyboardType="number-pad"
@@ -179,7 +192,7 @@ export const CreateGroupPage = ({
                 <TextInput
                   style={styles.input}
                   placeholder="10"
-                  placeholderTextColor="#0a0a0a80"
+                  placeholderTextColor={COLORS.textSecondary}
                   value={pricePerPerson}
                   onChangeText={setPricePerPerson}
                   keyboardType="decimal-pad"
@@ -323,12 +336,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: "#1d2838",
+    color: COLORS.primary,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1d2838",
+    color: COLORS.primary,
   },
   scrollView: {
     flex: 1,
@@ -352,7 +365,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1d2838",
+    color: COLORS.primary,
   },
   inputGroup: {
     gap: 8,
@@ -361,7 +374,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#495566",
+    color: COLORS.primary,
   },
   labelRow: {
     flexDirection: "row",
@@ -370,14 +383,14 @@ const styles = StyleSheet.create({
   },
   addStopButton: {
     fontSize: 14,
-    color: "#155cfb",
+    color: COLORS.primary,
     fontWeight: "600",
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.4,
-    borderColor: "#d0d5db",
+    borderColor: COLORS.border,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 48,
@@ -389,12 +402,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: "#0a0a0a",
+    color: COLORS.text,
     paddingVertical: 8,
   },
   helpText: {
     fontSize: 12,
-    color: "#697282",
+    color: COLORS.textSecondary,
     marginTop: 4,
   },
   rowContainer: {
@@ -406,7 +419,7 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     borderWidth: 1.4,
-    borderColor: "#d0d5db",
+    borderColor: COLORS.border,
     borderRadius: 10,
     overflow: "hidden",
     height: 48,
@@ -414,7 +427,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 48,
-    color: "#0a0a0a",
+    color: COLORS.text,
   },
   preferenceItem: {
     flexDirection: "row",
@@ -432,15 +445,15 @@ const styles = StyleSheet.create({
   preferenceTitleText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1d2838",
+    color: COLORS.primary,
     marginBottom: 4,
   },
   preferenceDescriptionText: {
     fontSize: 13,
-    color: "#697282",
+    color: COLORS.textSecondary,
   },
   createButton: {
-    backgroundColor: "#155dfc",
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
