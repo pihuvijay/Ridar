@@ -49,20 +49,23 @@ body.
 
 ### Field Descriptions
 
-  Field               Type                    Required   Description
-  ------------------- ----------------------- ---------- ------------------------------------
-  name                string                  ✅         Name of the ride
-  maxMembers          number                  ✅         Maximum riders (min 2)
-  pickup              object                  ✅         Pickup location
-  pickup.lat          number                  ✅         Latitude
-  pickup.lng          number                  ✅         Longitude
-  pickup.label        string                  ✅         Display label
-  destination         object                  ✅         Destination location
-  destination.lat     number                  ✅         Latitude
-  destination.lng     number                  ✅         Longitude
-  destination.label   string                  ✅         Display label
-  leaveBy             string (ISO datetime)   ❌         Optional departure time
-  userId              string                  ❌         Testing fallback until auth exists (To be updated)
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| name | string | ✅ | Name of the ride |
+| maxMembers | number | ✅ | Maximum riders (min 2) |
+| pickup | object | ✅ | Pickup location |
+| pickup.lat | number | ✅ | Latitude |
+| pickup.lng | number | ✅ | Longitude |
+| pickup.label | string | ✅ | Display label |
+| destination | object | ✅ | Destination location |
+| destination.lat | number | ✅ | Latitude |
+| destination.lng | number | ✅ | Longitude |
+| destination.label | string | ✅ | Display label |
+| leaveBy | string (ISO datetime) | ❌ | Optional departure time |
+| userId | string | ❌ | Testing fallback until auth exists |
+
+
+(To be updated)
 
 ### Example Response
 
