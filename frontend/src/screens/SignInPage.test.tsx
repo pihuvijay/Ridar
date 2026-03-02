@@ -21,8 +21,73 @@ tests to write:
 
 */
 
-
+// snapshot test
 test('renders SignInPage correctly (snapshot test)', () => {
   const { toJSON } = render(<SignInPage />);
   expect(toJSON()).toMatchSnapshot(); 
+});
+
+// EVERYTHING IS FAILING BECAUSE WE DONT HAVE A PROP SET UP FOR THE SIGN IN BUTTON
+// test 1
+test('Verifies if these are valid login credentials', () => {
+  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+  const { getByLabelText, getByText } = render(<SignInPage />);
+  
+  fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
+  fireEvent.changeText(getByLabelText("Password"), "abc123");
+  fireEvent.press(getByText("Sign In"));
+
+  expect(consoleSpy).toHaveBeenCalledWith(
+    "Sign in submitted",
+    expect.objectContaining({email: "czl21@bath.ac.uk", password: "abc123", rememberMe: false,
+    })
+  );
+
+  consoleSpy.mockRestore();
+});
+
+
+// test 2
+test('Fails if its not a .ac.uk email', () => {
+  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+  const { getByLabelText, getByText } = render(<SignInPage />);
+  
+  fireEvent.changeText(getByLabelText("Email address"), "czl21@gmail.com");
+  fireEvent.changeText(getByLabelText("Password"), "abc123");
+  fireEvent.press(getByText("Sign In"));
+
+  expect(consoleSpy).not.toHaveBeenCalled();
+});
+
+// test 3
+test('Fails Sign In if no email is entered', () => {
+  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+  const { getByLabelText, getByText } = render(<SignInPage />);
+  
+  fireEvent.changeText(getByLabelText("Password"), "abc123");
+  fireEvent.press(getByText("Sign In"));
+
+  expect(consoleSpy).not.toHaveBeenCalled();
+});
+
+
+// test 4
+test('Fails Sign In if no password is entered', () => {
+  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+  const { getByLabelText, getByText } = render(<SignInPage />);
+  
+  fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
+  fireEvent.press(getByText("Sign In"));
+
+  expect(consoleSpy).not.toHaveBeenCalled();
+});
+
+
+// test 5
+test('Remember Me checkbox toggles when pressed', () => {
+  const { getByLabelText, getByText, queryByText } = render(<SignInPage />);
+
+  expect(queryByText("✓")).toBeNull(); // before press
+  fireEvent.press(getByLabelText("Remember me"));
+  expect(getByText("✓")).toBeTruthy(); // after press
 });
