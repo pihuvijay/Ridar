@@ -15,7 +15,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { authService } from "../services/api";
+import { useSignUp, useVerifyEmail } from "../hooks";
 
 interface SignUpPageProps {
   onSignIn?: () => void;
@@ -38,9 +38,10 @@ export const SignUpPage = ({
 
   const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+
+  const { signUp, loading: isCreatingAccount, error: signUpError } = useSignUp();
+  const { verifyEmail, loading: isVerifyingEmail, error: verifyError } = useVerifyEmail();
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -64,24 +65,17 @@ export const SignUpPage = ({
       return;
     }
 
-    setIsVerifyingEmail(true);
-    try {
-      const response = await authService.verifyEmail(formData.email);
-      if (response.isValid) {
-        setEmailVerified(true);
-        Alert.alert("Success", "Email verified successfully");
-      } else {
-        Alert.alert("Error", response.message || "Email could not be verified");
-        setEmailVerified(false);
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to verify email"
-      );
+    const isValid = await verifyEmail(formData.email);
+    if (isValid) {
+      setEmailVerified(true);
+      Alert.alert("Success", "Email verified successfully");
+    } else {
       setEmailVerified(false);
-    } finally {
-      setIsVerifyingEmail(false);
+      if (verifyError) {
+        Alert.alert("Error", verifyError);
+      } else {
+        Alert.alert("Error", "Email could not be verified");
+      }
     }
   };
 
@@ -96,30 +90,20 @@ export const SignUpPage = ({
       return;
     }
 
-    setIsCreatingAccount(true);
-    try {
-      const response = await authService.signUp({
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        courseMajor: formData.courseMajor,
-        age: parseInt(formData.age),
-        gender: formData.gender,
-      });
+    const success = await signUp({
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      courseMajor: formData.courseMajor,
+      age: parseInt(formData.age),
+      gender: formData.gender,
+    });
 
-      if (response.success) {
-        Alert.alert("Success", "Account created successfully");
-        if (onCreateAccount) onCreateAccount();
-      } else {
-        Alert.alert("Error", response.message || "Failed to create account");
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to create account"
-      );
-    } finally {
-      setIsCreatingAccount(false);
+    if (success) {
+      Alert.alert("Success", "Account created successfully");
+      if (onCreateAccount) onCreateAccount();
+    } else if (signUpError) {
+      Alert.alert("Error", signUpError);
     }
   };
 

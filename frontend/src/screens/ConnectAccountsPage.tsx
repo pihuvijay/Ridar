@@ -13,7 +13,8 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
-import { uberService, paymentService } from "../services/api";
+import { useAddPaymentMethod, useUberConnection } from "../hooks";
+import * as WebBrowser from "expo-web-browser";
 
 interface ConnectAccountsPageProps {
   userName?: string;
@@ -62,27 +63,32 @@ export const ConnectAccountsPage = ({
   onNavigateHome,
 }: ConnectAccountsPageProps): JSX.Element => {
   const { createToken } = useStripe();
-  const [uberConnected, setUberConnected] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState("");
+  const { addPaymentMethod, loading: isProcessing, error: paymentError } = useAddPaymentMethod();
+  const { isConnected: uberConnected, loading: uberLoading, connectUber, getAuthUrl } = useUberConnection();
 
   const handleUberConnect = async () => {
-    console.log("Connecting Uber...");
-    // In a real app, this would open Uber's OAuth flow
-    // For now, we'll simulate it and call the backend
-    try {
-      // TODO: Implement proper OAuth flow with Uber
-      // Get auth URL from backend
-      // const authUrlResponse = await uberService.initiateUberAuth();
-      
-      // For demonstration, simulating the connection
-      setTimeout(() => {
-        setUberConnected(true);
-        Alert.alert("Success", "Uber account connected successfully");
-      }, 500);
-    } catch (error) {
-      Alert.alert("Error", "Failed to connect Uber account");
+    try { 
+      const response = await getAuthUrl();
+      if (!response?.authUrl) { 
+        Alert.alert('Error','Could not get Uber auth URL from backend');
+        return;
+      }
+      const result = await WebBrowser.openAuthSessionAsync(response.authUrl, 'ridar://');
+
+      if (result.type == 'success' && result.url) { 
+        const code = new URL(result.url).searchParams.get('code');
+        if (code) { 
+          const success = await connectUber(code);
+          if (success) { 
+            Alert.alert('Success','Uber Account Connected successfully');
+          }
+        }
+      }
+    } catch(error) { 
+      Alert.alert('Error','Failed to connect Uber Account');
     }
+
   };
 
   const handleAddPaymentMethod = async () => {
@@ -96,7 +102,6 @@ export const ConnectAccountsPage = ({
       return;
     }
 
-    setIsProcessing(true);
     try {
       // Tokenize the card using Stripe SDK
       const { token, error } = await createToken({
@@ -105,37 +110,27 @@ export const ConnectAccountsPage = ({
 
       if (error) {
         Alert.alert("Card Error", error.message);
-        setIsProcessing(false);
         return;
       }
 
       if (!token) {
         Alert.alert("Error", "Failed to create card token");
-        setIsProcessing(false);
         return;
       }
 
-      // Send token to your backend
-      // TODO: Replace with actual user ID from auth context
-      const userId = "user_123"; // Placeholder - should come from auth context
-      const response = await paymentService.addPaymentMethod(
-        token.id,
-        cardholderName,
-        userId
-      );
+      // Send token to backend via hook (uses auth token automatically)
+      const success = await addPaymentMethod(token.id, cardholderName);
 
-      if (response.success) {
+      if (success) {
         console.log("Payment method created successfully");
         Alert.alert("Success", "Payment method added successfully");
         if (onNavigateHome) onNavigateHome();
-      } else {
-        Alert.alert("Error", response.message || "Failed to add payment method. Please try again.");
+      } else if (paymentError) {
+        Alert.alert("Error", paymentError);
       }
     } catch (err) {
       console.error("Payment error:", err);
       Alert.alert("Error", "Network error. Please check your connection.");
-    } finally {
-      setIsProcessing(false);
     }
   };
 

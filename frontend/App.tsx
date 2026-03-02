@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { StripeProvider } from '@stripe/stripe-react-native';
+import { AuthProvider } from './src/contexts';
 import { MapScreen } from './src/screens/MapScreen';
 import { SignInPage } from './src/screens/SignInPage';
 import { SignUpPage } from './src/screens/SignUpPage';
@@ -48,22 +49,24 @@ export default function App() {
   };
 
   return (
-    <StripeProvider publishableKey={publishableKey}>
-      <>
-        {currentScreen === 'signin' ? (
-          <SignInPage onSignUp={handleSignUp} onModeratorLogin={handleModeratorLogin} />
-        ) : currentScreen === 'signup' ? (
-          <SignUpPage onSignIn={handleBackToSignIn} onCreateAccount={handleCreateAccount} />
-        ) : currentScreen === 'connectaccounts' ? (
-          <ConnectAccountsPage onNavigateHome={handleAccountsConnected} />
-        ) : currentScreen === 'creategroup' ? (
-          <CreateGroupPage onBack={handleBackToMap} />
-        ) : (
-          <MapScreen onMenuPress={handleSignOut} onCreateRideGroup={handleCreateRideGroup} />
-        )}
-        <StatusBar style="auto" />
-      </>
-    </StripeProvider>
+    <AuthProvider>
+      <StripeProvider publishableKey={publishableKey}>
+        <>
+          {currentScreen === 'signin' ? (
+            <SignInPage onSignUp={handleSignUp} onModeratorLogin={handleModeratorLogin} />
+          ) : currentScreen === 'signup' ? (
+            <SignUpPage onSignIn={handleBackToSignIn} onCreateAccount={handleCreateAccount} />
+          ) : currentScreen === 'connectaccounts' ? (
+            <ConnectAccountsPage onNavigateHome={handleAccountsConnected} />
+          ) : currentScreen === 'creategroup' ? (
+            <CreateGroupPage onBack={handleBackToMap} />
+          ) : (
+            <MapScreen onMenuPress={handleSignOut} onCreateRideGroup={handleCreateRideGroup} />
+          )}
+          <StatusBar style="auto" />
+        </>
+      </StripeProvider>
+    </AuthProvider>
   );
 }
 

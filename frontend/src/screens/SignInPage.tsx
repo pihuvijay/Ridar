@@ -13,7 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { authService } from "../services/api";
+import { useSignIn } from "../hooks";
 
 interface SignInPageProps {
   onSignUp?: () => void;
@@ -29,7 +29,7 @@ export const SignInPage = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const { signIn, loading: isSigningIn, error } = useSignIn();
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -37,31 +37,11 @@ export const SignInPage = ({
       return;
     }
 
-    setIsSigningIn(true);
-    try {
-      const response = await authService.signIn({
-        email,
-        password,
-      });
-
-      if (response.success) {
-        // TODO: Store token securely
-        if (response.token) {
-          console.log("Auth token:", response.token);
-          // Store token in secure storage (e.g., expo-secure-store)
-        }
-        Alert.alert("Success", "Signed in successfully");
-        // Navigate to next screen
-      } else {
-        Alert.alert("Sign In Failed", response.message || "Invalid credentials");
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to sign in"
-      );
-    } finally {
-      setIsSigningIn(false);
+    const success = await signIn({ email, password });
+    if (success) {
+      Alert.alert("Success", "Signed in successfully");
+    } else if (error) {
+      Alert.alert("Error", error);
     }
   };
 
