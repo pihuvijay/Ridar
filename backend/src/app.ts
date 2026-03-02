@@ -14,6 +14,7 @@ import { partiesRouter } from "./models/parties/parties.routes";
 // import { reportsRouter } from "./models/reports/reports.routes";
 // import { walletRouter } from "./models/wallet/wallet.routes";
 import { stripeRouter } from "./routes/stripe.routes";
+import { uberRouter } from "./routes/uber.routes";
 
 export const app = express();
 
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (_req, res) =>
-  res.json({ name: "Ridar API", status: "up", health: "/health", parties: "/parties", stripe: "/stripe" })
+  res.json({ name: "Ridar API", status: "up", health: "/health", parties: "/parties", stripe: "/stripe", uber: "/uber" })
 );
 app.get("/health", (_req, res) => res.json({ ok: true, status: "up" }));
 
@@ -34,6 +35,7 @@ app.use("/parties", partiesRouter);
 // app.use("/reports", reportsRouter);
 // app.use("/wallet", walletRouter);
 app.use("/stripe", stripeRouter);
+app.use("/uber", uberRouter);
 
 app.use(errorHandler);
 

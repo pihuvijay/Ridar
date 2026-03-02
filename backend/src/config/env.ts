@@ -17,6 +17,11 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_PUBLISHABLE_KEY: z.string().min(1),
 
+  // Uber OAuth
+  UBER_CLIENT_ID: z.string().min(1),
+  UBER_CLIENT_SECRET: z.string().min(1),
+  UBER_REDIRECT_URI: z.string().url(),
+
   // Optional: use in-memory store for parties (no Supabase table required). For local testing only.
   MOCK_PARTIES: z
     .string()
