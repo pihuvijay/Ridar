@@ -51,18 +51,18 @@ body.
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| name | string | ✅ | Name of the ride |
-| maxMembers | number | ✅ | Maximum riders (min 2) |
-| pickup | object | ✅ | Pickup location |
-| pickup.lat | number | ✅ | Latitude |
-| pickup.lng | number | ✅ | Longitude |
-| pickup.label | string | ✅ | Display label |
-| destination | object | ✅ | Destination location |
-| destination.lat | number | ✅ | Latitude |
-| destination.lng | number | ✅ | Longitude |
-| destination.label | string | ✅ | Display label |
-| leaveBy | string (ISO datetime) | ❌ | Optional departure time |
-| userId | string | ❌ | Testing fallback until auth exists |
+| name | string | yes | Name of the ride |
+| maxMembers | number | yes | Maximum riders (min 2) |
+| pickup | object | yes | Pickup location |
+| pickup.lat | number | yes | Latitude |
+| pickup.lng | number | yes | Longitude |
+| pickup.label | string | yes | Display label |
+| destination | object | yes | Destination location |
+| destination.lat | number | yes | Latitude |
+| destination.lng | number | yes | Longitude |
+| destination.label | string | yes | Display label |
+| leaveBy | string (ISO datetime) | no | Optional departure time |
+| userId | string | no | Testing fallback until auth exists |
 
 
 (To be updated)
