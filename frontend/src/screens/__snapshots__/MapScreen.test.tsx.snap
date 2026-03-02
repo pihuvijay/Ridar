@@ -1,0 +1,454 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders MapScreen correctly (snapshot test) 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#f9fafb",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#ffffff",
+        "elevation": 3,
+        "flexDirection": "row",
+        "justifyContent": "space-between",
+        "paddingHorizontal": 16,
+        "paddingVertical": 12,
+        "shadowColor": "#000000",
+        "shadowOffset": {
+          "height": 2,
+          "width": 0,
+        },
+        "shadowOpacity": 0.1,
+        "shadowRadius": 4,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
+        }
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#ffffff",
+            "borderRadius": 10,
+            "height": 40,
+            "justifyContent": "center",
+            "opacity": 1,
+            "width": 40,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#1e2939",
+              "fontSize": 24,
+              "fontWeight": "600",
+            }
+          }
+        >
+          ☰
+        </Text>
+      </View>
+      <Text
+        style={
+          {
+            "color": "#1e2939",
+            "fontSize": 16,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Find a Ride
+      </Text>
+    </View>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "borderRadius": 10,
+            "height": 40,
+            "justifyContent": "center",
+            "opacity": 1,
+            "width": 40,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "fontSize": 20,
+            }
+          }
+        >
+          ⚙️
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+            "opacity": 1,
+            "paddingHorizontal": 12,
+            "paddingVertical": 8,
+          }
+        }
+      >
+        <ViewManagerAdapter_ExpoLinearGradient
+          colors={
+            [
+              4281040895,
+              4288155898,
+            ]
+          }
+          endPoint={
+            [
+              1,
+              1,
+            ]
+          }
+          startPoint={
+            [
+              0,
+              0,
+            ]
+          }
+          style={
+            {
+              "alignItems": "center",
+              "borderRadius": 20,
+              "height": 40,
+              "justifyContent": "center",
+              "width": 40,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#ffffff",
+                "fontSize": 18,
+                "fontWeight": "700",
+              }
+            }
+          >
+            R
+          </Text>
+        </ViewManagerAdapter_ExpoLinearGradient>
+        <Text
+          style={
+            {
+              "color": "#364153",
+              "fontSize": 14,
+              "fontWeight": "500",
+              "maxWidth": 150,
+            }
+          }
+        >
+          Rhys Leonard
+        </Text>
+      </View>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#e5e7eb",
+        "flex": 1,
+        "justifyContent": "center",
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "gap": 8,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "fontSize": 32,
+          }
+        }
+      >
+        🗺️ Map View
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#6b7280",
+            "fontSize": 14,
+          }
+        }
+      >
+        Ride groups displayed on map
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderTopColor": "#0000001a",
+        "borderTopWidth": 1,
+        "elevation": 4,
+        "gap": 12,
+        "paddingHorizontal": 16,
+        "paddingVertical": 16,
+        "shadowColor": "#000000",
+        "shadowOffset": {
+          "height": -2,
+          "width": 0,
+        },
+        "shadowOpacity": 0.1,
+        "shadowRadius": 4,
+      }
+    }
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "backgroundColor": "#155dfc",
+          "borderRadius": 10,
+          "elevation": 3,
+          "flexDirection": "row",
+          "gap": 8,
+          "justifyContent": "center",
+          "opacity": 1,
+          "paddingVertical": 16,
+          "shadowColor": "#000000",
+          "shadowOffset": {
+            "height": 2,
+            "width": 0,
+          },
+          "shadowOpacity": 0.1,
+          "shadowRadius": 4,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "fontSize": 20,
+          }
+        }
+      >
+        👥
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#ffffff",
+            "fontSize": 16,
+            "fontWeight": "600",
+          }
+        }
+      >
+        View Available Ride Groups
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "backgroundColor": "#ffffff",
+          "borderColor": "#155dfc",
+          "borderRadius": 10,
+          "borderWidth": 2,
+          "justifyContent": "center",
+          "opacity": 1,
+          "paddingVertical": 16,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#155dfc",
+            "fontSize": 16,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Create New Ride Group
+      </Text>
+    </View>
+    <Text
+      style={
+        {
+          "color": "#4a5565",
+          "fontSize": 16,
+          "fontWeight": "500",
+          "textAlign": "center",
+        }
+      }
+    >
+      3 ride groups available near you
+    </Text>
+  </View>
+</RCTSafeAreaView>
+`;

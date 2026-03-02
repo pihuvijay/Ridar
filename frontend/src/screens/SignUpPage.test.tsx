@@ -98,12 +98,12 @@ test("If they don't press 'verify' for their email, their account isn't created"
 });
 
 
-// test 5 | this test failed, im unsure why
+// test 5
 test('Create Account button is disabled if form incomplete', () => {
   const mockCreateAccount = jest.fn();
   const { getByText } = render(<SignUpPage onCreateAccount={mockCreateAccount} />);
   const createButton = getByText("Create Account & Connect Uber");
-  expect(createButton.props.accessibilityState.disabled).toBe(true);
+  expect(createButton).toBeDisabled();
 });
 
 // continuation of test 5, if some fields are filled but not all.
@@ -112,7 +112,7 @@ test("Create button disabled when form partially filled", () => {
 
   fireEvent.changeText(getByLabelText("Full Name"), "Dave");
   const createButton = getByText("Create Account & Connect Uber");
-  expect(createButton.props.accessibilityState.disabled).toBe(true);
+  expect(createButton).toBeDisabled();
 });
 
 
@@ -128,7 +128,7 @@ test("Calls onSignIn when Sign in pressed", () => {
 });
 
 
-// test 7 | this failed
+// test 7
 test("Verify button is disabled after email is verified", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
@@ -140,9 +140,7 @@ test("Verify button is disabled after email is verified", () => {
   fireEvent.press(getByText("Verify"));
   const verifiedButton = getByText("✓ Verified");
 
-  expect(
-    verifiedButton.parent?.props.accessibilityState.disabled
-  ).toBe(true);
+  expect(verifiedButton).toBeDisabled();
 });
 
 
