@@ -11,6 +11,8 @@ tests to write:
 5. cann't press the 'create account' button if inputs aren't filled in
 6. redirects to the signin page if the 'sign in' button is pressed
 7. can't press 'verify' for email if its already been verified
+8. check if course string length is long enough to be valid (at least 4 characters? math)
+9. check if age is at least 18 to create an account
 */
 
 
@@ -143,6 +145,12 @@ test("Verify button is disabled after email is verified", () => {
   expect(verifiedButton).toBeDisabled();
 });
 
+
+// test 8 course length
+
+
+
+// test 9 age value
 
 
 // SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/th3rdwave/react-native-safe-area-context
