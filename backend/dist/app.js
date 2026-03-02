@@ -1,0 +1,37 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.app = void 0;
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
+const morgan_1 = __importDefault(require("morgan"));
+const errorHandler_1 = require("./middleware/errorHandler");
+const logger_1 = require("./utils/logger");
+// Routes
+// import { authRouter } from "./models/auth/auth.routes";
+// import { usersRouter } from "./models/users/users.routes";
+// import { chatRouter } from "./models/chat/chat.routes";
+const parties_routes_1 = require("./models/parties/parties.routes");
+// import { reportsRouter } from "./models/reports/reports.routes";
+// import { walletRouter } from "./models/wallet/wallet.routes";
+const stripe_routes_1 = require("./routes/stripe.routes");
+exports.app = (0, express_1.default)();
+exports.app.use((0, helmet_1.default)());
+exports.app.use((0, cors_1.default)());
+exports.app.use(express_1.default.json());
+exports.app.use((0, morgan_1.default)("dev"));
+exports.app.get("/", (_req, res) => res.json({ name: "Ridar API", status: "up", health: "/health", parties: "/parties", stripe: "/stripe" }));
+exports.app.get("/health", (_req, res) => res.json({ ok: true, status: "up" }));
+// app.use("/auth", authRouter);
+// app.use("/users", usersRouter);
+// app.use("/chat", chatRouter);
+exports.app.use("/parties", parties_routes_1.partiesRouter);
+// app.use("/reports", reportsRouter);
+// app.use("/wallet", walletRouter);
+exports.app.use("/stripe", stripe_routes_1.stripeRouter);
+exports.app.use(errorHandler_1.errorHandler);
+process.on("unhandledRejection", (reason) => logger_1.logger.error(reason, "unhandledRejection"));
+process.on("uncaughtException", (err) => logger_1.logger.error(err, "uncaughtException"));

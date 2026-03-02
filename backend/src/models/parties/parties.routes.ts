@@ -28,7 +28,5 @@ partiesRouter.patch(
 partiesRouter.post(
   "/:partyId/join",
   validate(joinPartySchema),
-  (req, res) => {
-    res.status(501).json({ ok: false, error: { message: "Not implemented yet" } });
-  }
+  partiesController.joinParty
 );

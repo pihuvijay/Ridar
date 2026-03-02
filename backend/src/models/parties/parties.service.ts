@@ -1,12 +1,24 @@
 import { supabaseAdmin } from "../../lib/supabase";
 import { env } from "../../config/env";
 import { Party, LocationPoint } from "./parties.types";
+import crypto from "crypto";
 
 // In-memory store used when MOCK_PARTIES=true (no Supabase table needed)
 const mockPartiesStore = new Map<string, Party>();
+// track which users have joined each mock ride
+const mockPartyRiders = new Map<string, Set<string>>();
 
 function generateId(): string {
   return "mock-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 9);
+}
+
+function parseWktPoint(point: any): { lat: number; lng: number } | null {
+  if (!point) return null;
+  const s = typeof point === "string" ? point : point?.toString?.();
+  if (!s) return null;
+  const m = s.match(/POINT\((-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\)/);
+  if (!m) return null;
+  return { lat: parseFloat(m[2]), lng: parseFloat(m[1]) };
 }
 
 export const partiesService = {
@@ -38,21 +50,27 @@ export const partiesService = {
       return party;
     }
 
-    // TODO: replace "parties" and column names with actual Supabase schema later
+    // the table is called "rides" but columns differ from the original doc.
+    // we store the full LocationPoint as a JSON string in pickup_location/destination.
+    // some schemas don't auto‑generate a ride_id; create one here
+    const rideId = crypto.randomUUID();
+    // create WKT strings for geog columns
+    const pickPoint = `POINT(${pickup.lng} ${pickup.lat})`;
+    const destPoint = `POINT(${destination.lng} ${destination.lat})`;
+
     const { data, error } = await supabaseAdmin
-      .from("parties")
+      .from("rides")
       .insert({
-        leader_user_id: leaderUserId,
-        name,
-        max_members: maxMembers,
-        pickup_lat: pickup.lat,
-        pickup_lng: pickup.lng,
-        pickup_label: pickup.label,
-        destination_lat: destination.lat,
-        destination_lng: destination.lng,
-        destination_label: destination.label,
-        leave_by: leaveBy ?? null,
-        status: "open",
+        ride_id: rideId,
+        creator_user_id: leaderUserId,
+        course: name,                        // store ride name in course field
+        max_riders: maxMembers,
+        pickup_location: pickup.label,
+        pickup_geog: pickPoint,
+        destination: destination.label,
+        destination_geog: destPoint,
+        departure_time: leaveBy ?? null,
+        ride_status: "pending",
       })
       .select()
       .single();
@@ -62,23 +80,17 @@ export const partiesService = {
     }
 
     return {
-      id: data.party_id,
-      leaderUserId: data.leader_user_id,
-      name: data.name,
-      maxMembers: data.max_members,
-      currentMembers: data.current_members ?? 1,
-      pickup: {
-        lat: data.pickup_lat,
-        lng: data.pickup_lng,
-        label: data.pickup_label,
-      },
-      destination: {
-        lat: data.destination_lat,
-        lng: data.destination_lng,
-        label: data.destination_label,
-      },
-      leaveBy: data.leave_by,
-      status: data.status,
+      id: data.ride_id,
+      leaderUserId: data.creator_user_id,
+      name: data.course,
+      maxMembers: data.max_riders,
+      currentMembers: data.current_riders ?? 1,
+      pickup: { lat: pickup.lat, lng: pickup.lng, label: pickup.label },
+      pickupGeog: data.pickup_geog ?? null,
+      destination: { lat: destination.lat, lng: destination.lng, label: destination.label },
+      destinationGeog: data.destination_geog ?? null,
+      leaveBy: data.departure_time ?? leaveBy ?? null,
+      status: data.ride_status,
     };
   },
 
@@ -88,9 +100,9 @@ export const partiesService = {
     }
 
     const { data, error } = await supabaseAdmin
-      .from("parties")
+      .from("rides")
       .select("*")
-      .eq("party_id", partyId)
+      .eq("ride_id", partyId)
       .single();
 
     if (error && error.code !== "PGRST116") {
@@ -100,24 +112,29 @@ export const partiesService = {
 
     if (!data) return null;
 
+    const pickupCoords = parseWktPoint(data.pickup_geog);
+    const destCoords = parseWktPoint(data.destination_geog);
+
     return {
-      id: data.party_id,
-      leaderUserId: data.leader_user_id,
-      name: data.name,
-      maxMembers: data.max_members,
-      currentMembers: data.current_members,
+      id: data.ride_id,
+      leaderUserId: data.creator_user_id,
+      name: data.course,
+      maxMembers: data.max_riders,
+      currentMembers: data.current_riders,
       pickup: {
-        lat: data.pickup_lat,
-        lng: data.pickup_lng,
-        label: data.pickup_label,
+        lat: pickupCoords?.lat ?? 0,
+        lng: pickupCoords?.lng ?? 0,
+        label: data.pickup_location ?? "",
       },
+      pickupGeog: data.pickup_geog ?? null,
       destination: {
-        lat: data.destination_lat,
-        lng: data.destination_lng,
-        label: data.destination_label,
+        lat: destCoords?.lat ?? 0,
+        lng: destCoords?.lng ?? 0,
+        label: data.destination ?? "",
       },
-      leaveBy: data.leave_by,
-      status: data.status,
+      destinationGeog: data.destination_geog ?? null,
+      leaveBy: data.departure_time,
+      status: data.ride_status,
     };
   },
 
@@ -140,21 +157,19 @@ export const partiesService = {
     const payload: Record<string, unknown> = {};
 
     if (updates.pickup) {
-      payload.pickup_lat = updates.pickup.lat;
-      payload.pickup_lng = updates.pickup.lng;
-      payload.pickup_label = updates.pickup.label;
+      payload.pickup_location = updates.pickup.label;
+      payload.pickup_geog = `POINT(${updates.pickup.lng} ${updates.pickup.lat})`;
     }
 
     if (updates.destination) {
-      payload.destination_lat = updates.destination.lat;
-      payload.destination_lng = updates.destination.lng;
-      payload.destination_label = updates.destination.label;
+      payload.destination = updates.destination.label;
+      payload.destination_geog = `POINT(${updates.destination.lng} ${updates.destination.lat})`;
     }
 
     const { data, error } = await supabaseAdmin
-      .from("parties")
+      .from("rides")
       .update(payload)
-      .eq("party_id", partyId)
+      .eq("ride_id", partyId)
       .select()
       .single();
 
@@ -162,24 +177,99 @@ export const partiesService = {
       throw new Error(`Failed to update party locations: ${error?.message ?? "Unknown error"}`);
     }
 
+    const updatedPickupCoords = parseWktPoint(data.pickup_geog);
+    const updatedDestCoords = parseWktPoint(data.destination_geog);
+
     return {
-      id: data.party_id,
-      leaderUserId: data.leader_user_id,
-      name: data.name,
-      maxMembers: data.max_members,
-      currentMembers: data.current_members,
+      id: data.ride_id,
+      leaderUserId: data.creator_user_id,
+      name: data.course,
+      maxMembers: data.max_riders,
+      currentMembers: data.current_riders,
       pickup: {
-        lat: data.pickup_lat,
-        lng: data.pickup_lng,
-        label: data.pickup_label,
+        lat: updatedPickupCoords?.lat ?? 0,
+        lng: updatedPickupCoords?.lng ?? 0,
+        label: data.pickup_location ?? "",
       },
+      pickupGeog: data.pickup_geog ?? null,
       destination: {
-        lat: data.destination_lat,
-        lng: data.destination_lng,
-        label: data.destination_label,
+        lat: updatedDestCoords?.lat ?? 0,
+        lng: updatedDestCoords?.lng ?? 0,
+        label: data.destination ?? "",
       },
-      leaveBy: data.leave_by,
-      status: data.status,
+      destinationGeog: data.destination_geog ?? null,
+      leaveBy: data.departure_time,
+      status: data.ride_status,
+    };
+  },
+
+  async joinParty(
+    rideId: string,
+    userId: string,
+    options: { dropoff?: LocationPoint; status?: string } = {}
+  ) {
+    if (env.MOCK_PARTIES) {
+      let riders = mockPartyRiders.get(rideId);
+      if (!riders) {
+        riders = new Set<string>();
+        mockPartyRiders.set(rideId, riders);
+      }
+      riders.add(userId);
+      // also increment the mock party's currentMembers if present
+      const party = mockPartiesStore.get(rideId);
+      if (party) {
+        party.currentMembers += 1;
+        mockPartiesStore.set(rideId, party);
+      }
+      return {
+        rideId,
+        userId,
+        dropoff: options.dropoff ?? null,
+        status: options.status ?? "pending",
+      };
+    }
+
+    const payload: Record<string, unknown> = {
+      ride_id: rideId,
+      user_id: userId,
+      join_status: options.status ?? "pending",
+    };
+    if (options.dropoff) {
+      payload.user_destination = JSON.stringify(options.dropoff);
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("user_rides")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Failed to join ride: ${error?.message ?? "Unknown error"}`);
+    }
+
+    // bump counter on the rides row so current_riders stays accurate
+    try {
+      const { data: rideData } = await supabaseAdmin
+        .from("rides")
+        .select("current_riders")
+        .eq("ride_id", rideId)
+        .single();
+      if (rideData) {
+        await supabaseAdmin
+          .from("rides")
+          .update({ current_riders: rideData.current_riders + 1 })
+          .eq("ride_id", rideId);
+      }
+    } catch {
+      // swallow – the join itself succeeded, count is optional
+    }
+
+    return {
+      rideId: data.ride_id,
+      userId: data.user_id,
+      dropoff: data.user_destination ? JSON.parse(data.user_destination) : null,
+      status: data.join_status || data.status,
     };
   },
 };
