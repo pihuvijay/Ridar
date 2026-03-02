@@ -84,7 +84,7 @@ test("If they don't press 'verify' for their email, their account isn't created"
   );
 
   fireEvent.changeText(getByLabelText("Full Name"), "Dave");
-  fireEvent.changeText(getByLabelText("Course/Major"), "CS");
+  fireEvent.changeText(getByLabelText("Course/Major"), "Computer Science");
   fireEvent.changeText(getByLabelText("Age"), "20");
   fireEvent.changeText(
     getByLabelText("University Email"),
@@ -146,11 +146,37 @@ test("Verify button is disabled after email is verified", () => {
 });
 
 
-// test 8 course length
+// test 8 (WE NEED A FUNCTION TO CHECK COURSE VALIDITY)
+test("Create Account is disabled if the course string is less than 5 characters", () => {
+  const { getByLabelText, getByText } = render(<SignUpPage />);
+
+  fireEvent.changeText(getByLabelText("Full Name"), "Dave");
+  fireEvent.changeText(getByLabelText("Course/Major"), "aa");
+  fireEvent.changeText(getByLabelText("Age"), "18");
+  fireEvent.changeText(getByLabelText("University Email"), "dv123@bath.ac.uk");
+
+  fireEvent.press(getByText("Select Gender"));
+  fireEvent.press(getByText("Male"));
+  fireEvent.press(getByText("☐"));
+  const createButton = getByText("Create Account & Connect Uber");
+  expect(createButton).toBeDisabled();
+});
 
 
+// test 9 currently failing, works on the figma
+test("Create Account is disabled if the user inputs an age < 18", () => {
+  const { getByLabelText, getByText } = render(<SignUpPage />);
 
-// test 9 age value
+  fireEvent.changeText(getByLabelText("Full Name"), "Dave");
+  fireEvent.changeText(getByLabelText("Course/Major"), "Computer Science");
+  fireEvent.changeText(getByLabelText("Age"), "17");
+  fireEvent.changeText(getByLabelText("University Email"), "dv123@bath.ac.uk");
 
+  fireEvent.press(getByText("Select Gender"));
+  fireEvent.press(getByText("Male"));
+  fireEvent.press(getByText("☐"));
+  const createButton = getByText("Create Account & Connect Uber");
+  expect(createButton).toBeDisabled();
+});
 
 // SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/th3rdwave/react-native-safe-area-context
