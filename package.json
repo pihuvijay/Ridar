@@ -1,0 +1,26 @@
+{
+  "name": "ridar",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pihuvijay/Ridar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pihuvijay/Ridar/issues"
+  },
+  "homepage": "https://github.com/pihuvijay/Ridar#readme",
+  "description": "",
+  "dependencies": {
+    "expo": "^54.0.33"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}
