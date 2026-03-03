@@ -21,6 +21,10 @@ tests to write:
 
 */
 
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
 // snapshot test
 test('renders SignInPage correctly (snapshot test)', () => {
   const { toJSON } = render(<SignInPage />);
@@ -126,4 +130,25 @@ test("Goes to the forget password section when 'forget password pressed", () => 
 
   fireEvent.press(getByText("Forgot password?"));
   expect(mockForgetPassword).toHaveBeenCalledTimes(1);
+});
+
+test('Fails if the credentials do not match database info', () => {
+  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+  const { getByLabelText, getByText } = render(<SignInPage />);
+
+  fireEvent.changeText(getByLabelText("Email address"), "wrong@bath.ac.uk");
+  fireEvent.changeText(getByLabelText("Password"), "wrongpass");
+
+  fireEvent.press(getByText("Sign In"));
+
+  const callArgs = consoleSpy.mock.calls[0][1];
+
+  const isValidUser =
+    callArgs.email === "czl21@bath.ac.uk" &&
+    callArgs.password === "abc123";
+
+  expect(isValidUser).toBe(false);
+
+  consoleSpy.mockRestore();
 });
