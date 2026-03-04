@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider } from './src/contexts';
 import { COLORS } from './src/theme/colors';
@@ -145,9 +146,10 @@ export default function App() {
   }
 
   return (
-    <StripeProvider publishableKey="pk_test_51T3m9820nWP9392CIyappOL7YyxWfjKQBzUAPE0HLFrzNvp3IXz1sQZ5h7RkOEYRCTjFIpOcTKTaI1sFgFHmwT0700XzYWajot">
-      <AuthProvider>
-        <View style={{ flex: 1, backgroundColor: COLORS.primary }}>
+    <SafeAreaProvider>
+      <StripeProvider publishableKey="pk_test_51T3m9820nWP9392CIyappOL7YyxWfjKQBzUAPE0HLFrzNvp3IXz1sQZ5h7RkOEYRCTjFIpOcTKTaI1sFgFHmwT0700XzYWajot">
+        <AuthProvider>
+          <View style={{ flex: 1, backgroundColor: COLORS.primary }}>
         {currentScreen === 'signin' && (
         <SignInPage
           onSignUp={handleShowSignup}
@@ -220,6 +222,7 @@ export default function App() {
       </View>
     </AuthProvider>
   </StripeProvider>
+    </SafeAreaProvider>
   );
 }
 

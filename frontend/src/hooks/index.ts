@@ -11,6 +11,7 @@ import {
   SignUpData,
   AuthResponse,
   EmailVerificationResponse,
+  EmailCodeSendResponse,
   PaymentMethodResponse,
   UberConnectionResponse,
 } from '../services/api';
@@ -124,6 +125,47 @@ export function useVerifyEmail() {
   );
 
   return { verifyEmail, loading, error, isValid: data?.isValid ?? false };
+}
+
+/**
+ * Hook for sending and verifying email verification codes.
+ */
+export function useEmailVerificationCode() {
+  const {
+    loading: sendingCode,
+    error: sendCodeError,
+    run: runSendCode,
+  } = useAsync<EmailCodeSendResponse>();
+  const {
+    loading: verifyingCode,
+    error: verifyCodeError,
+    run: runVerifyCode,
+  } = useAsync<EmailVerificationResponse>();
+
+  const sendVerificationCode = useCallback(
+    async (email: string) => {
+      const result = await runSendCode(() => authService.sendVerificationCode(email));
+      return result?.success ?? false;
+    },
+    [runSendCode],
+  );
+
+  const verifyEmailCode = useCallback(
+    async (email: string, code: string) => {
+      const result = await runVerifyCode(() => authService.verifyEmailCode(email, code));
+      return result?.isValid ?? false;
+    },
+    [runVerifyCode],
+  );
+
+  return {
+    sendVerificationCode,
+    verifyEmailCode,
+    sendingCode,
+    sendCodeError,
+    verifyingCode,
+    verifyCodeError,
+  };
 }
 
 /**

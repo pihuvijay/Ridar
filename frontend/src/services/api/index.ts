@@ -36,6 +36,11 @@ export interface EmailVerificationResponse {
   isValid: boolean;
 }
 
+export interface EmailCodeSendResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface PaymentMethodResponse {
   success: boolean;
   message: string;
@@ -101,6 +106,37 @@ export const authService = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Send email verification code to the provided address
+   */
+  async sendVerificationCode(email: string): Promise<EmailCodeSendResponse> {
+    const response = await fetch(`${API_URL}/api/auth/send-verification-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Verify the code sent to the provided email
+   */
+  async verifyEmailCode(
+    email: string,
+    code: string,
+  ): Promise<EmailVerificationResponse> {
+    const response = await fetch(`${API_URL}/api/auth/verify-email-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, code }),
     });
     return handleResponse(response);
   },

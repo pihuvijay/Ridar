@@ -7,15 +7,16 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   Image,
   Pressable,
   Modal,
   ActivityIndicator,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../theme/colors";
+import { useSignUp, useEmailVerificationCode } from "../hooks";
 
 interface SignUpPageProps {
   onSignIn?: () => void;
@@ -33,21 +34,41 @@ export const SignUpPage = ({
     gender: "",
     email: "",
     password: "",
+    confirmPassword: "",
     agreedToTerms: false,
   });
+  
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
 
   const { signUp, loading: isCreatingAccount, error: signUpError } = useSignUp();
-  const { verifyEmail, loading: isVerifyingEmail, error: verifyError } = useVerifyEmail();
+  const {
+    sendVerificationCode,
+    verifyEmailCode,
+    sendingCode: isSendingCode,
+    sendCodeError,
+    verifyingCode: isVerifyingCode,
+    verifyCodeError,
+  } = useEmailVerificationCode();
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const updatedData = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === "password" || field === "confirmPassword") {
+        setPasswordsMatch(updatedData.password === updatedData.confirmPassword);
+      }
+
+      return updatedData;
+    });
   };
 
   const handleGenderSelect = (selectedGender: string) => {
@@ -59,22 +80,47 @@ export const SignUpPage = ({
     return email.endsWith(".ac.uk");
   };
 
-  const handleVerifyEmail = async () => {
+  const handleSendVerificationCode = async () => {
+    if (!formData.email) {
+      Alert.alert("Missing Email", "Please enter your university email first");
+      return;
+    }
+
     if (!validateEmail(formData.email)) {
       Alert.alert("Invalid Email", "Email must end in .ac.uk");
       return;
     }
 
-    const isValid = await verifyEmail(formData.email);
+    const sent = await sendVerificationCode(formData.email);
+    if (sent) {
+      setCodeSent(true);
+      setEmailVerified(false);
+      Alert.alert("Code Sent", "Check your email for the verification code");
+    } else {
+      if (sendCodeError) {
+        Alert.alert("Error", sendCodeError);
+      } else {
+        Alert.alert("Error", "Could not send verification code");
+      }
+    }
+  };
+
+  const handleConfirmVerificationCode = async () => {
+    if (!verificationCode.trim()) {
+      Alert.alert("Missing Code", "Please enter the verification code");
+      return;
+    }
+
+    const isValid = await verifyEmailCode(formData.email, verificationCode.trim());
     if (isValid) {
       setEmailVerified(true);
       Alert.alert("Success", "Email verified successfully");
     } else {
       setEmailVerified(false);
-      if (verifyError) {
-        Alert.alert("Error", verifyError);
+      if (verifyCodeError) {
+        Alert.alert("Error", verifyCodeError);
       } else {
-        Alert.alert("Error", "Email could not be verified");
+        Alert.alert("Error", "Invalid verification code");
       }
     }
   };
@@ -87,6 +133,11 @@ export const SignUpPage = ({
 
     if (formData.password.length < 8) {
       Alert.alert("Weak Password", "Password must be at least 8 characters");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert("Password Mismatch", "Passwords do not match");
       return;
     }
 
@@ -118,6 +169,8 @@ export const SignUpPage = ({
     formData.gender &&
     formData.email &&
     formData.password &&
+    formData.confirmPassword &&
+    passwordsMatch &&
     formData.agreedToTerms;
 
   return (
@@ -272,7 +325,7 @@ export const SignUpPage = ({
                 </View>
               </View>
 
-              {/* Email with Verify Button */}
+              {/* Email with Send Code Button */}
               <View style={styles.emailSection}>
                 <Text style={styles.label}>University Email * (must end in .ac.uk)</Text>
                 <View style={styles.emailInputWrapper}>
@@ -284,6 +337,8 @@ export const SignUpPage = ({
                     onChangeText={(value) => {
                       handleInputChange("email", value);
                       setEmailVerified(false);
+                      setCodeSent(false);
+                      setVerificationCode("");
                     }}
                     keyboardType="email-address"
                     accessibilityLabel="University Email"
@@ -293,11 +348,11 @@ export const SignUpPage = ({
                       styles.verifyButton,
                       emailVerified && styles.verifyButtonVerified,
                     ]}
-                    onPress={handleVerifyEmail}
-                    disabled={emailVerified || isVerifyingEmail}
+                    onPress={handleSendVerificationCode}
+                    disabled={isSendingCode || !formData.email}
                     activeOpacity={0.8}
                   >
-                    {isVerifyingEmail ? (
+                    {isSendingCode ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
                       <Text
@@ -306,14 +361,46 @@ export const SignUpPage = ({
                           emailVerified && styles.verifyButtonTextVerified,
                         ]}
                       >
-                        {emailVerified ? "✓ Verified" : "Verify"}
+                        {emailVerified ? "✓ Verified" : codeSent ? "Resend" : "Send Code"}
                       </Text>
                     )}
                   </TouchableOpacity>
                 </View>
+
+                {codeSent && !emailVerified && (
+                  <View style={styles.emailInputWrapper}>
+                    <TextInput
+                      style={styles.emailInput}
+                      placeholder="Enter verification code"
+                      placeholderTextColor={COLORS.textSecondary}
+                      value={verificationCode}
+                      onChangeText={setVerificationCode}
+                      keyboardType="number-pad"
+                      accessibilityLabel="Verification Code"
+                    />
+                    <TouchableOpacity
+                      style={styles.verifyButton}
+                      onPress={handleConfirmVerificationCode}
+                      disabled={isVerifyingCode || !verificationCode.trim()}
+                      activeOpacity={0.8}
+                    >
+                      {isVerifyingCode ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={styles.verifyButtonText}>Verify Code</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 {!emailVerified && formData.email && !formData.email.endsWith(".ac.uk") && (
                   <Text style={styles.errorText}>
                     Email must end in .ac.uk
+                  </Text>
+                )}
+                {!emailVerified && codeSent && (
+                  <Text style={styles.successText}>
+                    Verification code sent. Enter it above to continue.
                   </Text>
                 )}
                 {emailVerified && (
@@ -323,8 +410,8 @@ export const SignUpPage = ({
                 )}
               </View>
 
-              {/* Password */}
-              <View style={styles.formColumn}>
+              {/* Password Section */}
+              <View style={{ marginTop: 8 }}>
                 <Text style={styles.label}>Password * (min 8 characters)</Text>
                 <View style={styles.inputContainer}>
                   <Text style={styles.inputIcon}>🔒</Text>
@@ -341,6 +428,30 @@ export const SignUpPage = ({
                   />
                 </View>
               </View>
+
+              {/* Confirm Password Section */}
+              <View style={{ marginTop: 8 }}>
+                <Text style={styles.label}>Confirm Password *</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#0a0a0a80"
+                    value={formData.confirmPassword}
+                    onChangeText={(value) =>
+                      handleInputChange("confirmPassword", value)
+                    }
+                    secureTextEntry
+                    accessibilityLabel="Confirm Password"
+                  />
+                </View>
+              </View>
+
+              {/* Password Mismatch Error */}
+              {formData.password && formData.confirmPassword && !passwordsMatch && (
+                <Text style={styles.errorText}>Passwords do not match</Text>
+              )}
 
               {/* Terms Checkbox */}
               <View style={styles.termsContainer}>
