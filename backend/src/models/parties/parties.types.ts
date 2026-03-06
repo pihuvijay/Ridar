@@ -24,7 +24,9 @@ export type Party = {
   maxMembers: number;
   currentMembers: number;
   pickup: LocationPoint;
+  pickupGeog?: string | null;
   destination: LocationPoint;
+  destinationGeog?: string | null;
   leaveBy: string | null;
   status: PartyStatus;
 };
