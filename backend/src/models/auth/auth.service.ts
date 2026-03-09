@@ -1,45 +1,96 @@
-// backend/src/models/auth/auth.service.ts
-import { supabaseAuth, supabaseAdmin } from "../../lib/supabase";
+import { supabaseAdmin, supabaseAuth } from "../../lib/supabase";
+import { AuthSession } from "./auth.types";
 
-export async function register(email: string, password: string, p0: { fullName: string; courseMajor: string; age: number; gender: string; }) {
-  // IMPORTANT: use Admin client so we can bypass email sending + confirm immediately
-  const admin = supabaseAdmin();
+export const authService = {
+  async signUp(params: {
+    email: string;
+    password: string;
+    fullName: string;
+    courseMajor: string;
+    age: number;
+    gender: string;
+  }): Promise<AuthSession> {
+    const { email, password, fullName, courseMajor, age, gender } = params;
 
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
+    // 1️⃣ Create user in Supabase Auth
+    const { data, error } = await supabaseAdmin().auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // skip email verification for MVP
+      user_metadata: { fullName, courseMajor, age, gender },
+    });
 
-  if (error) throw Object.assign(new Error(error.message), { status: 400 });
+    if (error || !data.user) {
+      throw new Error(error?.message ?? "Failed to create user");
+    }
 
-  return data;
-}
+    // 2️⃣ Upsert into public users table
+    await supabaseAdmin().from("users").upsert({
+      user_id: data.user.id,
+      email,
+      full_name: fullName,
+      course: courseMajor,
+      age,
+      gender,
+    });
 
-export async function login(email: string, password: string) {
-  // normal sign-in uses anon client
-  const supabase = supabaseAuth();
+    // 3️⃣ Sign in immediately to get token
+    const { data: session, error: signInError } =
+      await supabaseAuth().auth.signInWithPassword({
+        email,
+        password,
+      });
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    if (signInError || !session.session) {
+      throw new Error(
+        "Account created but could not sign in automatically"
+      );
+    }
 
-  if (error) throw Object.assign(new Error(error.message), { status: 401 });
+    return {
+      user: { id: data.user.id, email: data.user.email! },
+      accessToken: session.session.access_token,
+    };
+  },
 
-  return data;
-}
+  async signIn(email: string, password: string): Promise<AuthSession> {
+    const { data, error } = await supabaseAuth().auth.signInWithPassword({
+      email,
+      password,
+    });
 
-export async function verifyEmail(email: string) {
-  const supabase = supabaseAuth();
+    if (error || !data.session) {
+      throw new Error(error?.message ?? "Invalid credentials");
+    }
 
-  const { data, error } = await supabase.auth.resend({
-    type: "signup",
-    email,
-    // options: { emailRedirectTo: "yourapp://auth-callback" }, // optional later
-  });
+    return {
+      user: { id: data.user.id, email: data.user.email! },
+      accessToken: data.session.access_token,
+    };
+  },
 
-  if (error) throw Object.assign(new Error(error.message), { status: 400 });
+  async signOut(token: string): Promise<void> {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin().auth.getUser(token);
 
-  return data;
-}
+    if (userError || !user) throw new Error("Invalid token");
+
+    const { error } = await supabaseAdmin().auth.admin.signOut(user.id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  // 🔹 Keep your email verification flow
+  async verifyEmail(email: string) {
+    const { data, error } = await supabaseAuth().auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) throw new Error(error.message);
+
+    return data;
+  },
+};

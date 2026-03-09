@@ -1,9 +1,9 @@
 import { z } from "zod";
 
+// Main schemas used by validateBody(...)
 export const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-
   fullName: z.string().min(1),
   courseMajor: z.string().min(1),
   age: z.number().int().min(16).max(120),
@@ -17,4 +17,13 @@ export const LoginSchema = z.object({
 
 export const VerifyEmailSchema = z.object({
   email: z.string().email(),
+});
+
+// Optional aliases for compatibility with the other branch
+export const signUpSchema = z.object({
+  body: RegisterSchema,
+});
+
+export const signInSchema = z.object({
+  body: LoginSchema,
 });
