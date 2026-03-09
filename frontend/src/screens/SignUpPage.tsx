@@ -1,699 +1,926 @@
 import React, { useState } from "react";
 import { JSX } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  Image,
-  Pressable,
-  Modal,
-  ActivityIndicator,
-  Alert,
+	View,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	ScrollView,
+	StyleSheet,
+	SafeAreaView,
+	Image,
+	Pressable,
+	Modal,
+	ActivityIndicator,
+	Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { authService } from "../services/api";
 
 interface SignUpPageProps {
-  onSignIn?: () => void;
-  onCreateAccount?: () => void;
+	onSignIn?: () => void;
+	onCreateAccount?: () => void;
 }
 
 export const SignUpPage = ({
-  onSignIn,
-  onCreateAccount,
+	onSignIn,
+	onCreateAccount,
 }: SignUpPageProps): JSX.Element => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    courseMajor: "",
-    age: "",
-    gender: "",
-    email: "",
-    password: "",
-    agreedToTerms: false,
-  });
+	const [formData, setFormData] = useState({
+		fullName: "",
+		email: "",
+		password: "",
+		courseMajor: "",
+		age: "",
+		gender: "",
+		agreedToTerms: false,
+	});
 
-  const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
+	const [verificationCode, setVerificationCode] = useState("");
+	const [isSendingCode, setIsSendingCode] = useState(false);
+	const [isConfirmingCode, setIsConfirmingCode] = useState(false);
+	const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
+	const [codeSent, setCodeSent] = useState(false);
+	const [emailVerified, setEmailVerified] = useState(false);
+	const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+	const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+	const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+	const handleInputChange = (field: string, value: string | boolean) => {
+		setFormData((prev) => ({
+			...prev,
+			[field]: value,
+		}));
+	};
 
-  const handleGenderSelect = (selectedGender: string) => {
-    handleInputChange("gender", selectedGender);
-    setGenderDropdownVisible(false);
-  };
+	const handleGenderSelect = (selectedGender: string) => {
+		handleInputChange("gender", selectedGender);
+		setGenderDropdownVisible(false);
+	};
 
-  const validateEmail = (email: string): boolean => {
-    return email.endsWith(".ac.uk");
-  };
+	const validateEmail = (email: string): boolean => {
+		return email.endsWith(".ac.uk");
+	};
 
-  const handleVerifyEmail = async () => {
-    if (!validateEmail(formData.email)) {
-      Alert.alert("Invalid Email", "Email must end in .ac.uk");
-      return;
-    }
+	const handleVerifyEmail = async () => {
+		if (!validateEmail(formData.email)) {
+			Alert.alert("Invalid Email", "Email must end in .ac.uk");
+			return;
+		}
 
-    setIsVerifyingEmail(true);
-    try {
-      const response = await authService.verifyEmail(formData.email);
-      if (response.isValid) {
-        setEmailVerified(true);
-        Alert.alert("Success", "Email verified successfully");
-      } else {
-        Alert.alert("Error", response.message || "Email could not be verified");
-        setEmailVerified(false);
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to verify email"
-      );
-      setEmailVerified(false);
-    } finally {
-      setIsVerifyingEmail(false);
-    }
-  };
+		setIsSendingCode(true);
+		try {
+			const r = await authService.sendEmailCode(
+				formData.email.trim().toLowerCase(),
+			);
 
-  const handleCreateAccount = async () => {
-    if (!isFormValid || !emailVerified) {
-      Alert.alert("Incomplete Form", "Please verify your email and fill all fields");
-      return;
-    }
+			if (r.success) {
+				setEmailVerified(false); // not verified yet
+				setCodeSent(true);
+			} else {
+				Alert.alert("Error", r.message);
+			}
+		} catch (e) {
+			Alert.alert(
+				"Error",
+				e instanceof Error ? e.message : "Failed to send code",
+			);
+		} finally {
+			setIsSendingCode(false);
+		}
+	};
 
-    if (formData.password.length < 8) {
-      Alert.alert("Weak Password", "Password must be at least 8 characters");
-      return;
-    }
+	const handleConfirmCode = async () => {
+		if (!validateEmail(formData.email)) {
+			Alert.alert("Invalid Email", "Email must end in .ac.uk");
+			return;
+		}
 
-    setIsCreatingAccount(true);
-    try {
-      const response = await authService.signUp({
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        courseMajor: formData.courseMajor,
-        age: parseInt(formData.age),
-        gender: formData.gender,
-      });
+		const code = verificationCode.trim();
+		if (code.length < 4) {
+			Alert.alert(
+				"Invalid Code",
+				"Please enter the code from your email.",
+			);
+			return;
+		}
 
-      if (response.success) {
-        Alert.alert("Success", "Account created successfully");
-        if (onCreateAccount) onCreateAccount();
-      } else {
-        Alert.alert("Error", response.message || "Failed to create account");
-      }
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error instanceof Error ? error.message : "Failed to create account"
-      );
-    } finally {
-      setIsCreatingAccount(false);
-    }
-  };
+		setIsConfirmingCode(true);
+		try {
+			const r = await authService.verifyEmailCode(
+				formData.email.trim().toLowerCase(),
+				code,
+			);
 
-  const handleSignIn = () => {
-    if (onSignIn) onSignIn();
-  };
+			if (r.success) {
+				setEmailVerified(true);
+				setVerificationCode("");
+				setCodeSent(false);
+			} else {
+				setEmailVerified(false);
+				Alert.alert("Verification failed", r.message);
+			}
+		} catch (e) {
+			setEmailVerified(false);
+			Alert.alert(
+				"Error",
+				e instanceof Error ? e.message : "Failed to verify code",
+			);
+		} finally {
+			setIsConfirmingCode(false);
+		}
+	};
 
-  const isFormValid =
-    formData.fullName &&
-    formData.courseMajor &&
-    formData.age &&
-    formData.gender &&
-    formData.email &&
-    formData.password &&
-    formData.agreedToTerms;
+	const handleCreateAccount = async () => {
+		if (!isFormValid || !emailVerified) {
+			Alert.alert(
+				"Incomplete Form",
+				"Please verify your email and fill all fields",
+			);
+			return;
+		}
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={["#2B7FFF", "#9810FA"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBackground}
-      >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              {/* Logo placeholder - replace with actual image */}
-              <View style={styles.logoBadge}>
-                <Text style={styles.logoText}>R</Text>
-              </View>
-            </View>
+		if (formData.password.length < 8) {
+			Alert.alert(
+				"Weak Password",
+				"Password must be at least 8 characters",
+			);
+			return;
+		}
 
-            <Text style={styles.headerTitle}>Join Ridar</Text>
-            <Text style={styles.headerSubtitle}>Student carpooling made easy</Text>
-          </View>
+		// ✅ sanitize + validate before sending
+		const payload = {
+			fullName: (formData.fullName ?? "").trim(),
+			email: (formData.email ?? "").trim().toLowerCase(),
+			password: formData.password,
+			courseMajor: (formData.courseMajor ?? "").trim(),
+			age: Number(String(formData.age ?? "").trim()),
+			gender: (formData.gender ?? "").trim(),
+		};
 
-          {/* Main Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Create Account</Text>
-            <Text style={styles.cardSubtitle}>
-              Verify your student email to get started
-            </Text>
+		if (!payload.fullName || !payload.courseMajor || !payload.gender) {
+			Alert.alert(
+				"Missing Fields",
+				"Full name, course/major, and gender are required.",
+			);
+			return;
+		}
 
-            {/* Form */}
-            <View style={styles.form}>
-              {/* Full Name and Course/Major Row */}
-              <View style={styles.formRow}>
-                {/* Full Name */}
-                <View style={styles.formColumn}>
-                  <Text style={styles.label}>Full Name *</Text>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputIcon}>👤</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="John Smith"
-                      placeholderTextColor="#0a0a0a80"
-                      value={formData.fullName}
-                      onChangeText={(value) =>
-                        handleInputChange("fullName", value)
-                      }
-                      accessibilityLabel="Full Name"
-                    />
-                  </View>
-                </View>
+		if (!Number.isFinite(payload.age) || payload.age <= 0) {
+			Alert.alert(
+				"Invalid Age",
+				"Please enter a valid age (numbers only).",
+			);
+			return;
+		}
 
-                {/* Course/Major */}
-                <View style={styles.formColumn}>
-                  <Text style={styles.label}>Course/Major *</Text>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputIcon}>📚</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Computer Science"
-                      placeholderTextColor="#0a0a0a80"
-                      value={formData.courseMajor}
-                      onChangeText={(value) =>
-                        handleInputChange("courseMajor", value)
-                      }
-                      accessibilityLabel="Course/Major"
-                    />
-                  </View>
-                </View>
-              </View>
+		setIsCreatingAccount(true);
+		try {
+			console.log("[SignUpPage] payload preview", {
+				fullName: formData.fullName,
+				courseMajor: formData.courseMajor,
+				age: formData.age,
+				gender: formData.gender,
+				email: formData.email,
+			});
+			const response = await authService.signUp(payload);
 
-              {/* Age and Gender Row */}
-              <View style={styles.formRow}>
-                {/* Age */}
-                <View style={styles.formColumn}>
-                  <Text style={styles.label}>Age *</Text>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputIcon}>🎂</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="21"
-                      placeholderTextColor="#0a0a0a80"
-                      value={formData.age}
-                      onChangeText={(value) =>
-                        handleInputChange("age", value)
-                      }
-                      keyboardType="number-pad"
-                      accessibilityLabel="Age"
-                    />
-                  </View>
-                </View>
+			if (response.success) {
+				onCreateAccount?.();
+				return;
+			}
 
-                {/* Gender */}
-                <View style={styles.formColumn}>
-                  <Text style={styles.label}>Gender *</Text>
-                  <TouchableOpacity
-                    style={styles.genderInputContainer}
-                    onPress={() => setGenderDropdownVisible(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.genderInputText}>
-                      {formData.gender || "Select Gender"}
-                    </Text>
-                    <Text style={styles.genderDropdownIcon}>▼</Text>
-                  </TouchableOpacity>
+			// ✅ show backend validation details if present
+			const details = (response as any).details?.fieldErrors;
+			if (details) {
+				const msg = Object.entries(details)
+					.map(
+						([field, errs]) =>
+							`${field}: ${(errs as string[]).join(", ")}`,
+					)
+					.join("\n");
+				Alert.alert("Validation Error", msg);
+			} else {
+				Alert.alert(
+					"Error",
+					response.message || "Failed to create account",
+				);
+			}
+		} catch (error) {
+			Alert.alert(
+				"Error",
+				error instanceof Error
+					? error.message
+					: "Failed to create account",
+			);
+		} finally {
+			setIsCreatingAccount(false);
+		}
+	};
 
-                  {/* Gender Dropdown Modal */}
-                  <Modal
-                    visible={genderDropdownVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setGenderDropdownVisible(false)}
-                  >
-                    <Pressable
-                      style={styles.genderModalOverlay}
-                      onPress={() => setGenderDropdownVisible(false)}
-                    >
-                      <View style={styles.genderModalContent}>
-                        <Text style={styles.genderModalTitle}>Select Gender</Text>
-                        {genderOptions.map((option) => (
-                          <TouchableOpacity
-                            key={option}
-                            style={styles.genderOption}
-                            onPress={() => handleGenderSelect(option)}
-                          >
-                            <Text
-                              style={[
-                                styles.genderOptionText,
-                                formData.gender === option &&
-                                  styles.genderOptionSelected,
-                              ]}
-                            >
-                              {option}
-                              {formData.gender === option && " ✓"}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                        <TouchableOpacity
-                          style={styles.genderCloseButton}
-                          onPress={() => setGenderDropdownVisible(false)}
-                        >
-                          <Text style={styles.genderCloseButtonText}>Close</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </Pressable>
-                  </Modal>
-                </View>
-              </View>
+	const handleSignIn = () => {
+		if (onSignIn) onSignIn();
+	};
 
-              {/* Email with Verify Button */}
-              <View style={styles.emailSection}>
-                <Text style={styles.label}>University Email * (must end in .ac.uk)</Text>
-                <View style={styles.emailInputWrapper}>
-                  <TextInput
-                    style={styles.emailInput}
-                    placeholder="your.name@university.ac.uk"
-                    placeholderTextColor="#0a0a0a80"
-                    value={formData.email}
-                    onChangeText={(value) => {
-                      handleInputChange("email", value);
-                      setEmailVerified(false);
-                    }}
-                    keyboardType="email-address"
-                    accessibilityLabel="University Email"
-                  />
-                  <TouchableOpacity
-                    style={[
-                      styles.verifyButton,
-                      emailVerified && styles.verifyButtonVerified,
-                    ]}
-                    onPress={handleVerifyEmail}
-                    disabled={emailVerified || isVerifyingEmail}
-                    activeOpacity={0.8}
-                  >
-                    {isVerifyingEmail ? (
-                      <ActivityIndicator size="small" color="#ffffff" />
-                    ) : (
-                      <Text
-                        style={[
-                          styles.verifyButtonText,
-                          emailVerified && styles.verifyButtonTextVerified,
-                        ]}
-                      >
-                        {emailVerified ? "✓ Verified" : "Verify"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-                {!emailVerified && formData.email && !formData.email.endsWith(".ac.uk") && (
-                  <Text style={styles.errorText}>
-                    Email must end in .ac.uk
-                  </Text>
-                )}
-                {emailVerified && (
-                  <Text style={styles.successText}>
-                    Email verified successfully
-                  </Text>
-                )}
-              </View>
+	const isFormValid =
+		formData.fullName &&
+		formData.courseMajor &&
+		formData.age &&
+		formData.gender &&
+		formData.email &&
+		formData.password &&
+		formData.agreedToTerms;
 
-              {/* Password */}
-              <View style={styles.formColumn}>
-                <Text style={styles.label}>Password * (min 8 characters)</Text>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputIcon}>🔒</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••••"
-                    placeholderTextColor="#0a0a0a80"
-                    value={formData.password}
-                    onChangeText={(value) =>
-                      handleInputChange("password", value)
-                    }
-                    secureTextEntry
-                    accessibilityLabel="Password"
-                  />
-                </View>
-              </View>
+	return (
+		<SafeAreaView style={styles.container}>
+			<LinearGradient
+				colors={["#2B7FFF", "#9810FA"]}
+				start={{ x: 0, y: 0 }}
+				end={{ x: 1, y: 1 }}
+				style={styles.gradientBackground}
+			>
+				<ScrollView
+					style={styles.scrollView}
+					contentContainerStyle={styles.scrollContent}
+					showsVerticalScrollIndicator={false}
+				>
+					{/* Header */}
+					<View style={styles.header}>
+						<View style={styles.logoContainer}>
+							{/* Logo placeholder - replace with actual image */}
+							<View style={styles.logoBadge}>
+								<Text style={styles.logoText}>R</Text>
+							</View>
+						</View>
 
-              {/* Terms Checkbox */}
-              <View style={styles.termsContainer}>
-                <TouchableOpacity
-                  style={styles.checkbox}
-                  onPress={() =>
-                    handleInputChange("agreedToTerms", !formData.agreedToTerms)
-                  }
-                >
-                  <Text style={styles.checkboxText}>
-                    {formData.agreedToTerms ? "☑️" : "☐"}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.termsText}>
-                  I agree to the Terms of Service and Privacy Policy, and
-                  confirm I am a university student
-                </Text>
-              </View>
+						<Text style={styles.headerTitle}>Join Ridar</Text>
+						<Text style={styles.headerSubtitle}>
+							Student carpooling made easy
+						</Text>
+					</View>
 
-              {/* Create Account Button */}
-              <TouchableOpacity
-                style={[
-                  styles.createButton,
-                  (!isFormValid || !emailVerified || isCreatingAccount) && styles.createButtonDisabled,
-                ]}
-                onPress={handleCreateAccount}
-                disabled={!isFormValid || !emailVerified || isCreatingAccount}
-                activeOpacity={0.8}
-              >
-                {isCreatingAccount ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <Text style={styles.createButtonText}>
-                    Create Account & Connect Uber
-                  </Text>
-                )}
-              </TouchableOpacity>
+					{/* Main Card */}
+					<View style={styles.card}>
+						<Text style={styles.cardTitle}>Create Account</Text>
+						<Text style={styles.cardSubtitle}>
+							Verify your student email to get started
+						</Text>
 
-              {/* Sign In Link */}
-              <View style={styles.signInContainer}>
-                <Text style={styles.signInText}>Already have an account?</Text>
-                <TouchableOpacity onPress={handleSignIn}>
-                  <Text style={styles.signInLink}>Sign in</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
-  );
+						{/* Form */}
+						<View style={styles.form}>
+							{/* Full Name and Course/Major Row */}
+							<View style={styles.formRow}>
+								{/* Full Name */}
+								<View style={styles.formColumn}>
+									<Text style={styles.label}>
+										Full Name *
+									</Text>
+									<View style={styles.inputContainer}>
+										<Text style={styles.inputIcon}>👤</Text>
+										<TextInput
+											style={styles.input}
+											value={formData.fullName}
+											onChangeText={(t) =>
+												setFormData((p) => ({
+													...p,
+													fullName: t,
+												}))
+											}
+											placeholder="Full name"
+										/>
+									</View>
+								</View>
+
+								{/* Course/Major */}
+								<View style={styles.formColumn}>
+									<Text style={styles.label}>
+										Course/Major *
+									</Text>
+									<View style={styles.inputContainer}>
+										<Text style={styles.inputIcon}>📚</Text>
+										<TextInput
+											style={styles.input}
+											value={formData.courseMajor}
+											onChangeText={(t) =>
+												setFormData((p) => ({
+													...p,
+													courseMajor: t,
+												}))
+											}
+											placeholder="Course / Major"
+										/>
+									</View>
+								</View>
+							</View>
+
+							{/* Age and Gender Row */}
+							<View style={styles.formRow}>
+								{/* Age */}
+								<View style={styles.formColumn}>
+									<Text style={styles.label}>Age *</Text>
+									<View style={styles.inputContainer}>
+										<Text style={styles.inputIcon}>🎂</Text>
+										<TextInput
+											style={styles.input}
+											value={formData.age}
+											onChangeText={(t) =>
+												setFormData((p) => ({
+													...p,
+													age: t,
+												}))
+											}
+											placeholder="Age"
+											keyboardType="number-pad"
+										/>
+									</View>
+								</View>
+
+								{/* Gender */}
+								<View style={styles.formColumn}>
+									<Text style={styles.label}>Gender *</Text>
+									<TouchableOpacity
+										style={styles.genderInputContainer}
+										onPress={() =>
+											setGenderDropdownVisible(true)
+										}
+										activeOpacity={0.7}
+									>
+										<Text style={styles.genderInputText}>
+											{formData.gender || "Select Gender"}
+										</Text>
+										<Text style={styles.genderDropdownIcon}>
+											▼
+										</Text>
+									</TouchableOpacity>
+
+									{/* Gender Dropdown Modal */}
+									<Modal
+										visible={genderDropdownVisible}
+										transparent
+										animationType="fade"
+										onRequestClose={() =>
+											setGenderDropdownVisible(false)
+										}
+									>
+										<Pressable
+											style={styles.genderModalOverlay}
+											onPress={() =>
+												setGenderDropdownVisible(false)
+											}
+										>
+											<View
+												style={
+													styles.genderModalContent
+												}
+											>
+												<Text
+													style={
+														styles.genderModalTitle
+													}
+												>
+													Select Gender
+												</Text>
+												{genderOptions.map((option) => (
+													<TouchableOpacity
+														key={option}
+														style={
+															styles.genderOption
+														}
+														onPress={() =>
+															handleGenderSelect(
+																option,
+															)
+														}
+													>
+														<Text
+															style={[
+																styles.genderOptionText,
+																formData.gender ===
+																	option &&
+																	styles.genderOptionSelected,
+															]}
+														>
+															{option}
+															{formData.gender ===
+																option && " ✓"}
+														</Text>
+													</TouchableOpacity>
+												))}
+												<TouchableOpacity
+													style={
+														styles.genderCloseButton
+													}
+													onPress={() =>
+														setGenderDropdownVisible(
+															false,
+														)
+													}
+												>
+													<Text
+														style={
+															styles.genderCloseButtonText
+														}
+													>
+														Close
+													</Text>
+												</TouchableOpacity>
+											</View>
+										</Pressable>
+									</Modal>
+								</View>
+							</View>
+
+							{/* Email with Verify Button */}
+							<View style={styles.emailSection}>
+								<Text style={styles.label}>
+									University Email * (must end in .ac.uk)
+								</Text>
+								<View style={styles.emailInputWrapper}>
+									<TextInput
+										style={styles.emailInput}
+										placeholder="your.name@university.ac.uk"
+										placeholderTextColor="#0a0a0a80"
+										value={formData.email}
+										onChangeText={(value) => {
+											handleInputChange("email", value);
+										}}
+										keyboardType="email-address"
+										accessibilityLabel="University Email"
+									/>
+									<TouchableOpacity
+										style={[
+											styles.verifyButton,
+											styles.verifyButtonVerified,
+										]}
+										onPress={handleVerifyEmail}
+										disabled={
+											emailVerified || isSendingCode
+										}
+										activeOpacity={0.8}
+									>
+										{isVerifyingEmail ? (
+											<ActivityIndicator
+												size="small"
+												color="#ffffff"
+											/>
+										) : (
+											<Text
+												style={[
+													styles.verifyButtonText,
+													emailVerified &&
+														styles.verifyButtonTextVerified,
+												]}
+											>
+												{emailVerified
+													? "✓ Verified"
+													: codeSent
+														? "Resend Code"
+														: "Verify"}
+											</Text>
+										)}
+									</TouchableOpacity>
+								</View>
+								{!emailVerified &&
+									formData.email &&
+									!formData.email.endsWith(".ac.uk") && (
+										<Text style={styles.errorText}>
+											Email must end in .ac.uk
+										</Text>
+									)}
+								{emailVerified && (
+									<Text style={styles.successText}>
+										Email verified successfully
+									</Text>
+								)}
+							</View>
+
+							{codeSent && (
+								<View style={{ gap: 8, marginTop: 8 }}>
+									<Text style={styles.label}>
+										Verification Code *
+									</Text>
+
+									<View style={styles.inputContainer}>
+										<Text style={styles.inputIcon}>🔢</Text>
+										<TextInput
+											style={styles.input}
+											placeholder="Enter 6-digit code"
+											placeholderTextColor="#0a0a0a80"
+											value={verificationCode}
+											onChangeText={setVerificationCode}
+											keyboardType="number-pad"
+										/>
+									</View>
+
+									<TouchableOpacity
+										style={[
+											styles.verifyButton,
+											emailVerified &&
+												styles.verifyButtonVerified,
+										]}
+										onPress={handleConfirmCode}
+										disabled={
+											emailVerified || isConfirmingCode
+										}
+										activeOpacity={0.8}
+									>
+										{isConfirmingCode ? (
+											<ActivityIndicator
+												size="small"
+												color="#ffffff"
+											/>
+										) : (
+											<Text
+												style={[
+													styles.verifyButtonText,
+													emailVerified &&
+														styles.verifyButtonTextVerified,
+												]}
+											>
+												{emailVerified
+													? "✓ Verified"
+													: "Confirm Code"}
+											</Text>
+										)}
+									</TouchableOpacity>
+								</View>
+							)}
+
+							{/* Password */}
+							<View style={styles.formColumn}>
+								<Text style={styles.label}>
+									Password * (min 8 characters)
+								</Text>
+								<View style={styles.inputContainer}>
+									<Text style={styles.inputIcon}>🔒</Text>
+									<TextInput
+										style={styles.input}
+										placeholder="••••••••"
+										placeholderTextColor="#0a0a0a80"
+										value={formData.password}
+										onChangeText={(value) =>
+											handleInputChange("password", value)
+										}
+										secureTextEntry
+										accessibilityLabel="Password"
+									/>
+								</View>
+							</View>
+
+							{/* Terms Checkbox */}
+							<View style={styles.termsContainer}>
+								<TouchableOpacity
+									style={styles.checkbox}
+									onPress={() =>
+										handleInputChange(
+											"agreedToTerms",
+											!formData.agreedToTerms,
+										)
+									}
+								>
+									<Text style={styles.checkboxText}>
+										{formData.agreedToTerms ? "☑️" : "☐"}
+									</Text>
+								</TouchableOpacity>
+								<Text style={styles.termsText}>
+									I agree to the Terms of Service and Privacy
+									Policy, and confirm I am a university
+									student
+								</Text>
+							</View>
+
+							{/* Create Account Button */}
+							<TouchableOpacity
+								style={[
+									styles.createButton,
+									(!isFormValid ||
+										!emailVerified ||
+										isCreatingAccount) &&
+										styles.createButtonDisabled,
+								]}
+								onPress={handleCreateAccount}
+								disabled={
+									!isFormValid ||
+									!emailVerified ||
+									isCreatingAccount
+								}
+								activeOpacity={0.8}
+							>
+								{isCreatingAccount ? (
+									<ActivityIndicator
+										size="small"
+										color="#ffffff"
+									/>
+								) : (
+									<Text style={styles.createButtonText}>
+										Create Account & Connect Uber
+									</Text>
+								)}
+							</TouchableOpacity>
+
+							{/* Sign In Link */}
+							<View style={styles.signInContainer}>
+								<Text style={styles.signInText}>
+									Already have an account?
+								</Text>
+								<TouchableOpacity onPress={handleSignIn}>
+									<Text style={styles.signInLink}>
+										Sign in
+									</Text>
+								</TouchableOpacity>
+							</View>
+						</View>
+					</View>
+				</ScrollView>
+			</LinearGradient>
+		</SafeAreaView>
+	);
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  gradientBackground: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 32,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  logoContainer: {
-    marginBottom: 20,
-  },
-  logoBadge: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoText: {
-    fontSize: 40,
-    fontWeight: "700",
-    color: "#ffffff",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#ffffff",
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#daeafe",
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.1,
-    shadowRadius: 50,
-    elevation: 8,
-    marginBottom: 32,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1e2939",
-    marginBottom: 8,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: "#4a5565",
-    marginBottom: 24,
-  },
-  form: {
-    gap: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-    gap: 11.99,
-  },
-  formColumn: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#364153",
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 0.95,
-    borderColor: "#d1d5dc",
-    borderRadius: 10,
-    height: 38,
-    paddingHorizontal: 10,
-    gap: 8,
-  },
-  inputIcon: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: "#0a0a0a",
-    paddingVertical: 8,
-  },
-  emailSection: {
-    gap: 8,
-  },
-  emailInputWrapper: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  emailInput: {
-    flex: 1,
-    borderWidth: 0.95,
-    borderColor: "#d1d5dc",
-    borderRadius: 10,
-    height: 38,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    color: "#0a0a0a",
-  },
-  genderInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 0.95,
-    borderColor: "#d1d5dc",
-    borderRadius: 10,
-    height: 38,
-    paddingHorizontal: 12,
-    backgroundColor: "#ffffff",
-    justifyContent: "space-between",
-  },
-  genderInputText: {
-    fontSize: 14,
-    color: "#0a0a0a",
-    fontWeight: "400",
-    flex: 1,
-  },
-  genderDropdownIcon: {
-    fontSize: 12,
-    color: "#6a7282",
-    marginLeft: 8,
-  },
-  verifyButton: {
-    backgroundColor: "#d1d5dc",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 38,
-    minWidth: 87,
-  },
-  verifyButtonVerified: {
-    backgroundColor: "#0ea574",
-  },
-  verifyButtonText: {
-    fontSize: 14,
-    color: "#6a7282",
-    fontWeight: "600",
-  },
-  verifyButtonTextVerified: {
-    color: "#ffffff",
-  },
-  errorText: {
-    fontSize: 12,
-    color: "#dc2626",
-    marginTop: 4,
-  },
-  successText: {
-    fontSize: 12,
-    color: "#0ea574",
-    marginTop: 4,
-  },
-  genderModalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  genderModalContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    minWidth: 280,
-    maxWidth: 320,
-    gap: 8,
-  },
-  genderModalTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1e2939",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  genderOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: "#f3f4f6",
-    marginBottom: 4,
-  },
-  genderOptionText: {
-    fontSize: 14,
-    color: "#364153",
-    fontWeight: "500",
-  },
-  genderOptionSelected: {
-    color: "#155dfc",
-    fontWeight: "600",
-  },
-  genderCloseButton: {
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "#155dfc",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  genderCloseButtonText: {
-    fontSize: 14,
-    color: "#ffffff",
-    fontWeight: "600",
-  },
-  termsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 4,
-    marginVertical: 8,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 2,
-  },
-  checkboxText: {
-    fontSize: 18,
-  },
-  termsText: {
-    flex: 1,
-    fontSize: 12,
-    color: "#4a5565",
-    lineHeight: 16,
-  },
-  createButton: {
-    backgroundColor: "#155dfc",
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginVertical: 12,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  createButtonDisabled: {
-    backgroundColor: "#d1d5dc",
-    opacity: 0.6,
-  },
-  createButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  signInContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 12,
-    marginTop: 8,
-    gap: 4,
-  },
-  signInText: {
-    fontSize: 14,
-    color: "#4a5565",
-  },
-  signInLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#155dfc",
-  },
+	container: {
+		flex: 1,
+		backgroundColor: "#ffffff",
+	},
+	gradientBackground: {
+		flex: 1,
+	},
+	scrollView: {
+		flex: 1,
+	},
+	scrollContent: {
+		paddingHorizontal: 16,
+		paddingTop: 24,
+		paddingBottom: 32,
+	},
+	header: {
+		alignItems: "center",
+		marginBottom: 32,
+	},
+	logoContainer: {
+		marginBottom: 20,
+	},
+	logoBadge: {
+		width: 88,
+		height: 88,
+		borderRadius: 44,
+		backgroundColor: "rgba(255, 255, 255, 0.3)",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	logoText: {
+		fontSize: 40,
+		fontWeight: "700",
+		color: "#ffffff",
+	},
+	headerTitle: {
+		fontSize: 20,
+		fontWeight: "600",
+		color: "#ffffff",
+		marginBottom: 8,
+	},
+	headerSubtitle: {
+		fontSize: 14,
+		color: "#daeafe",
+	},
+	card: {
+		backgroundColor: "#ffffff",
+		borderRadius: 24,
+		padding: 24,
+		shadowColor: "#000000",
+		shadowOffset: { width: 0, height: 25 },
+		shadowOpacity: 0.1,
+		shadowRadius: 50,
+		elevation: 8,
+		marginBottom: 32,
+	},
+	cardTitle: {
+		fontSize: 20,
+		fontWeight: "600",
+		color: "#1e2939",
+		marginBottom: 8,
+	},
+	cardSubtitle: {
+		fontSize: 14,
+		color: "#4a5565",
+		marginBottom: 24,
+	},
+	form: {
+		gap: 16,
+	},
+	formRow: {
+		flexDirection: "row",
+		gap: 11.99,
+	},
+	formColumn: {
+		flex: 1,
+	},
+	label: {
+		fontSize: 14,
+		fontWeight: "500",
+		color: "#364153",
+		marginBottom: 8,
+	},
+	inputContainer: {
+		flexDirection: "row",
+		alignItems: "center",
+		borderWidth: 0.95,
+		borderColor: "#d1d5dc",
+		borderRadius: 10,
+		height: 38,
+		paddingHorizontal: 10,
+		gap: 8,
+	},
+	inputIcon: {
+		fontSize: 16,
+		marginRight: 4,
+	},
+	input: {
+		flex: 1,
+		fontSize: 14,
+		color: "#0a0a0a",
+		paddingVertical: 8,
+	},
+	emailSection: {
+		gap: 8,
+	},
+	emailInputWrapper: {
+		flexDirection: "row",
+		gap: 8,
+		alignItems: "center",
+	},
+	emailInput: {
+		flex: 1,
+		borderWidth: 0.95,
+		borderColor: "#d1d5dc",
+		borderRadius: 10,
+		height: 38,
+		paddingHorizontal: 12,
+		fontSize: 14,
+		color: "#0a0a0a",
+	},
+	genderInputContainer: {
+		flexDirection: "row",
+		alignItems: "center",
+		borderWidth: 0.95,
+		borderColor: "#d1d5dc",
+		borderRadius: 10,
+		height: 38,
+		paddingHorizontal: 12,
+		backgroundColor: "#ffffff",
+		justifyContent: "space-between",
+	},
+	genderInputText: {
+		fontSize: 14,
+		color: "#0a0a0a",
+		fontWeight: "400",
+		flex: 1,
+	},
+	genderDropdownIcon: {
+		fontSize: 12,
+		color: "#6a7282",
+		marginLeft: 8,
+	},
+	verifyButton: {
+		backgroundColor: "#d1d5dc",
+		borderRadius: 10,
+		paddingVertical: 8,
+		paddingHorizontal: 12,
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		height: 38,
+		minWidth: 87,
+	},
+	verifyButtonVerified: {
+		backgroundColor: "#0ea574",
+	},
+	verifyButtonText: {
+		fontSize: 14,
+		color: "#6a7282",
+		fontWeight: "600",
+	},
+	verifyButtonTextVerified: {
+		color: "#ffffff",
+	},
+	errorText: {
+		fontSize: 12,
+		color: "#dc2626",
+		marginTop: 4,
+	},
+	successText: {
+		fontSize: 12,
+		color: "#0ea574",
+		marginTop: 4,
+	},
+	genderModalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0, 0, 0, 0.5)",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	genderModalContent: {
+		backgroundColor: "#ffffff",
+		borderRadius: 16,
+		padding: 20,
+		minWidth: 280,
+		maxWidth: 320,
+		gap: 8,
+	},
+	genderModalTitle: {
+		fontSize: 16,
+		fontWeight: "600",
+		color: "#1e2939",
+		marginBottom: 12,
+		textAlign: "center",
+	},
+	genderOption: {
+		paddingVertical: 12,
+		paddingHorizontal: 16,
+		borderRadius: 8,
+		backgroundColor: "#f3f4f6",
+		marginBottom: 4,
+	},
+	genderOptionText: {
+		fontSize: 14,
+		color: "#364153",
+		fontWeight: "500",
+	},
+	genderOptionSelected: {
+		color: "#155dfc",
+		fontWeight: "600",
+	},
+	genderCloseButton: {
+		marginTop: 12,
+		paddingVertical: 10,
+		paddingHorizontal: 16,
+		backgroundColor: "#155dfc",
+		borderRadius: 8,
+		alignItems: "center",
+	},
+	genderCloseButtonText: {
+		fontSize: 14,
+		color: "#ffffff",
+		fontWeight: "600",
+	},
+	termsContainer: {
+		flexDirection: "row",
+		gap: 12,
+		paddingHorizontal: 4,
+		marginVertical: 8,
+	},
+	checkbox: {
+		width: 24,
+		height: 24,
+		justifyContent: "center",
+		alignItems: "center",
+		marginTop: 2,
+	},
+	checkboxText: {
+		fontSize: 18,
+	},
+	termsText: {
+		flex: 1,
+		fontSize: 12,
+		color: "#4a5565",
+		lineHeight: 16,
+	},
+	createButton: {
+		backgroundColor: "#155dfc",
+		borderRadius: 10,
+		paddingVertical: 12,
+		alignItems: "center",
+		marginVertical: 12,
+		shadowColor: "#000000",
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.1,
+		shadowRadius: 4,
+		elevation: 3,
+	},
+	createButtonDisabled: {
+		backgroundColor: "#d1d5dc",
+		opacity: 0.6,
+	},
+	createButtonText: {
+		color: "#ffffff",
+		fontSize: 14,
+		fontWeight: "600",
+	},
+	signInContainer: {
+		flexDirection: "row",
+		justifyContent: "center",
+		alignItems: "center",
+		paddingTop: 12,
+		marginTop: 8,
+		gap: 4,
+	},
+	signInText: {
+		fontSize: 14,
+		color: "#4a5565",
+	},
+	signInLink: {
+		fontSize: 14,
+		fontWeight: "600",
+		color: "#155dfc",
+	},
 });

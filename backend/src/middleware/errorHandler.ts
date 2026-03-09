@@ -1,23 +1,11 @@
-import { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/http";
+import type { NextFunction, Request, Response } from "express";
 import { logger } from "../utils/logger";
 
-export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      ok: false,
-      error: {
-        message: err.message,
-        code: err.code,
-        details: err.details,
-      },
-    });
-  }
+export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
+  logger.error({ err, path: req.path, method: req.method }, "Unhandled error");
 
-  logger.error(err, "Unhandled error");
+  const status = typeof err?.status === "number" ? err.status : 500;
+  const message = err?.message ?? "Internal Server Error";
 
-  return res.status(500).json({
-    ok: false,
-    error: { message: "Internal server error" },
-  });
-};
+  res.status(status).json({ ok: false, error: { message } });
+}

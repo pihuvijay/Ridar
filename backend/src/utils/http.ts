@@ -1,14 +1,13 @@
-export class AppError extends Error {
-  statusCode: number;
-  code?: string;
-  details?: unknown;
+export type ApiResponse<T> = {
+  ok: boolean;
+  data?: T;
+  error?: { message: string };
+};
 
-  constructor(message: string, statusCode = 500, code?: string, details?: unknown) {
-    super(message);
-    this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
-  }
+export function ok<T>(data: T): ApiResponse<T> {
+  return { ok: true, data };
 }
 
-export const ok = <T>(data: T) => ({ ok: true, data });
+export function fail(message: string): ApiResponse<never> {
+  return { ok: false, error: { message } };
+}

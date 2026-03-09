@@ -1,58 +1,23 @@
-import { Request, Response, NextFunction } from "express";
-import { partiesService } from "./parties.service";
-import { ok } from "../../utils/http";
+import type { Response, NextFunction } from "express";
+import type { AuthedRequest } from "../../middleware/auth";
+import * as service from "./parties.service";
 
-export const partiesController = {
-  createParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = (req as any).user;
-      // Fallback: until auth middleware is made, allow userId in body (for testing only)
-      const leaderUserId = user?.id ?? req.body.userId;
+export async function list(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const data = await service.listParties(userId);
+    res.json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}
 
-      const { name, maxMembers, pickup, destination, leaveBy } = req.body;
-
-      const party = await partiesService.createParty(leaderUserId, {
-        name,
-        maxMembers,
-        pickup,
-        destination,
-        leaveBy,
-      });
-
-      res.status(201).json(ok(party));
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  getParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { partyId } = req.params;
-      const party = await partiesService.getParty(partyId);
-
-      if (!party) {
-        return res.status(404).json({ ok: false, error: { message: "Party not found" } });
-      }
-
-      res.json(ok(party));
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  updatePartyLocations: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { partyId } = req.params;
-      const { pickup, destination } = req.body;
-
-      const party = await partiesService.updatePartyLocations(partyId, {
-        pickup,
-        destination,
-      });
-
-      res.json(ok(party));
-    } catch (err) {
-      next(err);
-    }
-  },
-};
+export async function create(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const data = await service.createParty(userId, req.body);
+    res.status(201).json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}

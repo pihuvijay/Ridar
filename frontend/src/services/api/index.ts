@@ -1,246 +1,171 @@
-// API client and service functions for backend communication
+// frontend/src/services/api/index.ts
+import * as SecureStore from "expo-secure-store";
+import { getToken } from "../../utils/authStorage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
-// ==================== TYPES ====================
-
-export interface AuthCredentials {
-  email: string;
-  password: string;
-}
-
-export interface SignUpData {
-  fullName: string;
-  email: string;
-  password: string;
-  courseMajor: string;
-  age: number;
-  gender: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  message: string;
-  token?: string;
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-  };
-}
-
-export interface EmailVerificationResponse {
-  success: boolean;
-  message: string;
-  isValid: boolean;
-}
-
-export interface PaymentMethodResponse {
-  success: boolean;
-  message: string;
-  paymentMethodId?: string;
-}
-
-export interface UberConnectionResponse {
-  success: boolean;
-  message: string;
-  accessToken?: string;
-}
-
-// ==================== HELPERS ====================
-
-const handleResponse = async (response: Response) => {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: `HTTP ${response.status}: ${response.statusText}`,
-    }));
-    throw new Error(error.message || 'API request failed');
-  }
-  return response.json();
+export type ApiError = {
+	success: false;
+	message: string;
+	status?: number;
+	raw?: any;
 };
+export type ApiSuccess<T> = { success: true; status: number; data: T };
 
-// ==================== AUTH ENDPOINTS ====================
+function isApiError(x: any): x is ApiError {
+	return x && typeof x === "object" && x.success === false;
+}
 
+async function getSavedToken() {
+	return await SecureStore.getItemAsync("auth_token");
+}
+
+async function requestJson<T = any>(
+	path: string,
+	options: RequestInit = {},
+): Promise<ApiSuccess<T> | ApiError> {
+	const url = `${API_URL}${path}`;
+	console.log("[api] API_URL =", API_URL);
+	console.log("[api]", options.method ?? "GET", "->", url);
+
+	try {
+		const token = await getToken();
+
+		const res = await fetch(url, {
+			...options,
+			headers: {
+				"Content-Type": "application/json",
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+				...(options.headers ?? {}),
+			},
+		});
+
+		const text = await res.text();
+		let body: any = null;
+		try {
+			body = text ? JSON.parse(text) : null;
+		} catch {
+			body = text;
+		}
+
+		const pretty =
+			body && typeof body === "object"
+				? JSON.stringify(body, null, 2)
+				: body;
+
+		console.log("[api] status =", res.status, "body =", pretty);
+		if (!res.ok) {
+			const msg =
+				(body && (body.message || body.error?.message || body.error)) ||
+				`Request failed (${res.status})`;
+
+			return {
+				success: false,
+				message: String(msg),
+				status: res.status,
+				raw: body,
+			};
+		}
+
+		// backend returns: { ok: true, data: ... } OR sometimes raw object
+		const data = body?.data ?? body;
+		return { success: true, status: res.status, data };
+	} catch (e) {
+		console.log("[api] NETWORK ERROR:", e);
+		return { success: false, message: "Network request failed" };
+	}
+}
+
+/**
+ * AUTH
+ * Backend currently validates ONLY:
+ *  - register: { email, password }
+ *  - login:    { email, password }
+ *
+ * So: we ACCEPT extra signup fields for UI,
+ * but only SEND email+password to /auth/register.
+ */
 export const authService = {
-  /**
-   * Sign in with email and password
-   */
-  async signIn(credentials: AuthCredentials): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
-    return handleResponse(response);
-  },
+	async signIn(payload: { email: string; password: string }) {
+		console.log("[authService.signIn] email =", payload.email);
 
-  /**
-   * Create a new account
-   */
-  async signUp(data: SignUpData): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/api/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
-  },
+		const r = await requestJson<any>(`/auth/login`, {
+			method: "POST",
+			body: JSON.stringify({
+				email: payload.email,
+				password: payload.password,
+			}),
+		});
 
-  /**
-   * Verify email belongs to a university and is not already registered
-   */
-  async verifyEmail(email: string): Promise<EmailVerificationResponse> {
-    const response = await fetch(`${API_URL}/api/auth/verify-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-    return handleResponse(response);
-  },
+		if (isApiError(r)) return r;
+
+		const token = r.data?.session?.access_token;
+		return { success: true as const, token, data: r.data };
+	},
+
+	async signUp(payload: {
+		email: string;
+		password: string;
+		fullName: string;
+		courseMajor: string;
+		age: number;
+		gender: string;
+	}) {
+		console.log("[authService.signUp] email =", payload.email);
+
+		// ✅ send the full payload (matches backend RegisterSchema)
+		const r = await requestJson<any>(`/auth/register`, {
+			method: "POST",
+			body: JSON.stringify({
+				email: payload.email,
+				password: payload.password,
+				fullName: payload.fullName,
+				courseMajor: payload.courseMajor,
+				age: payload.age,
+				gender: payload.gender,
+			}),
+		});
+
+		if (isApiError(r)) return r;
+
+		const token = r.data?.session?.access_token;
+		return { success: true as const, token, data: r.data };
+	},
+
+	async sendEmailCode(email: string) {
+		const r = await requestJson<{ sent: boolean }>(`/email/send-code`, {
+			method: "POST",
+			body: JSON.stringify({ email }),
+		});
+		return r;
+	},
+
+	async verifyEmailCode(email: string, code: string) {
+		const r = await requestJson<{ verified: boolean }>(
+			`/email/verify-code`,
+			{
+				method: "POST",
+				body: JSON.stringify({ email, code }),
+			},
+		);
+		return r;
+	},
 };
 
-// ==================== PAYMENT ENDPOINTS ====================
-
-export const paymentService = {
-  /**
-   * Create a payment method with Stripe token
-   */
-  async addPaymentMethod(
-    token: string,
-    cardholderName: string,
-    userId: string
-  ): Promise<PaymentMethodResponse> {
-    const response = await fetch(`${API_URL}/api/payment/add-method`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`, // Replace with actual auth token
-      },
-      body: JSON.stringify({
-        token,
-        cardholderName,
-      }),
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Get user's payment methods
-   */
-  async getPaymentMethods(userId: string): Promise<any> {
-    const response = await fetch(`${API_URL}/api/payment/methods`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${userId}`,
-      },
-    });
-    return handleResponse(response);
-  },
+/**
+ * USERS
+ */
+export const userService = {
+	async me() {
+		const r = await requestJson(`/users/me`);
+		if ("success" in r) return r;
+		return { success: true, data: r };
+	},
 };
 
-// ==================== UBER INTEGRATION ENDPOINTS ====================
-
-export const uberService = {
-  /**
-   * Initiate Uber OAuth flow
-   */
-  async initiateUberAuth(): Promise<any> {
-    const response = await fetch(`${API_URL}/api/uber/auth-url`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Connect Uber account with authorization code
-   */
-  async connectUber(
-    authCode: string,
-    userId: string
-  ): Promise<UberConnectionResponse> {
-    const response = await fetch(`${API_URL}/api/uber/connect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`,
-      },
-      body: JSON.stringify({ authCode }),
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Check if Uber is connected for a user
-   */
-  async isConnected(userId: string): Promise<{ connected: boolean }> {
-    const response = await fetch(`${API_URL}/api/uber/connected`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${userId}`,
-      },
-    });
-    return handleResponse(response);
-  },
-};
-
-// ==================== RIDE ENDPOINTS ====================
-
-export const rideService = {
-  /**
-   * Create a new ride group
-   */
-  async createRideGroup(
-    data: {
-      name: string;
-      destination: string;
-      departureTime: string;
-      maxPassengers: number;
-    },
-    userId: string
-  ): Promise<any> {
-    const response = await fetch(`${API_URL}/api/rides/group`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`,
-      },
-      body: JSON.stringify(data),
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Get all ride groups
-   */
-  async getRideGroups(userId: string): Promise<any> {
-    const response = await fetch(`${API_URL}/api/rides/groups`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${userId}`,
-      },
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Join a ride group
-   */
-  async joinRideGroup(groupId: string, userId: string): Promise<any> {
-    const response = await fetch(`${API_URL}/api/rides/group/${groupId}/join`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${userId}`,
-      },
-    });
-    return handleResponse(response);
-  },
-};
+/**
+ * PLACEHOLDERS so your imported screens compile.
+ * We’ll wire these to real endpoints after TS builds.
+ */
+export const uberService = {} as any;
+export const paymentService = {} as any;
