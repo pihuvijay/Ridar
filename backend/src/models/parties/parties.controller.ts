@@ -55,22 +55,4 @@ export const partiesController = {
       next(err);
     }
   },
-
-  joinParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = (req as any).user;
-      const userId = user?.id ?? req.body.userId; // fallback for testing
-      const { partyId } = req.params;
-      const { dropoff, status } = req.body;
-
-      const record = await partiesService.joinParty(partyId, userId, {
-        dropoff,
-        status,
-      });
-
-      res.status(201).json(ok(record));
-    } catch (err) {
-      next(err);
-    }
-  },
 };

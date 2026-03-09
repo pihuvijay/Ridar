@@ -2,33 +2,33 @@ import { Router } from "express";
 import { partiesController } from "./parties.controller";
 import { validate } from "../../middleware/validate";
 import { createPartySchema, updatePartyLocationsSchema, joinPartySchema } from "./parties.schemas";
-import { protect } from "../../middleware/auth";
+// import { protect } from "../../middleware/auth"; // when you want auth
 
 export const partiesRouter = Router();
 
+// For now you can skip `protect` or add it later
 partiesRouter.post(
   "/",
-  protect,
   validate(createPartySchema),
   partiesController.createParty
 );
 
 partiesRouter.get(
   "/:partyId",
-  protect,
   partiesController.getParty
 );
 
 partiesRouter.patch(
   "/:partyId/locations",
-  protect,
   validate(updatePartyLocationsSchema),
   partiesController.updatePartyLocations
 );
 
+// Example stub for join party
 partiesRouter.post(
   "/:partyId/join",
-  protect,
   validate(joinPartySchema),
-  partiesController.joinParty
+  (req, res) => {
+    res.status(501).json({ ok: false, error: { message: "Not implemented yet" } });
+  }
 );

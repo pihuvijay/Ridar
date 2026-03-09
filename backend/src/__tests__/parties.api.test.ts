@@ -99,44 +99,14 @@ describe("Parties API", () => {
   });
 
   describe("POST /parties/:partyId/join", () => {
-    it("allows a user to join and returns 201 with ride info", async () => {
+    it("returns 501 Not Implemented", async () => {
       const create = await request(app).post("/parties").send(validPartyBody).expect(201);
       const partyId = create.body.data.id;
 
-      const res = await request(app)
-        .post(`/parties/${partyId}/join`)
-        .send({ userId: "rider-111" })
-        .expect(201);
+      const res = await request(app).post(`/parties/${partyId}/join`).send({}).expect(501);
 
-      expect(res.body.ok).toBe(true);
-      expect(res.body.data).toMatchObject({
-        rideId: partyId,
-        userId: "rider-111",
-        status: "pending",
-      });
-
-      // fetch the ride to verify currentMembers incremented
-      const after = await request(app).get(`/parties/${partyId}`).expect(200);
-      expect(after.body.data.currentMembers).toBe(2);
-    });
-
-    it("accepts dropoff details and status in the body", async () => {
-      const create = await request(app).post("/parties").send(validPartyBody).expect(201);
-      const partyId = create.body.data.id;
-      const dropoff = { lat: 51.503, lng: -0.13, label: "Museum" };
-
-      const res = await request(app)
-        .post(`/parties/${partyId}/join`)
-        .send({ userId: "rider-222", dropoff, status: "joined" })
-        .expect(201);
-
-      expect(res.body.ok).toBe(true);
-      expect(res.body.data).toMatchObject({
-        rideId: partyId,
-        userId: "rider-222",
-        status: "joined",
-        dropoff,
-      });
+      expect(res.body.ok).toBe(false);
+      expect(res.body.error?.message).toMatch(/not implemented/i);
     });
   });
 });

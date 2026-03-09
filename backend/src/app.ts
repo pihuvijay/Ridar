@@ -7,7 +7,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { logger } from "./utils/logger";
 
 // Routes
-import { authRouter } from "./models/auth/auth.routes";
+// import { authRouter } from "./models/auth/auth.routes";
 // import { usersRouter } from "./models/users/users.routes";
 // import { chatRouter } from "./models/chat/chat.routes";
 import { partiesRouter } from "./models/parties/parties.routes";
@@ -24,11 +24,11 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.get("/", (_req, res) =>
-  res.json({ name: "Ridar API", status: "up", health: "/health", auth: "/auth", parties: "/parties", stripe: "/stripe", uber: "/uber" })
+  res.json({ name: "Ridar API", status: "up", health: "/health", parties: "/parties", stripe: "/stripe", uber: "/uber" })
 );
 app.get("/health", (_req, res) => res.json({ ok: true, status: "up" }));
 
-app.use("/auth", authRouter);
+// app.use("/auth", authRouter);
 // app.use("/users", usersRouter);
 // app.use("/chat", chatRouter);
 app.use("/parties", partiesRouter);
