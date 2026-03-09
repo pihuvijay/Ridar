@@ -7,3 +7,6 @@ backend/node_modules
 
 node_modules/
 node_modules
+
+/backend/dist
+/backend/tsc_output.txt
