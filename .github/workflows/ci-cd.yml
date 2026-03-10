@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, cicd-setup ]
     types: [ opened, synchronize ]
 
 permissions:
@@ -23,7 +23,6 @@ jobs:
         run: npm install
       - name: Run linter
         run: npm run lint
-        # If you haven't set up ESLint yet, see https://eslint.org/docs/latest/user-guide/getting-started
 
   security-scan:
     runs-on: ubuntu-latest
