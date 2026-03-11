@@ -17,15 +17,9 @@
   },
   "homepage": "https://github.com/pihuvijay/Ridar#readme",
   "description": "",
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.0.2",
-    "eslint-plugin-react": "^7.37.5",
-    "globals": "^17.4.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
-  },
   "dependencies": {
-    "jiti": "^2.6.1"
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1"
   }
 }

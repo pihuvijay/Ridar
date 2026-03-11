@@ -5,7 +5,6 @@ import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-<<<<<<< HEAD
   {
     files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
     plugins: { js },
@@ -80,10 +79,3 @@ export default defineConfig([
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
 ]);
-=======
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"], plugins: { js }, extends: ["js/recommended"], languageOptions: { globals: globals.node } }, 
-  "settings": { "react": { version: "detect"} },
-  tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
-]);
->>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)
