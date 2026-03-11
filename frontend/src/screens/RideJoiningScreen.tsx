@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   Pressable,
   StyleSheet,
   SafeAreaView,
@@ -31,6 +30,8 @@ interface Message {
 interface RideJoiningScreenProps {
   userName: string;
   rideGroup: any;
+  messages: Message[];
+  onSendMessage: (text: string) => void;
   onBack: () => void;
   onViewSettings: () => void;
   onPartyFull: (rideGroup: any) => void;
@@ -63,19 +64,11 @@ const mockRiders: Rider[] = [
   },
 ];
 
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    author: 'Sarah M.',
-    content: 'Hey everyone! Heading to Downtown Financial District. Join the ride!',
-    timestamp: 'Just now',
-    isVerified: true,
-  },
-];
-
 export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
   userName,
   rideGroup,
+  messages,
+  onSendMessage,
   onBack,
   onViewSettings,
   onPartyFull,
@@ -93,7 +86,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      // Handle message sending
+      onSendMessage(newMessage.trim());
       setNewMessage('');
     }
   };
@@ -140,18 +133,27 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
     </View>
   );
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <View style={styles.messageContainer}>
-      <View style={styles.messageHeader}>
-        <Text style={styles.messageSender}>{item.author}</Text>
-        {item.isVerified && <Text style={styles.verifiedCheck}>⭐</Text>}
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isMine = item.author === userName || item.author === 'You';
+    return (
+      <View style={[styles.messageContainer, isMine && styles.messageContainerMine]}>
+        {!isMine && (
+          <View style={styles.messageHeader}>
+            <Text style={styles.messageSender}>{item.author}</Text>
+            {item.isVerified && <Text style={styles.verifiedCheck}>⭐</Text>}
+          </View>
+        )}
+        <View style={[styles.messageBubble, isMine && styles.messageBubbleMine]}>
+          <Text style={[styles.messageContent, isMine && styles.messageContentMine]}>
+            {item.content}
+          </Text>
+        </View>
+        <Text style={[styles.messageTime, isMine && styles.messageTimeMine]}>
+          {item.timestamp}
+        </Text>
       </View>
-      <View style={styles.messageBubble}>
-        <Text style={styles.messageContent}>{item.content}</Text>
-      </View>
-      <Text style={styles.messageTime}>{item.timestamp}</Text>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -199,7 +201,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
       {/* Messages Section */}
       <View style={styles.messagesSection}>
         <FlatList
-          data={mockMessages}
+          data={messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           scrollEnabled={false}
@@ -409,6 +411,9 @@ const styles = StyleSheet.create({
   messageContainer: {
     gap: SPACING.xs,
   },
+  messageContainerMine: {
+    alignItems: 'flex-end',
+  },
   messageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -430,14 +435,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
   },
+  messageBubbleMine: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
   messageContent: {
     fontSize: FONT_SIZES.base,
     color: COLORS.primary,
     lineHeight: 24,
   },
+  messageContentMine: {
+    color: COLORS.textLight,
+  },
   messageTime: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textSecondary,
+  },
+  messageTimeMine: {
+    textAlign: 'right',
   },
   inputSection: {
     paddingHorizontal: SPACING.md,

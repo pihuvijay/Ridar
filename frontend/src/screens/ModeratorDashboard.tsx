@@ -22,45 +22,17 @@ interface Report {
 }
 
 interface ModeratorDashboardProps {
+  reports: Report[];
+  onUpdateReport: (id: string, status: Report['status']) => void;
   onLogout: () => void;
 }
 
-const mockReports: Report[] = [
-  {
-    id: '1',
-    reporterName: 'John D.',
-    reportedUserName: 'Alex P.',
-    reason: 'Inappropriate Behavior',
-    timestamp: '2 hours ago',
-    status: 'pending',
-    description: 'User was disrespectful during ride',
-    evidence: 'Chat logs available',
-  },
-  {
-    id: '2',
-    reporterName: 'Sarah M.',
-    reportedUserName: 'Tom K.',
-    reason: 'Safety Concern',
-    timestamp: '4 hours ago',
-    status: 'investigating',
-    description: 'Unsafe driving reported',
-    evidence: 'Multiple witness accounts',
-  },
-  {
-    id: '3',
-    reporterName: 'Emma W.',
-    reportedUserName: 'Mike J.',
-    reason: 'Damage Report',
-    timestamp: '1 day ago',
-    status: 'approved',
-    description: 'Vehicle damage reported',
-    evidence: 'Photos attached',
-  },
-];
-
-export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({ onLogout }) => {
+export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
+  reports,
+  onUpdateReport,
+  onLogout,
+}) => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [reports, setReports] = useState(mockReports);
 
   const stats = {
     pending: reports.filter((r) => r.status === 'pending').length,
@@ -69,29 +41,17 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({ onLogout
   };
 
   const handleApproveReport = (reportId: string) => {
-    setReports(
-      reports.map((r) =>
-        r.id === reportId ? { ...r, status: 'approved' as const } : r
-      )
-    );
+    onUpdateReport(reportId, 'approved');
     setSelectedReport(null);
   };
 
   const handleRejectReport = (reportId: string) => {
-    setReports(
-      reports.map((r) =>
-        r.id === reportId ? { ...r, status: 'rejected' as const } : r
-      )
-    );
+    onUpdateReport(reportId, 'rejected');
     setSelectedReport(null);
   };
 
   const handleInvestigate = (reportId: string) => {
-    setReports(
-      reports.map((r) =>
-        r.id === reportId ? { ...r, status: 'investigating' as const } : r
-      )
-    );
+    onUpdateReport(reportId, 'investigating');
     setSelectedReport(null);
   };
 
@@ -132,7 +92,14 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({ onLogout
     >
       <View style={styles.reportCardHeader}>
         <View style={styles.reportCardLeft}>
-          <Text style={styles.reportCardTitle}>{item.reportedUserName}</Text>
+          <View style={styles.reportCardTitleRow}>
+            <Text style={styles.reportCardTitle}>{item.reportedUserName}</Text>
+            {item.timestamp === 'Just now' && (
+              <View style={styles.newBadge}>
+                <Text style={styles.newBadgeText}>New</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.reportCardSubtitle}>Reported by {item.reporterName}</Text>
         </View>
         <View
@@ -425,10 +392,27 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: SPACING.xs,
   },
+  reportCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flexWrap: 'wrap',
+  },
   reportCardTitle: {
     fontSize: FONT_SIZES.base,
     fontWeight: '600',
     color: COLORS.primary,
+  },
+  newBadge: {
+    backgroundColor: COLORS.danger + '20',
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+  },
+  newBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    color: COLORS.danger,
   },
   reportCardSubtitle: {
     fontSize: FONT_SIZES.sm,

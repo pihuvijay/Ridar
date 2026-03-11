@@ -18,6 +18,7 @@ interface PartyMember {
 }
 
 interface WaitScreenProps {
+  rideGroup?: any;
   onContinue: () => void;
 }
 
@@ -48,7 +49,7 @@ const driverInfo = {
 
 const pickupLocation = 'North Station - Main Entrance';
 
-export const WaitScreen: React.FC<WaitScreenProps> = ({ onContinue }) => {
+export const WaitScreen: React.FC<WaitScreenProps> = ({ rideGroup, onContinue }) => {
   const allMembersPresent = true;
   const waitingForLeader = true;
 

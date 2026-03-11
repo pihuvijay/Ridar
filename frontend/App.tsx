@@ -19,6 +19,72 @@ import { ModeratorLoginScreen } from './src/screens/ModeratorLoginScreen';
 import { ModeratorDashboard } from './src/screens/ModeratorDashboard';
 import { RideJoiningScreen } from './src/screens/RideJoiningScreen';
 import { WaitScreen } from './src/screens/WaitScreen';
+import { RideInsightsScreen } from './src/screens/RideInsightsScreen';
+
+// Shared types lifted to App level so chat and reports are shared across screens
+interface ChatMessage {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  isVerified: boolean;
+}
+
+type ReportStatus = 'pending' | 'approved' | 'rejected' | 'investigating';
+
+interface Report {
+  id: string;
+  reporterName: string;
+  reportedUserName: string;
+  reason: string;
+  timestamp: string;
+  status: ReportStatus;
+  description: string;
+  evidence?: string;
+}
+
+const initialChatMessages: ChatMessage[] = [
+  {
+    id: '1',
+    author: 'Sarah M.',
+    content: 'Hey everyone! Heading to Downtown Financial District. Join the ride!',
+    timestamp: 'Just now',
+    isVerified: true,
+  },
+];
+
+const initialReports: Report[] = [
+  {
+    id: '1',
+    reporterName: 'John D.',
+    reportedUserName: 'Alex P.',
+    reason: 'Inappropriate Behavior',
+    timestamp: '2 hours ago',
+    status: 'pending',
+    description: 'User was disrespectful during ride',
+    evidence: 'Chat logs available',
+  },
+  {
+    id: '2',
+    reporterName: 'Sarah M.',
+    reportedUserName: 'Tom K.',
+    reason: 'Safety Concern',
+    timestamp: '4 hours ago',
+    status: 'investigating',
+    description: 'Unsafe driving reported',
+    evidence: 'Multiple witness accounts',
+  },
+  {
+    id: '3',
+    reporterName: 'Emma W.',
+    reportedUserName: 'Mike J.',
+    reason: 'Damage Report',
+    timestamp: '1 day ago',
+    status: 'approved',
+    description: 'Vehicle damage reported',
+    evidence: 'Photos attached',
+  },
+];
 
 type Screen =
   | 'signin'
@@ -32,13 +98,16 @@ type Screen =
   | 'moderator-login'
   | 'moderator-dashboard'
   | 'ride-joining'
-  | 'wait-screen';
+  | 'wait-screen'
+  | 'ride-insights';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('signin');
   const [userName, setUserName] = useState('');
   const [selectedRideGroup, setSelectedRideGroup] = useState<any>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [reports, setReports] = useState<Report[]>(initialReports);
 
   useEffect(() => {
     // Simulate app loading
@@ -120,12 +189,16 @@ export default function App() {
   };
 
   const handleAllPaid = () => {
+    setCurrentScreen('ride-insights');
+  };
+
+  const handleRideInsightsDone = () => {
     setCurrentScreen('map');
   };
 
   const handlePartyFull = (rideGroup: any) => {
     setSelectedRideGroup(rideGroup);
-    setCurrentScreen('map');
+    setCurrentScreen('wait-screen');
   };
 
   const handleBookRide = () => {
@@ -139,6 +212,27 @@ export default function App() {
 
   const handleSignOut = () => {
     setCurrentScreen('signin');
+  };
+
+  // Chat handler — appends message to shared state
+  const handleSendChatMessage = (text: string) => {
+    const msg: ChatMessage = {
+      id: Date.now().toString(),
+      author: userName || 'You',
+      content: text,
+      timestamp: 'Just now',
+      isVerified: false,
+    };
+    setChatMessages((prev) => [...prev, msg]);
+  };
+
+  // Report handlers — shared between RideInsightsScreen and ModeratorDashboard
+  const handleAddReport = (report: Report) => {
+    setReports((prev) => [report, ...prev]);
+  };
+
+  const handleUpdateReport = (id: string, status: ReportStatus) => {
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
   };
 
   if (isLoading) {
@@ -186,13 +280,22 @@ export default function App() {
         <RideJoiningScreen
           userName={userName}
           rideGroup={selectedRideGroup}
+          messages={chatMessages}
+          onSendMessage={handleSendChatMessage}
           onBack={handleBackToRideGroups}
           onViewSettings={handleViewSettings}
           onPartyFull={handlePartyFull}
         />
       )}
       {currentScreen === 'wait-screen' && (
-        <WaitScreen onContinue={handleAllPaid} />
+        <WaitScreen rideGroup={selectedRideGroup} onContinue={handleAllPaid} />
+      )}
+      {currentScreen === 'ride-insights' && selectedRideGroup && (
+        <RideInsightsScreen
+          rideGroup={selectedRideGroup}
+          onAddReport={handleAddReport}
+          onDone={handleRideInsightsDone}
+        />
       )}
       {currentScreen === 'create-ride' && (
         <CreateGroupPage
@@ -216,7 +319,11 @@ export default function App() {
         />
       )}
       {currentScreen === 'moderator-dashboard' && (
-        <ModeratorDashboard onLogout={handleBackToSignIn} />
+        <ModeratorDashboard
+          reports={reports}
+          onUpdateReport={handleUpdateReport}
+          onLogout={handleBackToSignIn}
+        />
       )}
         <StatusBar style="light" />
       </View>
