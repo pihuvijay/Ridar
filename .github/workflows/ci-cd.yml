@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
       - name: Run linter
-        run: npm run lint
+        run: npx eslint
 
   security-scan:
     runs-on: ubuntu-latest
