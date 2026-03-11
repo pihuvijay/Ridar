@@ -164,7 +164,13 @@ export default function App() {
   };
 
   const handleRideCreated = (rideData: any) => {
-    setCurrentScreen('map');
+    setSelectedRideGroup({
+      destination: rideData.finalDestination || 'Your Destination',
+      pickup: rideData.pickupPoint || 'Your Pickup Point',
+      price: rideData.pricePerPerson || 8,
+      leavingIn: rideData.departureTime || 5,
+    });
+    setCurrentScreen('ride-insights');
   };
 
   const handleJoinRide = (rideGroup: any) => {
