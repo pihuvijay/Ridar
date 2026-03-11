@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       - name: Run linter
         run: npx eslint
 
@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -53,6 +53,6 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       - name: Run tests
         run: npm test
