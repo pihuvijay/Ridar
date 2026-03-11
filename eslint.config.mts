@@ -50,7 +50,7 @@ export default defineConfig([
       "consistent-return": 2,
       "curly": [2, "all"],
       "dot-notation": [2, { "allowKeywords": true }],
-      "eol-last": 2,
+      "eol-last": 0,
       "no-extra-parens": [2, "functions"],
       "eqeqeq": 2,
       "key-spacing": [2, { "beforeColon": false, "afterColon": true }],
@@ -72,7 +72,7 @@ export default defineConfig([
     },
     settings: {
       react: {
-        version: "20", 
+        version: "20",
       },
     },
   },
