@@ -7,4 +7,7 @@ export const supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE
     autoRefreshToken: false,
   },
 });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)

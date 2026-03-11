@@ -1,6 +1,7 @@
 name: CI/CD Pipeline
 
 on:
+<<<<<<< HEAD
   #pull_request:
   push:  
     branches: [ main, cicd-setup ]
@@ -17,6 +18,18 @@ permissions:
 
 jobs:
   lint:
+=======
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize ]
+
+permissions:
+  contents: write
+
+
+jobs:
+  lint: # Linting: 
+>>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,9 +39,16 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
+<<<<<<< HEAD
         run: npm ci --legacy-peer-deps
       - name: Run linter
         run: npx eslint
+=======
+        run: npm install
+      - name: Run linter
+        run: npm run lint
+        # If you haven't set up ESLint yet, see https://eslint.org/docs/latest/user-guide/getting-started
+>>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)
 
   security-scan:
     runs-on: ubuntu-latest
@@ -40,7 +60,11 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
+<<<<<<< HEAD
         run: npm ci --legacy-peer-deps
+=======
+        run: npm install
+>>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -58,6 +82,10 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
+<<<<<<< HEAD
         run: npm ci --legacy-peer-deps
+=======
+        run: npm install
+>>>>>>> 4c20bef (Setup ci-cd files + ESLint - not working yet)
       - name: Run tests
         run: npm test
