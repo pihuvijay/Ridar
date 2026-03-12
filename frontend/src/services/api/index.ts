@@ -1,8 +1,6 @@
-// frontend/src/services/api/index.ts
-import * as SecureStore from "expo-secure-store";
 import { getToken } from "../../utils/authStorage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://172.26.196.21:3000";
 
 export type ApiError = {
 	success: false;
@@ -10,14 +8,31 @@ export type ApiError = {
 	status?: number;
 	raw?: any;
 };
-export type ApiSuccess<T> = { success: true; status: number; data: T };
+
+export type ApiSuccess<T> = {
+	success: true;
+	status: number;
+	data: T;
+};
+
+export type AuthCredentials = {
+	email: string;
+	password: string;
+};
+
+export type SignUpData = {
+	email: string;
+	password: string;
+	fullName: string;
+	courseMajor: string;
+	age: number;
+	gender: string;
+};
+
+export type AuthResponse = (ApiSuccess<any> & { token?: string }) | ApiError;
 
 function isApiError(x: any): x is ApiError {
 	return x && typeof x === "object" && x.success === false;
-}
-
-async function getSavedToken() {
-	return await SecureStore.getItemAsync("auth_token");
 }
 
 async function requestJson<T = any>(
@@ -42,18 +57,15 @@ async function requestJson<T = any>(
 
 		const text = await res.text();
 		let body: any = null;
+
 		try {
 			body = text ? JSON.parse(text) : null;
 		} catch {
 			body = text;
 		}
 
-		const pretty =
-			body && typeof body === "object"
-				? JSON.stringify(body, null, 2)
-				: body;
+		console.log("[api] status =", res.status, "body =", body);
 
-		console.log("[api] status =", res.status, "body =", pretty);
 		if (!res.ok) {
 			const msg =
 				(body && (body.message || body.error?.message || body.error)) ||
@@ -67,7 +79,6 @@ async function requestJson<T = any>(
 			};
 		}
 
-		// backend returns: { ok: true, data: ... } OR sometimes raw object
 		const data = body?.data ?? body;
 		return { success: true, status: res.status, data };
 	} catch (e) {
@@ -76,23 +87,11 @@ async function requestJson<T = any>(
 	}
 }
 
-/**
- * AUTH
- * Backend currently validates ONLY:
- *  - register: { email, password }
- *  - login:    { email, password }
- *
- * So: we ACCEPT extra signup fields for UI,
- * but only SEND email+password to /auth/register.
- */
-
 export const partiesService = {
 	async list() {
 		const r = await requestJson<any[]>(`/parties`);
 
-		if ("success" in r && r.success === false) {
-			return r;
-		}
+		if (isApiError(r)) return r;
 
 		return {
 			success: true as const,
@@ -120,9 +119,31 @@ export const partiesService = {
 			body: JSON.stringify(payload),
 		});
 
-		if ("success" in r && r.success === false) {
-			return r;
-		}
+		if (isApiError(r)) return r;
+
+		return {
+			success: true as const,
+			data: r.data,
+		};
+	},
+
+	async join(
+		partyId: string,
+		payload?: {
+			dropoff?: {
+				lat: number;
+				lng: number;
+				label: string;
+			};
+			status?: string;
+		},
+	) {
+		const r = await requestJson<any>(`/parties/${partyId}/join`, {
+			method: "POST",
+			body: JSON.stringify(payload ?? {}),
+		});
+
+		if (isApiError(r)) return r;
 
 		return {
 			success: true as const,
@@ -132,96 +153,80 @@ export const partiesService = {
 };
 
 export const authService = {
-	async signIn(payload: { email: string; password: string }) {
-		console.log("[authService.signIn] email =", payload.email);
-
+	async signIn(payload: AuthCredentials): Promise<AuthResponse> {
 		const r = await requestJson<any>(`/auth/login`, {
 			method: "POST",
-			body: JSON.stringify({
-				email: payload.email,
-				password: payload.password,
-			}),
+			body: JSON.stringify(payload),
 		});
 
 		if (isApiError(r)) return r;
 
-		// ✅ merged backend returns data.accessToken
-		const token = r.data?.accessToken;
+		const token = r.data?.accessToken ?? r.data?.session?.access_token;
 
 		return {
 			success: true as const,
+			status: r.status,
 			token,
 			data: r.data,
 		};
 	},
 
-	async signUp(payload: {
-		email: string;
-		password: string;
-		fullName: string;
-		courseMajor: string;
-		age: number;
-		gender: string;
-	}) {
-		console.log("[authService.signUp] email =", payload.email);
-
+	async signUp(payload: SignUpData): Promise<AuthResponse> {
 		const r = await requestJson<any>(`/auth/register`, {
 			method: "POST",
-			body: JSON.stringify({
-				email: payload.email,
-				password: payload.password,
-				fullName: payload.fullName,
-				courseMajor: payload.courseMajor,
-				age: payload.age,
-				gender: payload.gender,
-			}),
+			body: JSON.stringify(payload),
 		});
 
 		if (isApiError(r)) return r;
 
-		// ✅ merged backend returns data.accessToken
-		const token = r.data?.accessToken;
+		const token = r.data?.accessToken ?? r.data?.session?.access_token;
 
 		return {
 			success: true as const,
+			status: r.status,
 			token,
 			data: r.data,
 		};
 	},
+
 	async sendEmailCode(email: string) {
-		const r = await requestJson<{ sent: boolean }>(`/email/send-code`, {
+		return await requestJson<{ sent: boolean }>(`/email/send-code`, {
 			method: "POST",
 			body: JSON.stringify({ email }),
 		});
-		return r;
 	},
 
 	async verifyEmailCode(email: string, code: string) {
-		const r = await requestJson<{ verified: boolean }>(
-			`/email/verify-code`,
-			{
-				method: "POST",
-				body: JSON.stringify({ email, code }),
-			},
-		);
-		return r;
+		return await requestJson<{ verified: boolean }>(`/email/verify-code`, {
+			method: "POST",
+			body: JSON.stringify({ email, code }),
+		});
 	},
 };
 
-/**
- * USERS
- */
 export const userService = {
 	async me() {
-		const r = await requestJson(`/users/me`);
-		if ("success" in r) return r;
-		return { success: true, data: r };
+		return await requestJson(`/users/me`);
 	},
 };
 
-/**
- * PLACEHOLDERS so your imported screens compile.
- * We’ll wire these to real endpoints after TS builds.
- */
-export const uberService = {} as any;
-export const paymentService = {} as any;
+export const uberService = {
+	initiateUberAuth: async () => ({ authUrl: "" }),
+	connectUber: async (_code: string, _token: string) => ({ success: false }),
+	isConnected: async (_token: string) => ({ connected: false }),
+} as any;
+
+export const paymentService = {
+	addPaymentMethod: async (
+		_token: string,
+		_name: string,
+		_authToken: string,
+	) => ({ success: false }),
+	getPaymentMethods: async (_token: string) => ({ success: true, data: [] }),
+} as any;
+
+export const rideService = {
+	createRideGroup: async (_data: any, _token: string) => ({ success: false }),
+	getRideGroups: async (_token: string) => ({ success: true, data: [] }),
+	joinRideGroup: async (_id: string, _token: string) => ({ success: false }),
+} as any;
