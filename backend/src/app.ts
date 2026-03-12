@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { randomUUID } from "crypto";
 
 import { env } from "./config";
 import { errorHandler } from "./middleware/errorHandler";
@@ -16,39 +17,72 @@ import { emailRouter } from "./routes/emai.routes";
 import { authDevRouter } from "./models/auth/auth.dev.routes";
 
 export function createApp() {
-  const app = express();
+	const app = express();
 
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(morgan("dev"));
+	// Security
+	app.use(helmet());
 
-app.get("/", (_req, res) =>
-  res.json({ name: "Ridar API", status: "up", health: "/health", auth: "/auth", parties: "/parties", stripe: "/stripe", uber: "/uber" })
-);
-app.get("/health", (_req, res) => res.json({ ok: true, status: "up" }));
-  app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN }));
-  app.use(express.json({ limit: "1mb" }));
-  app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+	// CORS
+	app.use(cors({ origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN }));
 
-  app.get("/health", (_req, res) => res.status(200).json({ ok: true, time: new Date().toISOString() }));
+	// JSON parsing
+	app.use(express.json({ limit: "1mb" }));
 
+	// Request ID middleware (for better logging)
+	app.use((req, res, next) => {
+		const requestId = randomUUID();
+		(req as any).requestId = requestId;
+		res.setHeader("X-Request-Id", requestId);
+		next();
+	});
 
-  app.use("/auth", authRouter);
-  app.use("/users", usersRouter);
-  app.use("/parties", partiesRouter);
-  app.use("/wallet", walletRouter);
-  app.use("/chat", chatRouter);
-  app.use("/reports", reportsRouter);
-  app.use("/auth-dev", authDevRouter);
-  app.use("/email", emailRouter);
+	// Logging
+	morgan.token("id", (req) => (req as any).requestId ?? "-");
+	app.use(
+		morgan(
+			env.NODE_ENV === "production"
+				? ":id :remote-addr :method :url :status :response-time ms"
+				: ":id :method :url :status :response-time ms",
+		),
+	);
 
-  // 404 handler (no route matched)
-  app.use((_req, res) => {
-    res.status(404).json({ error: "Not Found" });
-  });
+	// Root
+	app.get("/", (_req, res) =>
+		res.json({
+			name: "Ridar API",
+			status: "up",
+			health: "/health",
+			auth: "/auth",
+			parties: "/parties",
+			wallet: "/wallet",
+		}),
+	);
 
-  app.use(errorHandler);
-  return app;
+	// Health check
+	app.get("/health", (_req, res) =>
+		res.status(200).json({ success: true, time: new Date().toISOString() }),
+	);
+
+	// Routes
+	app.use("/auth", authRouter);
+	app.use("/users", usersRouter);
+	app.use("/parties", partiesRouter);
+	app.use("/wallet", walletRouter);
+	app.use("/chat", chatRouter);
+	app.use("/reports", reportsRouter);
+	app.use("/auth-dev", authDevRouter);
+	app.use("/email", emailRouter);
+
+	// 404 handler
+	app.use((_req, res) => {
+		res.status(404).json({
+			success: false,
+			message: "Not Found",
+		});
+	});
+
+	// Error handler
+	app.use(errorHandler);
+
+	return app;
 }

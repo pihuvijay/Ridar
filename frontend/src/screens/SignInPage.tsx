@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { saveToken } from "../utils/authStorage";
 import { authService, userService } from "../services/api";
+import { getToken } from "../utils/authStorage";
 import type { JSX } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -49,6 +50,15 @@ export const SignInPage = ({
 		try {
 			const response = await authService.signIn({ email, password });
 
+			console.log(
+				"[SignInPage] login response =",
+				JSON.stringify(response, null, 2),
+			);
+			console.log(
+				"[SignInPage] token returned? ",
+				response.success && !!response.token,
+			);
+
 			if (!response.success) {
 				Alert.alert(
 					"Sign In Failed",
@@ -60,6 +70,12 @@ export const SignInPage = ({
 			if (response.token) {
 				await saveToken(response.token);
 			}
+
+			const saved = await getToken();
+			console.log(
+				"[SignInPage] saved token exists after login? ",
+				!!saved,
+			);
 
 			const me = await userService.me();
 

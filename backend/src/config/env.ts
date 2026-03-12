@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
 
+  MOCK_PARTIES: z.coerce.boolean().optional().default(false),
+
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().default(2525),
   SMTP_USER: z.string().min(1),

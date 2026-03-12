@@ -2,9 +2,13 @@ import { Router } from "express";
 import { requireAuth } from "../../middleware/auth";
 import { validateBody } from "../../middleware/validate";
 import * as c from "./parties.controller";
-import { CreatePartySchema } from "./parties.schemas";
+import {
+  createPartySchema,
+} from "./parties.schemas";
 
 export const partiesRouter = Router();
 
 partiesRouter.get("/", requireAuth, c.list);
-partiesRouter.post("/", requireAuth, validateBody(CreatePartySchema), c.create);
+partiesRouter.post("/", requireAuth, validateBody(createPartySchema.shape.body), c.create);
+partiesRouter.get("/:partyId", requireAuth, c.getParty);
+partiesRouter.post("/:partyId/join", requireAuth, c.join);

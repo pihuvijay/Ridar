@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { partiesService } from "../services/api";
 import {
 	View,
 	Text,
@@ -25,61 +26,6 @@ interface RideCard {
 	tags: string[];
 }
 
-const rideCardsData: RideCard[] = [
-	{
-		id: "1",
-		destination: "Downtown Financial District",
-		pickup: "North Station - Main Entrance",
-		price: 8,
-		leavingIn: 5,
-		currentPassengers: 2,
-		maxPassengers: 4,
-		driverName: "Sarah M.",
-		driverInitial: "S",
-		driverTrips: 234,
-		tags: ["Female Only", "Alcohol Free"],
-	},
-	{
-		id: "2",
-		destination: "Tech Campus - Bay Area",
-		pickup: "Central Square - Starbucks",
-		price: 12,
-		leavingIn: 8,
-		currentPassengers: 3,
-		maxPassengers: 4,
-		driverName: "James K.",
-		driverInitial: "J",
-		driverTrips: 189,
-		tags: [],
-	},
-	{
-		id: "3",
-		destination: "Airport Terminal 2",
-		pickup: "East Side Plaza - Parking Lot B",
-		price: 15,
-		leavingIn: 3,
-		currentPassengers: 1,
-		maxPassengers: 3,
-		driverName: "Maria L.",
-		driverInitial: "M",
-		driverTrips: 412,
-		tags: ["Alcohol Free"],
-	},
-	{
-		id: "4",
-		destination: "Shopping Mall - Westfield",
-		pickup: "University Campus - Main Gate",
-		price: 10,
-		leavingIn: 2,
-		currentPassengers: 2,
-		maxPassengers: 4,
-		driverName: "Alex T.",
-		driverInitial: "A",
-		driverTrips: 156,
-		tags: ["Alcohol Free"],
-	},
-];
-
 interface RideGroupsScreenProps {
 	onBack: () => void;
 	userName: string;
@@ -98,6 +44,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 	const [currentLocation, setCurrentLocation] = useState("");
 	const [destination, setDestination] = useState("");
 	const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+	const [rides, setRides] = useState<RideCard[]>([]);
 
 	const toggleFilter = (filterId: string) => {
 		setActiveFilters((prev) => {
@@ -110,6 +57,49 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 			return newFilters;
 		});
 	};
+
+	useEffect(() => {
+		const fetchRides = async () => {
+			try {
+				const response = await partiesService.list();
+
+				if (!response.success) {
+					console.log(
+						"[rides] failed to load parties:",
+						response.message,
+					);
+					return;
+				}
+
+				// For now assume backend shape is already close enough.
+				// We'll map it properly next if needed.
+				const mappedRides: RideCard[] = (response.data ?? []).map(
+					(party: any) => ({
+						id: party.id,
+						destination:
+							party.destination?.label ?? "Unknown destination",
+						pickup: party.pickup?.label ?? "Unknown pickup",
+						price: 0,
+						leavingIn: Number(party.leaveBy ?? 0),
+						currentPassengers: party.currentMembers ?? 1,
+						maxPassengers: party.maxMembers ?? 4,
+						driverName: party.name ?? "Ride Group",
+						driverInitial: (party.name ?? "R")
+							.charAt(0)
+							.toUpperCase(),
+						driverTrips: 0,
+						tags: [],
+					}),
+				);
+
+				setRides(mappedRides);
+			} catch (err) {
+				console.error("Failed to load rides", err);
+			}
+		};
+
+		fetchRides();
+	}, []);
 
 	const renderRideCard = ({ item }: { item: RideCard }) => (
 		<Pressable
@@ -152,7 +142,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 					</View>
 				</View>
 
-				{item.tags.length > 0 && (
+				{item.tags?.length > 0 && (
 					<View style={styles.tagsContainer}>
 						{item.tags.map((tag, index) => (
 							<View
@@ -295,7 +285,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 			</View>
 
 			<FlatList
-				data={rideCardsData}
+				data={rides}
 				renderItem={renderRideCard}
 				keyExtractor={(item) => item.id}
 				scrollEnabled={false}

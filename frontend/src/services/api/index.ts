@@ -85,6 +85,52 @@ async function requestJson<T = any>(
  * So: we ACCEPT extra signup fields for UI,
  * but only SEND email+password to /auth/register.
  */
+
+export const partiesService = {
+	async list() {
+		const r = await requestJson<any[]>(`/parties`);
+
+		if ("success" in r && r.success === false) {
+			return r;
+		}
+
+		return {
+			success: true as const,
+			data: r.data ?? [],
+		};
+	},
+
+	async create(payload: {
+		name: string;
+		maxMembers: number;
+		pickup: {
+			lat: number;
+			lng: number;
+			label: string;
+		};
+		destination: {
+			lat: number;
+			lng: number;
+			label: string;
+		};
+		leaveBy?: string | null;
+	}) {
+		const r = await requestJson<any>(`/parties`, {
+			method: "POST",
+			body: JSON.stringify(payload),
+		});
+
+		if ("success" in r && r.success === false) {
+			return r;
+		}
+
+		return {
+			success: true as const,
+			data: r.data,
+		};
+	},
+};
+
 export const authService = {
 	async signIn(payload: { email: string; password: string }) {
 		console.log("[authService.signIn] email =", payload.email);
@@ -99,8 +145,14 @@ export const authService = {
 
 		if (isApiError(r)) return r;
 
-		const token = r.data?.session?.access_token;
-		return { success: true as const, token, data: r.data };
+		// ✅ merged backend returns data.accessToken
+		const token = r.data?.accessToken;
+
+		return {
+			success: true as const,
+			token,
+			data: r.data,
+		};
 	},
 
 	async signUp(payload: {
@@ -113,7 +165,6 @@ export const authService = {
 	}) {
 		console.log("[authService.signUp] email =", payload.email);
 
-		// ✅ send the full payload (matches backend RegisterSchema)
 		const r = await requestJson<any>(`/auth/register`, {
 			method: "POST",
 			body: JSON.stringify({
@@ -128,10 +179,15 @@ export const authService = {
 
 		if (isApiError(r)) return r;
 
-		const token = r.data?.session?.access_token;
-		return { success: true as const, token, data: r.data };
-	},
+		// ✅ merged backend returns data.accessToken
+		const token = r.data?.accessToken;
 
+		return {
+			success: true as const,
+			token,
+			data: r.data,
+		};
+	},
 	async sendEmailCode(email: string) {
 		const r = await requestJson<{ sent: boolean }>(`/email/send-code`, {
 			method: "POST",
