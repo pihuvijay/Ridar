@@ -15,6 +15,7 @@ import { partiesRouter } from "./models/parties/parties.routes";
 // import { walletRouter } from "./models/wallet/wallet.routes";
 import { stripeRouter } from "./routes/stripe.routes";
 import { uberRouter } from "./routes/uber.routes";
+import { uberRidesRouter } from './models/uber/uber.routes';
 
 export const app = express();
 
@@ -35,7 +36,8 @@ app.use("/parties", partiesRouter);
 // app.use("/reports", reportsRouter);
 // app.use("/wallet", walletRouter);
 app.use("/stripe", stripeRouter);
-app.use("/uber", uberRouter);
+app.use('/uber', uberRouter);        // OAuth: /uber/connect, /uber/callback, /uber/status
+app.use('/uber', uberRidesRouter);   // Rides:  /uber/estimates, /uber/request, /uber/ride/:id
 
 app.use(errorHandler);
 
