@@ -1,35 +1,32 @@
 import React, { useState } from "react";
-import { saveToken } from "../utils/authStorage";
+import { saveToken, getToken } from "../utils/authStorage";
 import { authService, userService } from "../services/api";
-import { getToken } from "../utils/authStorage";
 import type { JSX } from "react";
-import { LinearGradient } from "expo-linear-gradient";
 import {
 	View,
 	Text,
 	TextInput,
 	TouchableOpacity,
 	ScrollView,
-	Image,
 	StyleSheet,
-	ImageSourcePropType,
 	ActivityIndicator,
 	Alert,
-	Button,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../theme/colors";
 
 interface SignInPageProps {
 	onSignUp?: () => void;
 	onForgotPassword?: () => void;
 	onModeratorLogin?: () => void;
-	onLogin: (name: string) => void;
+	onLogin?: (name: string) => void;
 }
 
 export const SignInPage = ({
 	onSignUp,
 	onForgotPassword,
 	onModeratorLogin,
+	onLogin,
 }: SignInPageProps): JSX.Element => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -87,8 +84,7 @@ export const SignInPage = ({
 			const name =
 				me.data?.profile?.full_name ?? me.data?.email ?? "User";
 
-			// ✅ go to next screen (no popups)
-			onLogin(name);
+			onLogin?.(name);
 		} catch (error) {
 			Alert.alert(
 				"Error",
@@ -100,15 +96,15 @@ export const SignInPage = ({
 	};
 
 	const handleSignUp = () => {
-		if (onSignUp) onSignUp();
+		onSignUp?.();
 	};
 
 	const handleForgotPassword = () => {
-		if (onForgotPassword) onForgotPassword();
+		onForgotPassword?.();
 	};
 
 	const handleModeratorLogin = () => {
-		if (onModeratorLogin) onModeratorLogin();
+		onModeratorLogin?.();
 	};
 
 	return (
@@ -117,13 +113,12 @@ export const SignInPage = ({
 			contentContainerStyle={styles.contentContainer}
 		>
 			<LinearGradient
-				colors={["#2B7FFF", "#9810FA"]}
+				colors={[COLORS.primary, "#2d7a52"]}
 				start={{ x: 0, y: 0 }}
 				end={{ x: 1, y: 1 }}
 				style={styles.gradientContainer}
 			>
 				<View style={styles.contentWrapper}>
-					{/* Header */}
 					<View style={styles.header}>
 						<View style={styles.logoPlaceholder}>
 							<Text style={styles.logoText}>🚗</Text>
@@ -134,10 +129,9 @@ export const SignInPage = ({
 						</Text>
 					</View>
 
-					{/* Main Form Card */}
 					<View style={styles.card}>
 						<Text style={styles.welcomeText}>Welcome Back</Text>
-						{/* Email Input */}
+
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Email</Text>
 							<View style={styles.inputContainer}>
@@ -145,7 +139,7 @@ export const SignInPage = ({
 								<TextInput
 									style={styles.input}
 									placeholder="you@example.com"
-									placeholderTextColor="#0a0a0a80"
+									placeholderTextColor={COLORS.textSecondary}
 									value={email}
 									onChangeText={setEmail}
 									keyboardType="email-address"
@@ -153,7 +147,7 @@ export const SignInPage = ({
 								/>
 							</View>
 						</View>
-						{/* Password Input */}
+
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Password</Text>
 							<View style={styles.inputContainer}>
@@ -161,7 +155,7 @@ export const SignInPage = ({
 								<TextInput
 									style={styles.input}
 									placeholder="••••••••"
-									placeholderTextColor="#0a0a0a80"
+									placeholderTextColor={COLORS.textSecondary}
 									value={password}
 									onChangeText={setPassword}
 									secureTextEntry
@@ -170,7 +164,6 @@ export const SignInPage = ({
 							</View>
 						</View>
 
-						{/* Remember Me & Forgot Password */}
 						<View style={styles.optionsRow}>
 							<View style={styles.rememberMeContainer}>
 								<TouchableOpacity
@@ -186,13 +179,14 @@ export const SignInPage = ({
 									Remember me
 								</Text>
 							</View>
+
 							<TouchableOpacity onPress={handleForgotPassword}>
 								<Text style={styles.forgotPasswordText}>
 									Forgot password?
 								</Text>
 							</TouchableOpacity>
 						</View>
-						{/* Sign In Button */}
+
 						<TouchableOpacity
 							style={[
 								styles.signInButton,
@@ -213,7 +207,7 @@ export const SignInPage = ({
 								</Text>
 							)}
 						</TouchableOpacity>
-						{/* Sign Up Link */}
+
 						<View style={styles.signUpPrompt}>
 							<Text style={styles.signUpPromptText}>
 								Don't have an account?
@@ -222,7 +216,7 @@ export const SignInPage = ({
 								<Text style={styles.signUpLink}>Sign up</Text>
 							</TouchableOpacity>
 						</View>
-						{/* Moderator Login */}
+
 						<View style={styles.moderatorSection}>
 							<TouchableOpacity
 								style={styles.moderatorButton}

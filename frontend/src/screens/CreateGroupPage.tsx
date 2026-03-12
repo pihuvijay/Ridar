@@ -1,361 +1,293 @@
-import React, { useState } from "react";
-import { partiesService } from "../services/api";
-import type { JSX } from "react";
+import React, { useEffect, useState } from "react";
 import {
 	View,
 	Text,
+	Pressable,
 	TextInput,
-	Alert,
-	ActivityIndicator,
-	TouchableOpacity,
-	ScrollView,
 	StyleSheet,
+	FlatList,
 	SafeAreaView,
-	Switch,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { COLORS } from "../theme/colors";
+import { partiesService } from "../services/api";
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
-interface CreateGroupPageProps {
-	onBack?: () => void;
-	onCreateGroup: (rideData: any) => void;
+interface RideCard {
+	id: string;
+	destination: string;
+	pickup: string;
+	price: number;
+	leavingIn: number;
+	currentPassengers: number;
+	maxPassengers: number;
+	driverName: string;
+	driverInitial: string;
+	driverTrips: number;
+	tags: string[];
 }
 
-export const CreateGroupPage = ({
+interface RideGroupsScreenProps {
+	onBack: () => void;
+	userName: string;
+	onJoinRide: (rideGroup: RideCard) => void;
+	onViewSettings: () => void;
+	onViewProfile: () => void;
+}
+
+export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 	onBack,
-	onCreateGroup,
-}: CreateGroupPageProps): JSX.Element => {
-	const [pickupPoint, setPickupPoint] = useState("");
-	const [optionalStops, setOptionalStops] = useState("");
-	const [finalDestination, setFinalDestination] = useState("");
-	const [departureTime, setDepartureTime] = useState("");
-	const [maxRiders, setMaxRiders] = useState("");
-	const [pricePerPerson, setPricePerPerson] = useState("10");
-	const [minRating, setMinRating] = useState("3");
-	const [maxWaitTime, setMaxWaitTime] = useState("30");
-	const [isCreating, setIsCreating] = useState(false);
+	userName,
+	onJoinRide,
+	onViewSettings,
+	onViewProfile,
+}) => {
+	const [currentLocation, setCurrentLocation] = useState("");
+	const [destination, setDestination] = useState("");
+	const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+	const [rides, setRides] = useState<RideCard[]>([]);
 
-	const [allowCustomStops, setAllowCustomStops] = useState(false);
-	const [femaleOnly, setFemaleOnly] = useState(false);
-	const [alcoholFree, setAlcoholFree] = useState(false);
+	const toggleFilter = (filterId: string) => {
+		setActiveFilters((prev) => {
+			const newFilters = new Set(prev);
+			if (newFilters.has(filterId)) {
+				newFilters.delete(filterId);
+			} else {
+				newFilters.add(filterId);
+			}
+			return newFilters;
+		});
+	};
 
-	const handleCreateGroup = async () => {
-		if (!pickupPoint.trim() || !finalDestination.trim()) {
-			Alert.alert(
-				"Missing Fields",
-				"Please enter pickup point and destination.",
-			);
-			return;
-		}
+	useEffect(() => {
+		const fetchRides = async () => {
+			try {
+				const response = await partiesService.list();
 
-		const payload = {
-			name: `${pickupPoint.trim()} → ${finalDestination.trim()}`,
-			maxMembers: Number(maxRiders || "4"),
-			pickup: {
-				lat: 0,
-				lng: 0,
-				label: pickupPoint.trim(),
-			},
-			destination: {
-				lat: 0,
-				lng: 0,
-				label: finalDestination.trim(),
-			},
-			leaveBy: departureTime.trim() || null,
+				if (!response.success) {
+					console.log(
+						"[rides] failed to load parties:",
+						response.message,
+					);
+					return;
+				}
+
+				const mappedRides: RideCard[] = (response.data ?? []).map(
+					(party: any) => ({
+						id: party.id,
+						destination:
+							party.destination?.label ?? "Unknown destination",
+						pickup: party.pickup?.label ?? "Unknown pickup",
+						price: 0,
+						leavingIn: Number(party.leaveBy ?? 0),
+						currentPassengers: party.currentMembers ?? 1,
+						maxPassengers: party.maxMembers ?? 4,
+						driverName: party.name ?? "Ride Group",
+						driverInitial: (party.name ?? "R")
+							.charAt(0)
+							.toUpperCase(),
+						driverTrips: 0,
+						tags: [],
+					}),
+				);
+
+				setRides(mappedRides);
+			} catch (err) {
+				console.error("Failed to load rides", err);
+			}
 		};
 
-		if (!Number.isFinite(payload.maxMembers) || payload.maxMembers < 2) {
-			Alert.alert("Invalid Riders", "Max riders must be at least 2.");
-			return;
-		}
+		fetchRides();
+	}, []);
 
-		setIsCreating(true);
-		try {
-			const response = await partiesService.create(payload);
+	const renderRideCard = ({ item }: { item: RideCard }) => (
+		<Pressable
+			style={styles.rideCard}
+			onPress={() => onJoinRide(item)}
+			android_ripple={{ color: COLORS.primaryHover }}
+		>
+			<View style={styles.cardHeader}>
+				<View style={styles.cardDetails}>
+					<View style={styles.locationItem}>
+						<Text style={styles.locationLabel}>Going to</Text>
+						<Text style={styles.locationValue}>
+							{item.destination}
+						</Text>
+					</View>
+					<View style={styles.locationItem}>
+						<Text style={styles.locationLabel}>Pickup</Text>
+						<Text style={styles.locationValue}>{item.pickup}</Text>
+					</View>
+				</View>
+				<View style={styles.priceSection}>
+					<Text style={styles.priceValue}>£{item.price}</Text>
+					<Text style={styles.priceLabel}>per person</Text>
+				</View>
+			</View>
 
-			if (!response.success) {
-				const details = (response as any).raw?.details?.fieldErrors;
-				if (details) {
-					const msg = Object.entries(details)
-						.map(
-							([field, errs]) =>
-								`${field}: ${(errs as string[]).join(", ")}`,
-						)
-						.join("\n");
-					Alert.alert("Validation Error", msg);
-				} else {
-					Alert.alert(
-						"Create Failed",
-						response.message || "Could not create ride group.",
-					);
-				}
-				return;
-			}
+			<View style={styles.cardDivider} />
 
-			console.log(
-				"[parties] created group =",
-				JSON.stringify(response.data, null, 2),
-			);
+			<View style={styles.cardInfo}>
+				<View style={styles.infoLeft}>
+					<View style={styles.infoChip}>
+						<Text style={styles.infoChipText}>
+							⏱ Leaving in {item.leavingIn} min
+						</Text>
+					</View>
+					<View style={styles.infoChip}>
+						<Text style={styles.infoChipText}>
+							👥 {item.currentPassengers}/{item.maxPassengers}
+						</Text>
+					</View>
+				</View>
 
-			onCreateGroup(response.data);
-		} catch (error) {
-			Alert.alert(
-				"Error",
-				error instanceof Error
-					? error.message
-					: "Failed to create ride group",
-			);
-		} finally {
-			setIsCreating(false);
-		}
-	};
+				{item.tags?.length > 0 && (
+					<View style={styles.tagsContainer}>
+						{item.tags.map((tag, index) => (
+							<View
+								key={index}
+								style={[
+									styles.tag,
+									{
+										backgroundColor:
+											tag === "Female Only"
+												? COLORS.primaryLight
+												: COLORS.success + "20",
+									},
+								]}
+							>
+								<Text
+									style={[
+										styles.tagText,
+										{
+											color:
+												tag === "Female Only"
+													? COLORS.primary
+													: COLORS.success,
+										},
+									]}
+								>
+									{tag}
+								</Text>
+							</View>
+						))}
+					</View>
+				)}
+			</View>
 
-	const handleBack = () => {
-		if (onBack) onBack();
-	};
+			<View style={styles.cardDivider} />
+
+			<View style={styles.driverSection}>
+				<View style={styles.driverAvatar}>
+					<Text style={styles.driverAvatarText}>
+						{item.driverInitial}
+					</Text>
+					<View style={styles.badgeContainer}>
+						<Text style={styles.badgeText}>⭐</Text>
+					</View>
+				</View>
+				<View style={styles.driverInfo}>
+					<Text style={styles.driverName}>{item.driverName}</Text>
+					<Text style={styles.driverTrips}>
+						{item.driverTrips} trips
+					</Text>
+				</View>
+			</View>
+		</Pressable>
+	);
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<TouchableOpacity
-					style={styles.backButton}
-					onPress={handleBack}
-					accessibilityLabel="Go back"
-				>
-					<Text style={styles.backIcon}>←</Text>
-				</TouchableOpacity>
-				<Text style={styles.headerTitle}>Create Ride Group</Text>
+			<View style={styles.headerSection}>
+				<Pressable style={styles.headerButton} onPress={onBack}>
+					<View style={styles.headerButtonContent}>
+						<Text style={styles.headerTitle}>
+							Current Ride Groups
+						</Text>
+						<Text style={styles.headerSubtitle}>Leaving now</Text>
+					</View>
+				</Pressable>
+				<View style={styles.headerNav}>
+					<Pressable
+						onPress={onViewSettings}
+						style={styles.navButton}
+					>
+						<Text style={styles.navIcon}>⚙️</Text>
+					</Pressable>
+					<Pressable onPress={onViewProfile} style={styles.navButton}>
+						<Text style={styles.navIcon}>👤</Text>
+					</Pressable>
+				</View>
 			</View>
 
-			<ScrollView
-				style={styles.scrollView}
-				contentContainerStyle={styles.scrollContent}
-			>
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Route Details</Text>
+			<View style={styles.filtersSection}>
+				<View style={styles.inputGroup}>
+					<Text style={styles.inputIcon}>📍</Text>
+					<TextInput
+						style={styles.input}
+						placeholder="Where are you?"
+						placeholderTextColor={COLORS.textSecondary}
+						value={currentLocation}
+						onChangeText={setCurrentLocation}
+					/>
+				</View>
+				<View style={styles.inputGroup}>
+					<Text style={styles.inputIcon}>🎯</Text>
+					<TextInput
+						style={styles.input}
+						placeholder="Where do you want to go?"
+						placeholderTextColor={COLORS.textSecondary}
+						value={destination}
+						onChangeText={setDestination}
+					/>
+				</View>
+			</View>
 
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Pickup Point *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>📍</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Where will you pick up riders?"
-								placeholderTextColor={COLORS.textSecondary}
-								value={pickupPoint}
-								onChangeText={setPickupPoint}
-								accessibilityLabel="Pickup point"
-							/>
-						</View>
-					</View>
-
-					<View style={styles.inputGroup}>
-						<View style={styles.labelRow}>
-							<Text style={styles.label}>
-								Optional Stops Along the Way
-							</Text>
-							<TouchableOpacity>
-								<Text style={styles.addStopButton}>
-									+ Add Stop
-								</Text>
-							</TouchableOpacity>
-						</View>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>🛑</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Add intermediate stops"
-								placeholderTextColor={COLORS.textSecondary}
-								value={optionalStops}
-								onChangeText={setOptionalStops}
-								accessibilityLabel="Optional stops"
-							/>
-						</View>
-						<Text style={styles.helpText}>
-							Riders can request to be dropped off at these stops
+			<View style={styles.filterButtonsSection}>
+				<Text style={styles.filtersTitle}>Filters</Text>
+				<View style={styles.filterButtonsContainer}>
+					<Pressable
+						style={[
+							styles.filterButton,
+							activeFilters.has("female-only") &&
+								styles.filterButtonActive,
+						]}
+						onPress={() => toggleFilter("female-only")}
+					>
+						<Text style={styles.filterButtonText}>Female Only</Text>
+					</Pressable>
+					<Pressable
+						style={[
+							styles.filterButton,
+							activeFilters.has("alcohol-free") &&
+								styles.filterButtonActive,
+						]}
+						onPress={() => toggleFilter("alcohol-free")}
+					>
+						<Text style={styles.filterButtonText}>
+							Alcohol Free
 						</Text>
-					</View>
-
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Final Destination *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>📌</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Where are you heading?"
-								placeholderTextColor={COLORS.textSecondary}
-								value={finalDestination}
-								onChangeText={setFinalDestination}
-								accessibilityLabel="Final destination"
-							/>
-						</View>
-					</View>
-				</View>
-
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Trip Details</Text>
-
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Departure Time *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>🕐</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Select departure time"
-								placeholderTextColor={COLORS.textSecondary}
-								value={departureTime}
-								onChangeText={setDepartureTime}
-								accessibilityLabel="Departure time"
-							/>
-						</View>
-					</View>
-
-					<View style={styles.rowContainer}>
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Max Riders *</Text>
-							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>👥</Text>
-								<TextInput
-									style={styles.input}
-									placeholder="4"
-									placeholderTextColor={COLORS.textSecondary}
-									value={maxRiders}
-									onChangeText={setMaxRiders}
-									keyboardType="number-pad"
-									accessibilityLabel="Maximum riders"
-								/>
-							</View>
-						</View>
-
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Price/Person *</Text>
-							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>💵</Text>
-								<TextInput
-									style={styles.input}
-									placeholder="10"
-									placeholderTextColor={COLORS.textSecondary}
-									value={pricePerPerson}
-									onChangeText={setPricePerPerson}
-									keyboardType="decimal-pad"
-									accessibilityLabel="Price per person"
-								/>
-							</View>
-						</View>
-					</View>
-
-					<View style={styles.rowContainer}>
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>
-								Minimum Rider Rating
-							</Text>
-							<View style={styles.pickerContainer}>
-								<Picker
-									selectedValue={minRating}
-									onValueChange={setMinRating}
-									style={styles.picker}
-								>
-									<Picker.Item label="No Rating" value="" />
-									<Picker.Item label="1 Star" value="1" />
-									<Picker.Item label="2 Stars" value="2" />
-									<Picker.Item label="3 Stars" value="3" />
-									<Picker.Item label="4 Stars" value="4" />
-									<Picker.Item label="5 Stars" value="5" />
-								</Picker>
-							</View>
-							<Text style={styles.helpText}>
-								Only riders with this rating or higher can join
-							</Text>
-						</View>
-
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Max Wait Time</Text>
-							<View style={styles.pickerContainer}>
-								<Picker
-									selectedValue={maxWaitTime}
-									onValueChange={setMaxWaitTime}
-									style={styles.picker}
-								>
-									<Picker.Item label="15 min" value="15" />
-									<Picker.Item label="30 min" value="30" />
-									<Picker.Item label="1 hour" value="60" />
-									<Picker.Item label="2 hours" value="120" />
-								</Picker>
-							</View>
-							<Text style={styles.helpText}>
-								How long to advertise before departure
-							</Text>
-						</View>
-					</View>
-				</View>
-
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Ride Preferences</Text>
-
-					<View style={styles.preferenceItem}>
-						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
-								Allow custom stops
-							</Text>
-							<Text style={styles.preferenceDescriptionText}>
-								Let riders request different drop-off points
-							</Text>
-						</View>
-						<Switch
-							value={allowCustomStops}
-							onValueChange={setAllowCustomStops}
-							accessibilityLabel="Allow custom stops toggle"
-						/>
-					</View>
-
-					<View style={styles.preferenceItem}>
-						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
-								Female only
-							</Text>
-							<Text style={styles.preferenceDescriptionText}>
-								Only female riders can join
-							</Text>
-						</View>
-						<Switch
-							value={femaleOnly}
-							onValueChange={setFemaleOnly}
-							accessibilityLabel="Female only toggle"
-						/>
-					</View>
-
-					<View style={styles.preferenceItem}>
-						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
-								Alcohol free
-							</Text>
-							<Text style={styles.preferenceDescriptionText}>
-								No alcohol consumption during ride
-							</Text>
-						</View>
-						<Switch
-							value={alcoholFree}
-							onValueChange={setAlcoholFree}
-							accessibilityLabel="Alcohol free toggle"
-						/>
-					</View>
-				</View>
-
-				<TouchableOpacity
-					style={styles.createButton}
-					onPress={handleCreateGroup}
-					accessibilityLabel="Create ride group"
-					disabled={isCreating}
-				>
-					{isCreating ? (
-						<ActivityIndicator size="small" color="#fff" />
-					) : (
-						<Text style={styles.createButtonText}>
-							Create Ride Group
+					</Pressable>
+					<Pressable
+						style={[
+							styles.filterButton,
+							activeFilters.has("same-course") &&
+								styles.filterButtonActive,
+						]}
+						onPress={() => toggleFilter("same-course")}
+					>
+						<Text style={styles.filterButtonText}>
+							Same Course as Me
 						</Text>
-					)}
-				</TouchableOpacity>
-			</ScrollView>
+					</Pressable>
+				</View>
+			</View>
+
+			<FlatList
+				data={rides}
+				renderItem={renderRideCard}
+				keyExtractor={(item) => item.id}
+				scrollEnabled={false}
+				contentContainerStyle={styles.listContent}
+			/>
 		</SafeAreaView>
 	);
 };
@@ -363,161 +295,233 @@ export const CreateGroupPage = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f3f4f6",
+		backgroundColor: COLORS.background,
 	},
-	header: {
+	headerSection: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#fff",
-		paddingHorizontal: 16,
-		paddingVertical: 16,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-		gap: 12,
+		justifyContent: "space-between",
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		borderBottomWidth: 1,
+		borderBottomColor: COLORS.border,
+		backgroundColor: COLORS.background,
 	},
-	backButton: {
-		width: 40,
-		height: 40,
-		justifyContent: "center",
-		alignItems: "center",
-		borderRadius: 10,
-	},
-	backIcon: {
-		fontSize: 24,
-		color: COLORS.primary,
-	},
-	headerTitle: {
-		fontSize: 16,
-		fontWeight: "600",
-		color: COLORS.primary,
-	},
-	scrollView: {
+	headerButton: {
 		flex: 1,
 	},
-	scrollContent: {
-		paddingHorizontal: 16,
-		paddingVertical: 16,
-		gap: 16,
+	headerButtonContent: {
+		gap: SPACING.xs,
 	},
-	card: {
-		backgroundColor: "#fff",
-		borderRadius: 16,
-		padding: 24,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-		gap: 16,
-	},
-	cardTitle: {
-		fontSize: 16,
+	headerTitle: {
+		fontSize: FONT_SIZES.base,
 		fontWeight: "600",
 		color: COLORS.primary,
+	},
+	headerSubtitle: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
+	},
+	headerNav: {
+		flexDirection: "row",
+		gap: SPACING.md,
+	},
+	navButton: {
+		padding: SPACING.sm,
+		borderRadius: BORDER_RADIUS.md,
+		backgroundColor: COLORS.primaryLight,
+	},
+	navIcon: {
+		fontSize: FONT_SIZES.lg,
+	},
+	filtersSection: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		gap: SPACING.md,
+		borderBottomWidth: 1,
+		borderBottomColor: COLORS.border,
+		backgroundColor: COLORS.background,
 	},
 	inputGroup: {
-		gap: 8,
-		marginBottom: 8,
-	},
-	label: {
-		fontSize: 14,
-		fontWeight: "500",
-		color: COLORS.primary,
-	},
-	labelRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-	},
-	addStopButton: {
-		fontSize: 14,
-		color: COLORS.primary,
-		fontWeight: "600",
-	},
-	inputContainer: {
 		flexDirection: "row",
 		alignItems: "center",
-		borderWidth: 1.4,
+		borderRadius: BORDER_RADIUS.md,
+		borderWidth: 1,
 		borderColor: COLORS.border,
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		height: 48,
-		gap: 8,
+		paddingHorizontal: SPACING.md,
+		backgroundColor: COLORS.background,
 	},
 	inputIcon: {
-		fontSize: 16,
+		fontSize: FONT_SIZES.lg,
+		marginRight: SPACING.sm,
 	},
 	input: {
 		flex: 1,
-		fontSize: 14,
+		paddingVertical: SPACING.md,
+		fontSize: FONT_SIZES.base,
 		color: COLORS.text,
-		paddingVertical: 8,
 	},
-	helpText: {
-		fontSize: 12,
-		color: COLORS.textSecondary,
-		marginTop: 4,
+	filterButtonsSection: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		borderBottomWidth: 1,
+		borderBottomColor: COLORS.border,
+		backgroundColor: COLORS.background,
 	},
-	rowContainer: {
+	filtersTitle: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
+		color: COLORS.primary,
+		marginBottom: SPACING.md,
+	},
+	filterButtonsContainer: {
 		flexDirection: "row",
-		gap: 12,
+		flexWrap: "wrap",
+		gap: SPACING.md,
 	},
-	halfWidth: {
-		flex: 1,
+	filterButton: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.sm,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.primaryLight,
 	},
-	pickerContainer: {
-		borderWidth: 1.4,
+	filterButtonActive: {
+		backgroundColor: COLORS.primary,
+	},
+	filterButtonText: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.primary,
+		fontWeight: "500",
+	},
+	listContent: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		gap: SPACING.md,
+	},
+	rideCard: {
+		backgroundColor: COLORS.background,
+		borderRadius: BORDER_RADIUS.lg,
+		borderWidth: 1,
 		borderColor: COLORS.border,
-		borderRadius: 10,
-		overflow: "hidden",
-		height: 48,
-		justifyContent: "center",
+		padding: SPACING.md,
+		marginBottom: SPACING.md,
 	},
-	picker: {
-		height: 48,
-		color: COLORS.text,
+	cardHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		gap: SPACING.md,
 	},
-	preferenceItem: {
+	cardDetails: {
+		flex: 1,
+		gap: SPACING.md,
+	},
+	locationItem: {
+		gap: SPACING.xs,
+	},
+	locationLabel: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
+	},
+	locationValue: {
+		fontSize: FONT_SIZES.base,
+		fontWeight: "600",
+		color: COLORS.primary,
+		marginTop: SPACING.xs,
+	},
+	priceSection: {
+		alignItems: "flex-end",
+		gap: SPACING.xs,
+	},
+	priceValue: {
+		fontSize: FONT_SIZES.xxl,
+		fontWeight: "700",
+		color: COLORS.primary,
+	},
+	priceLabel: {
+		fontSize: FONT_SIZES.xs,
+		color: COLORS.textSecondary,
+	},
+	cardDivider: {
+		height: 1,
+		backgroundColor: COLORS.border,
+		marginVertical: SPACING.md,
+	},
+	cardInfo: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		backgroundColor: "#f3f4f6",
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		paddingVertical: 12,
-		marginBottom: 12,
+		paddingVertical: SPACING.md,
 	},
-	preferenceContent: {
+	infoLeft: {
+		flexDirection: "row",
+		gap: SPACING.md,
+	},
+	infoChip: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.sm,
+	},
+	infoChipText: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.success,
+		fontWeight: "500",
+	},
+	tagsContainer: {
+		flexDirection: "row",
+		gap: SPACING.sm,
+	},
+	tag: {
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.sm,
+		borderRadius: BORDER_RADIUS.full,
+	},
+	tagText: {
+		fontSize: FONT_SIZES.xs,
+		fontWeight: "500",
+	},
+	driverSection: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: SPACING.md,
+		paddingTop: SPACING.md,
+	},
+	driverAvatar: {
+		width: 40,
+		height: 40,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.primary,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	driverAvatarText: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+	},
+	badgeContainer: {
+		position: "absolute",
+		top: -8,
+		right: -8,
+		width: 28,
+		height: 28,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.accentYellow,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	badgeText: {
+		fontSize: FONT_SIZES.sm,
+	},
+	driverInfo: {
 		flex: 1,
+		gap: SPACING.xs,
 	},
-	preferenceTitleText: {
-		fontSize: 14,
+	driverName: {
+		fontSize: FONT_SIZES.sm,
 		fontWeight: "600",
 		color: COLORS.primary,
-		marginBottom: 4,
 	},
-	preferenceDescriptionText: {
-		fontSize: 13,
+	driverTrips: {
+		fontSize: FONT_SIZES.xs,
 		color: COLORS.textSecondary,
-	},
-	createButton: {
-		backgroundColor: COLORS.primary,
-		borderRadius: 10,
-		paddingVertical: 14,
-		alignItems: "center",
-		marginBottom: 20,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
-	},
-	createButtonText: {
-		color: "#fff",
-		fontSize: 16,
-		fontWeight: "600",
 	},
 });
