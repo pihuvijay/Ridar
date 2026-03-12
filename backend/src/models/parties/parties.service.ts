@@ -3,8 +3,8 @@ import { env } from "../../config/env";
 import { Party, LocationPoint } from "./parties.types";
 import crypto from "crypto";
 
-// In-memory store used when MOCK_PARTIES=true (no Supabase table needed)
 const mockPartiesStore = new Map<string, Party>();
+
 // track which users have joined each mock ride
 const mockPartyRiders = new Map<string, Set<string>>();
 
@@ -50,9 +50,7 @@ export const partiesService = {
       return party;
     }
 
-    // the table is called "rides" but columns differ from the original doc.
-    // we store the full LocationPoint as a JSON string in pickup_location/destination.
-    // some schemas don't auto‑generate a ride_id; create one here
+    // some schemas don't auto‑generate a ride_id
     const rideId = crypto.randomUUID();
     // create WKT strings for geog columns
     const pickPoint = `POINT(${pickup.lng} ${pickup.lat})`;
@@ -63,7 +61,7 @@ export const partiesService = {
       .insert({
         ride_id: rideId,
         creator_user_id: leaderUserId,
-        course: name,                        // store ride name in course field
+        course: name,                        // store ride name in course field for now (fix later)
         max_riders: maxMembers,
         pickup_location: pickup.label,
         pickup_geog: pickPoint,
@@ -106,7 +104,6 @@ export const partiesService = {
       .single();
 
     if (error && error.code !== "PGRST116") {
-      // 116 = no rows found, depending on Supabase version
       throw new Error(`Failed to fetch party: ${error.message}`);
     }
 
@@ -262,7 +259,7 @@ export const partiesService = {
           .eq("ride_id", rideId);
       }
     } catch {
-      // swallow – the join itself succeeded, count is optional
+
     }
 
     return {

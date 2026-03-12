@@ -37,7 +37,7 @@ export const joinPartySchema = z.object({
   }),
   body: z
     .object({
-      userId: z.string().min(1).optional(), // testing fallback, real auth should supply
+      userId: z.string().min(1).optional(), // testing fallback, real auth will supply
       dropoff: LocationPointSchema.optional(),
       status: z.string().optional(),
     })

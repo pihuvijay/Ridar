@@ -13,7 +13,6 @@ export const validate =
       }) as { body?: unknown; query?: Record<string, string>; params?: Record<string, string> };
 
       if (parsed.body !== undefined) req.body = parsed.body;
-      // Note: req.query is a read-only getter in newer Express — skip reassignment.
       // Zod still validates the query; controllers read from req.query directly.
       if (parsed.params !== undefined) (req as Request & { params: Record<string, string> }).params = parsed.params;
 
