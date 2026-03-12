@@ -14,7 +14,10 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS } from "../theme/colors";
+import { useSignUp, useEmailVerificationCode } from "../hooks";
 import { COLORS } from "../theme/colors";
 import { useSignUp, useEmailVerificationCode } from "../hooks";
 
@@ -35,13 +38,18 @@ export const SignUpPage = ({
     email: "",
     password: "",
     confirmPassword: "",
+    confirmPassword: "",
     agreedToTerms: false,
   });
+  
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
   
   const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const [genderDropdownVisible, setGenderDropdownVisible] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const genderOptions = ["Female", "Male", "Non-binary", "Prefer not to say"];
@@ -56,7 +64,29 @@ export const SignUpPage = ({
     verifyCodeError,
   } = useEmailVerificationCode();
 
+  const { signUp, loading: isCreatingAccount, error: signUpError } = useSignUp();
+  const {
+    sendVerificationCode,
+    verifyEmailCode,
+    sendingCode: isSendingCode,
+    sendCodeError,
+    verifyingCode: isVerifyingCode,
+    verifyCodeError,
+  } = useEmailVerificationCode();
+
   const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => {
+      const updatedData = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === "password" || field === "confirmPassword") {
+        setPasswordsMatch(updatedData.password === updatedData.confirmPassword);
+      }
+
+      return updatedData;
+    });
     setFormData((prev) => {
       const updatedData = {
         ...prev,
@@ -86,11 +116,25 @@ export const SignUpPage = ({
       return;
     }
 
+  const handleSendVerificationCode = async () => {
+    if (!formData.email) {
+      Alert.alert("Missing Email", "Please enter your university email first");
+      return;
+    }
+
     if (!validateEmail(formData.email)) {
       Alert.alert("Invalid Email", "Email must end in .ac.uk");
       return;
     }
 
+    const sent = await sendVerificationCode(formData.email);
+    if (sent) {
+      setCodeSent(true);
+      setEmailVerified(false);
+      Alert.alert("Code Sent", "Check your email for the verification code");
+    } else {
+      if (sendCodeError) {
+        Alert.alert("Error", sendCodeError);
     const sent = await sendVerificationCode(formData.email);
     if (sent) {
       setCodeSent(true);
@@ -116,7 +160,28 @@ export const SignUpPage = ({
       setEmailVerified(true);
       Alert.alert("Success", "Email verified successfully");
     } else {
+        Alert.alert("Error", "Could not send verification code");
+      }
+    }
+  };
+
+  const handleConfirmVerificationCode = async () => {
+    if (!verificationCode.trim()) {
+      Alert.alert("Missing Code", "Please enter the verification code");
+      return;
+    }
+
+    const isValid = await verifyEmailCode(formData.email, verificationCode.trim());
+    if (isValid) {
+      setEmailVerified(true);
+      Alert.alert("Success", "Email verified successfully");
+    } else {
       setEmailVerified(false);
+      if (verifyCodeError) {
+        Alert.alert("Error", verifyCodeError);
+      } else {
+        Alert.alert("Error", "Invalid verification code");
+      }
       if (verifyCodeError) {
         Alert.alert("Error", verifyCodeError);
       } else {
@@ -136,6 +201,19 @@ export const SignUpPage = ({
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert("Password Mismatch", "Passwords do not match");
+      return;
+    }
+
+    const success = await signUp({
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      courseMajor: formData.courseMajor,
+      age: parseInt(formData.age),
+      gender: formData.gender,
+    });
     if (formData.password !== formData.confirmPassword) {
       Alert.alert("Password Mismatch", "Passwords do not match");
       return;
@@ -171,11 +249,14 @@ export const SignUpPage = ({
     formData.password &&
     formData.confirmPassword &&
     passwordsMatch &&
+    formData.confirmPassword &&
+    passwordsMatch &&
     formData.agreedToTerms;
 
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
+        colors={[COLORS.primary, "#2d7a52"]}
         colors={[COLORS.primary, "#2d7a52"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -219,6 +300,7 @@ export const SignUpPage = ({
                       style={styles.input}
                       placeholder="John Smith"
                       placeholderTextColor={COLORS.textSecondary}
+                      placeholderTextColor={COLORS.textSecondary}
                       value={formData.fullName}
                       onChangeText={(value) =>
                         handleInputChange("fullName", value)
@@ -236,6 +318,7 @@ export const SignUpPage = ({
                     <TextInput
                       style={styles.input}
                       placeholder="Computer Science"
+                      placeholderTextColor={COLORS.textSecondary}
                       placeholderTextColor={COLORS.textSecondary}
                       value={formData.courseMajor}
                       onChangeText={(value) =>
@@ -257,6 +340,7 @@ export const SignUpPage = ({
                     <TextInput
                       style={styles.input}
                       placeholder="21"
+                      placeholderTextColor={COLORS.textSecondary}
                       placeholderTextColor={COLORS.textSecondary}
                       value={formData.age}
                       onChangeText={(value) =>
@@ -333,10 +417,13 @@ export const SignUpPage = ({
                     style={styles.emailInput}
                     placeholder="your.name@university.ac.uk"
                     placeholderTextColor={COLORS.textSecondary}
+                    placeholderTextColor={COLORS.textSecondary}
                     value={formData.email}
                     onChangeText={(value) => {
                       handleInputChange("email", value);
                       setEmailVerified(false);
+                      setCodeSent(false);
+                      setVerificationCode("");
                       setCodeSent(false);
                       setVerificationCode("");
                     }}
@@ -350,8 +437,11 @@ export const SignUpPage = ({
                     ]}
                     onPress={handleSendVerificationCode}
                     disabled={isSendingCode || !formData.email}
+                    onPress={handleSendVerificationCode}
+                    disabled={isSendingCode || !formData.email}
                     activeOpacity={0.8}
                   >
+                    {isSendingCode ? (
                     {isSendingCode ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
@@ -362,10 +452,38 @@ export const SignUpPage = ({
                         ]}
                       >
                         {emailVerified ? "✓ Verified" : codeSent ? "Resend" : "Send Code"}
+                        {emailVerified ? "✓ Verified" : codeSent ? "Resend" : "Send Code"}
                       </Text>
                     )}
                   </TouchableOpacity>
                 </View>
+
+                {codeSent && !emailVerified && (
+                  <View style={styles.emailInputWrapper}>
+                    <TextInput
+                      style={styles.emailInput}
+                      placeholder="Enter verification code"
+                      placeholderTextColor={COLORS.textSecondary}
+                      value={verificationCode}
+                      onChangeText={setVerificationCode}
+                      keyboardType="number-pad"
+                      accessibilityLabel="Verification Code"
+                    />
+                    <TouchableOpacity
+                      style={styles.verifyButton}
+                      onPress={handleConfirmVerificationCode}
+                      disabled={isVerifyingCode || !verificationCode.trim()}
+                      activeOpacity={0.8}
+                    >
+                      {isVerifyingCode ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={styles.verifyButtonText}>Verify Code</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+
 
                 {codeSent && !emailVerified && (
                   <View style={styles.emailInputWrapper}>
@@ -403,6 +521,11 @@ export const SignUpPage = ({
                     Verification code sent. Enter it above to continue.
                   </Text>
                 )}
+                {!emailVerified && codeSent && (
+                  <Text style={styles.successText}>
+                    Verification code sent. Enter it above to continue.
+                  </Text>
+                )}
                 {emailVerified && (
                   <Text style={styles.successText}>
                     Email verified successfully
@@ -410,6 +533,8 @@ export const SignUpPage = ({
                 )}
               </View>
 
+              {/* Password Section */}
+              <View style={{ marginTop: 8 }}>
               {/* Password Section */}
               <View style={{ marginTop: 8 }}>
                 <Text style={styles.label}>Password * (min 8 characters)</Text>
@@ -428,6 +553,30 @@ export const SignUpPage = ({
                   />
                 </View>
               </View>
+
+              {/* Confirm Password Section */}
+              <View style={{ marginTop: 8 }}>
+                <Text style={styles.label}>Confirm Password *</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#0a0a0a80"
+                    value={formData.confirmPassword}
+                    onChangeText={(value) =>
+                      handleInputChange("confirmPassword", value)
+                    }
+                    secureTextEntry
+                    accessibilityLabel="Confirm Password"
+                  />
+                </View>
+              </View>
+
+              {/* Password Mismatch Error */}
+              {formData.password && formData.confirmPassword && !passwordsMatch && (
+                <Text style={styles.errorText}>Passwords do not match</Text>
+              )}
 
               {/* Confirm Password Section */}
               <View style={{ marginTop: 8 }}>
@@ -550,6 +699,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: COLORS.textLightSecondary,
+    color: COLORS.textLightSecondary,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -566,10 +716,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: COLORS.primary,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   cardSubtitle: {
     fontSize: 14,
+    color: COLORS.textSecondary,
     color: COLORS.textSecondary,
     marginBottom: 24,
   },
@@ -587,12 +739,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: COLORS.primary,
+    color: COLORS.primary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 0.95,
+    borderColor: COLORS.border,
     borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
@@ -606,6 +760,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
+    color: COLORS.text,
     color: COLORS.text,
     paddingVertical: 8,
   },
@@ -621,16 +776,19 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 0.95,
     borderColor: COLORS.border,
+    borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
     paddingHorizontal: 12,
     fontSize: 14,
+    color: COLORS.text,
     color: COLORS.text,
   },
   genderInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 0.95,
+    borderColor: COLORS.border,
     borderColor: COLORS.border,
     borderRadius: 10,
     height: 38,
@@ -641,15 +799,18 @@ const styles = StyleSheet.create({
   genderInputText: {
     fontSize: 14,
     color: COLORS.text,
+    color: COLORS.text,
     fontWeight: "400",
     flex: 1,
   },
   genderDropdownIcon: {
     fontSize: 12,
     color: COLORS.textSecondary,
+    color: COLORS.textSecondary,
     marginLeft: 8,
   },
   verifyButton: {
+    backgroundColor: COLORS.primaryLight,
     backgroundColor: COLORS.primaryLight,
     borderRadius: 10,
     paddingVertical: 8,
@@ -662,9 +823,11 @@ const styles = StyleSheet.create({
   },
   verifyButtonVerified: {
     backgroundColor: COLORS.success,
+    backgroundColor: COLORS.success,
   },
   verifyButtonText: {
     fontSize: 14,
+    color: COLORS.textSecondary,
     color: COLORS.textSecondary,
     fontWeight: "600",
   },
@@ -712,9 +875,11 @@ const styles = StyleSheet.create({
   genderOptionText: {
     fontSize: 14,
     color: COLORS.primary,
+    color: COLORS.primary,
     fontWeight: "500",
   },
   genderOptionSelected: {
+    color: COLORS.primary,
     color: COLORS.primary,
     fontWeight: "600",
   },
@@ -722,6 +887,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 10,
     paddingHorizontal: 16,
+    backgroundColor: COLORS.primary,
     backgroundColor: COLORS.primary,
     borderRadius: 8,
     alignItems: "center",
@@ -751,9 +917,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     color: COLORS.textSecondary,
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
   createButton: {
+    backgroundColor: COLORS.primary,
     backgroundColor: COLORS.primary,
     borderRadius: 10,
     paddingVertical: 12,
@@ -785,10 +953,12 @@ const styles = StyleSheet.create({
   signInText: {
     fontSize: 14,
     color: COLORS.textSecondary,
+    color: COLORS.textSecondary,
   },
   signInLink: {
     fontSize: 14,
     fontWeight: "600",
+    color: COLORS.primary,
     color: COLORS.primary,
   },
 });

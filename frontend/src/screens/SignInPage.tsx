@@ -17,6 +17,7 @@ import {
 	Alert,
 	Button,
 } from "react-native";
+import { COLORS } from "../theme/colors";
 
 interface SignInPageProps {
 	onSignUp?: () => void;
@@ -29,7 +30,6 @@ export const SignInPage = ({
 	onSignUp,
 	onForgotPassword,
 	onModeratorLogin,
-	onLogin,
 }: SignInPageProps): JSX.Element => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
 	},
 	appSubtitle: {
 		fontSize: 16,
-		color: "#daeafe",
+		color: COLORS.textLightSecondary,
 	},
 	card: {
 		backgroundColor: "#fff",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
 	welcomeText: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#1d2838",
+		color: COLORS.primary,
 		marginBottom: 24,
 	},
 	inputGroup: {
@@ -309,14 +309,14 @@ const styles = StyleSheet.create({
 	label: {
 		fontSize: 14,
 		fontWeight: "500",
-		color: "#354152",
+		color: COLORS.primary,
 		marginBottom: 8,
 	},
 	inputContainer: {
 		flexDirection: "row",
 		alignItems: "center",
 		borderWidth: 1.64,
-		borderColor: "#d0d5db",
+		borderColor: COLORS.border,
 		borderRadius: 10,
 		paddingHorizontal: 12,
 		height: 51,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
 	input: {
 		flex: 1,
 		fontSize: 14,
-		color: "#0a0a0a",
+		color: COLORS.text,
 	},
 	optionsRow: {
 		flexDirection: "row",
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
 		width: 20,
 		height: 20,
 		borderWidth: 2,
-		borderColor: "#d0d5db",
+		borderColor: COLORS.border,
 		borderRadius: 4,
 		justifyContent: "center",
 		alignItems: "center",
@@ -352,21 +352,21 @@ const styles = StyleSheet.create({
 	},
 	checkboxInner: {
 		fontSize: 14,
-		color: "#155cfb",
+		color: COLORS.primary,
 		fontWeight: "bold",
 	},
 	rememberMeText: {
 		fontSize: 13,
-		color: "#495565",
+		color: COLORS.textSecondary,
 		marginLeft: 0,
 	},
 	forgotPasswordText: {
 		fontSize: 13,
-		color: "#155cfb",
+		color: COLORS.primary,
 		textDecorationLine: "underline",
 	},
 	signInButton: {
-		backgroundColor: "#155dfc",
+		backgroundColor: COLORS.primary,
 		borderRadius: 10,
 		padding: 12,
 		alignItems: "center",
@@ -392,24 +392,24 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingTop: 16,
 		borderTopWidth: 1.64,
-		borderTopColor: "#0000001a",
+		borderTopColor: COLORS.border,
 		marginBottom: 16,
 	},
 	signUpPromptText: {
 		fontSize: 14,
-		color: "#495565",
+		color: COLORS.textSecondary,
 		marginRight: 4,
 	},
 	signUpLink: {
 		fontSize: 14,
 		fontWeight: "600",
-		color: "#155cfb",
+		color: COLORS.primary,
 		textDecorationLine: "underline",
 	},
 	moderatorSection: {
 		paddingTop: 8,
 		borderTopWidth: 1.64,
-		borderTopColor: "#0000001a",
+		borderTopColor: COLORS.border,
 	},
 	moderatorButton: {
 		flexDirection: "row",
@@ -422,6 +422,6 @@ const styles = StyleSheet.create({
 	},
 	moderatorText: {
 		fontSize: 14,
-		color: "#495565",
+		color: COLORS.textSecondary,
 	},
 });

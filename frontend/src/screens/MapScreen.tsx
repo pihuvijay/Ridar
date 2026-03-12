@@ -11,6 +11,7 @@ import {
 	ActivityIndicator,
 	Alert,
 	ScrollView,
+	GestureResponderEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -446,6 +447,203 @@ export const MapScreen = ({
 							disabled={isSearching}
 						>
 							<Text style={styles.searchButtonText}>Apply</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.searchButton}
+							onPress={handleClearLocations}
+							disabled={isSearching}
+						>
+							{isSearching ? (
+								<ActivityIndicator size="small" color="#fff" />
+							) : (
+								<Text style={styles.searchButtonText}>
+									Apply
+								</Text>
+							)}
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							style={styles.clearButton}
+							onPress={handleClearLocations}
+						>
+							<Text style={styles.clearButtonText}>Clear</Text>
+						</TouchableOpacity>
+					</ScrollView>
+				</SafeAreaView>
+			</Modal>
+
+			{/* Location Search Overlay */}
+			{!showSearchPanel && (startCoords || endCoords) && (
+				<View style={styles.locationOverlay}>
+					<Text style={styles.locationOverlayText}>
+						{startLocation && endLocation
+							? startLocation + " -> " + endLocation
+							: startLocation
+								? "From: " + startLocation
+								: "To: " + endLocation}
+					</Text>
+					<View style={styles.locationOverlayButtons}>
+						<TouchableOpacity
+							style={styles.editLocationButton}
+							onPress={() => setShowSearchPanel(true)}
+						>
+							<Text style={styles.editLocationButtonText}>
+								Edit
+							</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.clearLocationButton}
+							onPress={handleClearLocations}
+						>
+							<Text style={styles.clearLocationButtonText}>
+								Clear
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+			)}
+			{/* Search Panel Modal */}
+			<Modal
+				visible={showSearchPanel}
+				transparent
+				animationType="slide"
+				onRequestClose={() => setShowSearchPanel(false)}
+			>
+				<SafeAreaView style={styles.searchPanelContainer}>
+					<ScrollView style={styles.searchPanelContent}>
+						<View style={styles.searchHeader}>
+							<Text style={styles.searchHeaderTitle}>
+								Search Locations
+							</Text>
+							<TouchableOpacity
+								onPress={() => setShowSearchPanel(false)}
+							>
+								<Text style={styles.searchCloseButton}>✕</Text>
+							</TouchableOpacity>
+						</View>
+
+						<View style={styles.searchInputContainer}>
+							<Text style={styles.searchLabel}>
+								Starting Point
+							</Text>
+							<TextInput
+								style={styles.searchInput}
+								placeholder="Enter starting location"
+								placeholderTextColor="#999"
+								value={startLocation}
+								onChangeText={(text) =>
+									handleLocationInputChange(text, true)
+								}
+								onFocus={() => setActiveSearchField("start")}
+							/>
+							{activeSearchField === "start" &&
+								startSuggestions.length > 0 && (
+									<View style={styles.suggestionsContainer}>
+										{loadingSuggestions ? (
+											<ActivityIndicator
+												size="small"
+												color="#155dfc"
+											/>
+										) : (
+											startSuggestions.map(
+												(suggestion, index) => (
+													<TouchableOpacity
+														key={index}
+														style={
+															styles.suggestionItem
+														}
+														onPress={() =>
+															handlePlaceSelection(
+																suggestion.placeId,
+																suggestion.description,
+																true,
+															)
+														}
+													>
+														<Text
+															style={
+																styles.suggestionText
+															}
+														>
+															📍{" "}
+															{
+																suggestion.description
+															}
+														</Text>
+													</TouchableOpacity>
+												),
+											)
+										)}
+									</View>
+								)}
+						</View>
+
+						<View style={styles.searchInputContainer}>
+							<Text style={styles.searchLabel}>Destination</Text>
+							<TextInput
+								style={styles.searchInput}
+								placeholder="Enter destination"
+								placeholderTextColor="#999"
+								value={endLocation}
+								onChangeText={(text) =>
+									handleLocationInputChange(text, false)
+								}
+								onFocus={() => setActiveSearchField("end")}
+							/>
+							{activeSearchField === "end" &&
+								endSuggestions.length > 0 && (
+									<View style={styles.suggestionsContainer}>
+										{loadingSuggestions ? (
+											<ActivityIndicator
+												size="small"
+												color="#155dfc"
+											/>
+										) : (
+											endSuggestions.map(
+												(suggestion, index) => (
+													<TouchableOpacity
+														key={index}
+														style={
+															styles.suggestionItem
+														}
+														onPress={() =>
+															handlePlaceSelection(
+																suggestion.placeId,
+																suggestion.description,
+																false,
+															)
+														}
+													>
+														<Text
+															style={
+																styles.suggestionText
+															}
+														>
+															📍{" "}
+															{
+																suggestion.description
+															}
+														</Text>
+													</TouchableOpacity>
+												),
+											)
+										)}
+									</View>
+								)}
+						</View>
+
+						<TouchableOpacity
+							style={styles.searchButton}
+							onPress={handleClearLocations}
+							disabled={isSearching}
+						>
+							{isSearching ? (
+								<ActivityIndicator size="small" color="#fff" />
+							) : (
+								<Text style={styles.searchButtonText}>
+									Apply
+								</Text>
+							)}
 						</TouchableOpacity>
 
 						<TouchableOpacity

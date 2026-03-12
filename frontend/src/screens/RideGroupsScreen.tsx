@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { partiesService } from "../services/api";
 import {
 	View,
 	Text,
-	ScrollView,
 	Pressable,
 	TextInput,
 	StyleSheet,
 	FlatList,
 	SafeAreaView,
 } from "react-native";
+import { partiesService } from "../services/api";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface RideCard {
@@ -71,8 +70,6 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 					return;
 				}
 
-				// For now assume backend shape is already close enough.
-				// We'll map it properly next if needed.
 				const mappedRides: RideCard[] = (response.data ?? []).map(
 					(party: any) => ({
 						id: party.id,

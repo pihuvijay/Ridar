@@ -18,7 +18,7 @@ import { COLORS } from "../theme/colors";
 
 interface CreateGroupPageProps {
 	onBack?: () => void;
-	onCreateGroup: (rideData: any) => void; // <-- Update this line
+	onCreateGroup: (rideData: any) => void;
 }
 
 export const CreateGroupPage = ({
@@ -96,7 +96,8 @@ export const CreateGroupPage = ({
 				"[parties] created group =",
 				JSON.stringify(response.data, null, 2),
 			);
-			onCreateGroup?.();
+
+			onCreateGroup(response.data);
 		} catch (error) {
 			Alert.alert(
 				"Error",
@@ -115,7 +116,6 @@ export const CreateGroupPage = ({
 
 	return (
 		<SafeAreaView style={styles.container}>
-			{/* Header */}
 			<View style={styles.header}>
 				<TouchableOpacity
 					style={styles.backButton}
@@ -131,11 +131,9 @@ export const CreateGroupPage = ({
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollContent}
 			>
-				{/* Route Details Section */}
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Route Details</Text>
 
-					{/* Pickup Point */}
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Pickup Point *</Text>
 						<View style={styles.inputContainer}>
@@ -151,7 +149,6 @@ export const CreateGroupPage = ({
 						</View>
 					</View>
 
-					{/* Optional Stops */}
 					<View style={styles.inputGroup}>
 						<View style={styles.labelRow}>
 							<Text style={styles.label}>
@@ -179,7 +176,6 @@ export const CreateGroupPage = ({
 						</Text>
 					</View>
 
-					{/* Final Destination */}
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Final Destination *</Text>
 						<View style={styles.inputContainer}>
@@ -196,11 +192,9 @@ export const CreateGroupPage = ({
 					</View>
 				</View>
 
-				{/* Trip Details Section */}
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Trip Details</Text>
 
-					{/* Departure Time */}
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Departure Time *</Text>
 						<View style={styles.inputContainer}>
@@ -216,7 +210,6 @@ export const CreateGroupPage = ({
 						</View>
 					</View>
 
-					{/* Max Riders and Price Row */}
 					<View style={styles.rowContainer}>
 						<View style={[styles.inputGroup, styles.halfWidth]}>
 							<Text style={styles.label}>Max Riders *</Text>
@@ -251,7 +244,6 @@ export const CreateGroupPage = ({
 						</View>
 					</View>
 
-					{/* Minimum Rating and Max Wait Time Row */}
 					<View style={styles.rowContainer}>
 						<View style={[styles.inputGroup, styles.halfWidth]}>
 							<Text style={styles.label}>
@@ -297,11 +289,9 @@ export const CreateGroupPage = ({
 					</View>
 				</View>
 
-				{/* Ride Preferences Section */}
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Ride Preferences</Text>
 
-					{/* Allow Custom Stops */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -318,7 +308,6 @@ export const CreateGroupPage = ({
 						/>
 					</View>
 
-					{/* Female Only */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -335,7 +324,6 @@ export const CreateGroupPage = ({
 						/>
 					</View>
 
-					{/* Alcohol Free */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -353,7 +341,6 @@ export const CreateGroupPage = ({
 					</View>
 				</View>
 
-				{/* Create Group Button */}
 				<TouchableOpacity
 					style={styles.createButton}
 					onPress={handleCreateGroup}
