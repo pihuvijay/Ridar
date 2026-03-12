@@ -119,6 +119,10 @@ export default function App() {
 		setChatMessages((prev) => [...prev, msg]);
 	};
 
+	const handleAddReport = (report: any) => {
+		setReports((prev) => [...prev, report]);
+	};
+
 	if (isLoading) {
 		return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
 	}
@@ -137,6 +141,7 @@ export default function App() {
 
 						{currentScreen === "signup" && (
 							<SignUpPage
+								onSignIn={() => setCurrentScreen("signin")}
 								onCreateAccount={() => handleSignup("User")}
 							/>
 						)}
@@ -180,15 +185,18 @@ export default function App() {
 									onBack={() =>
 										setCurrentScreen("ride-groups")
 									}
-									onPartyFull={() =>
-										setCurrentScreen("wait-screen")
+									onViewSettings={() =>
+										setCurrentScreen("settings")
 									}
+									onPartyFull={(rideGroup) => {
+										setSelectedRideGroup(rideGroup);
+										setCurrentScreen("wait-screen");
+									}}
 								/>
 							)}
 
 						{currentScreen === "wait-screen" && (
 							<WaitScreen
-								rideGroup={selectedRideGroup}
 								onContinue={() =>
 									setCurrentScreen("ride-insights")
 								}
@@ -198,6 +206,7 @@ export default function App() {
 						{currentScreen === "ride-insights" && (
 							<RideInsightsScreen
 								rideGroup={selectedRideGroup}
+								onAddReport={handleAddReport}
 								onDone={() => setCurrentScreen("map")}
 							/>
 						)}
