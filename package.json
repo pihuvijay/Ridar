@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cd backend && npm test"
+    "test": "cross-env NODE_ENV=test MOCK_PARTIES=true backend/jest --runInBand"
   },
   "repository": {
     "type": "git",
