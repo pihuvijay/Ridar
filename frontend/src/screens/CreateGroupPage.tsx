@@ -91,12 +91,6 @@ export const CreateGroupPage = ({
 				}
 				return;
 			}
-
-			console.log(
-				"[parties] created group =",
-				JSON.stringify(response.data, null, 2),
-			);
-			onCreateGroup?.();
 		} catch (error) {
 			Alert.alert(
 				"Error",
