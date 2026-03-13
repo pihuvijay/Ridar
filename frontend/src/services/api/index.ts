@@ -146,47 +146,115 @@ export const paymentService = {
 
 // ==================== UBER INTEGRATION ENDPOINTS ====================
 
+export interface UberPriceEstimate {
+  product_id: string;
+  display_name: string;
+  currency_code: string;
+  low_estimate: number;
+  high_estimate: number;
+  surge_multiplier: number;
+  duration: number;
+  distance: number;
+}
+
+export interface UberRideResponse {
+  rideId: string;
+  status: 'processing' | 'accepted' | 'arriving' | 'in_progress' | 'completed' | 'cancelled';
+  product_id: string;
+  driver: { name: string; rating: number; picture_url: string; phone_number: string } | null;
+  vehicle: { make: string; model: string; license_plate: string } | null;
+  eta: number;
+  fare_estimate: string;
+  pickup: { lat: number; lng: number };
+  dropoff: { lat: number; lng: number };
+  request_time: string;
+}
+
 export const uberService = {
   /**
-   * Initiate Uber OAuth flow
+   * Get Uber OAuth URL for the current user
    */
-  async initiateUberAuth(): Promise<any> {
-    const response = await fetch(`${API_URL}/api/uber/auth-url`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  async getConnectUrl(userId: string): Promise<{ authUrl: string }> {
+    const response = await fetch(`${API_URL}/uber/connect?userId=${encodeURIComponent(userId)}`);
+    return handleResponse(response);
+  },
+
+  /**
+   * Check if user has connected their Uber account
+   */
+  async getConnectionStatus(userId: string): Promise<{ connected: boolean }> {
+    const response = await fetch(`${API_URL}/uber/status?userId=${encodeURIComponent(userId)}`);
+    return handleResponse(response);
+  },
+
+  /**
+   * Get price estimates between two coordinates.
+   * Hits the real Uber sandbox API — no ride is created.
+   */
+  async getPriceEstimates(
+    startLat: number,
+    startLng: number,
+    endLat: number,
+    endLng: number,
+    token: string
+  ): Promise<{ ok: boolean; data: UberPriceEstimate[] }> {
+    const params = new URLSearchParams({
+      start_lat: String(startLat),
+      start_lng: String(startLng),
+      end_lat: String(endLat),
+      end_lng: String(endLng),
+    });
+    const response = await fetch(`${API_URL}/uber/estimates?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
     return handleResponse(response);
   },
 
   /**
-   * Connect Uber account with authorization code
+   * Request an Uber ride (mocked on the backend for MVP demo).
    */
-  async connectUber(
-    authCode: string,
-    userId: string
-  ): Promise<UberConnectionResponse> {
-    const response = await fetch(`${API_URL}/api/uber/connect`, {
+  async requestRide(
+    productId: string,
+    startLat: number,
+    startLng: number,
+    endLat: number,
+    endLng: number,
+    token: string
+  ): Promise<{ ok: boolean; data: UberRideResponse }> {
+    const response = await fetch(`${API_URL}/uber/request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ authCode }),
+      body: JSON.stringify({ productId, startLat, startLng, endLat, endLng }),
     });
     return handleResponse(response);
   },
 
   /**
-   * Check if Uber is connected for a user
+   * Poll ride status — status auto-progresses over time on the backend.
    */
-  async isConnected(userId: string): Promise<{ connected: boolean }> {
-    const response = await fetch(`${API_URL}/api/uber/connected`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${userId}`,
-      },
+  async getRideStatus(
+    rideId: string,
+    token: string
+  ): Promise<{ ok: boolean; data: UberRideResponse }> {
+    const response = await fetch(`${API_URL}/uber/ride/${encodeURIComponent(rideId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Cancel a ride.
+   */
+  async cancelRide(
+    rideId: string,
+    token: string
+  ): Promise<{ ok: boolean; data: { cancelled: boolean; rideId: string } }> {
+    const response = await fetch(`${API_URL}/uber/ride/${encodeURIComponent(rideId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     });
     return handleResponse(response);
   },
