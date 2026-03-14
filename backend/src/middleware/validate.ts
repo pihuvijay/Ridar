@@ -1,15 +1,26 @@
 import type { NextFunction, Request, Response } from "express";
 import type { ZodSchema } from "zod";
 
-export function validateBody(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({
-        ok: false,
-        error: { message: "Validation error" },
-        details: parsed.error.flatten(),
-      });
+export const validate =
+  (schema: ZodType) => (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const parsed = schema.parse({
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        headers: req.headers,
+      }) as { body?: unknown; query?: Record<string, string>; params?: Record<string, string> };
+
+      if (parsed.body !== undefined) req.body = parsed.body;
+      // Zod still validates the query; controllers read from req.query directly.
+      if (parsed.params !== undefined) (req as Request & { params: Record<string, string> }).params = parsed.params;
+
+      next();
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return next(new AppError("Validation error", 400, "VALIDATION_ERROR", err.flatten()));
+      }
+      next(err);
     }
     req.body = parsed.data;
     next();

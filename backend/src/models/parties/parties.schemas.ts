@@ -35,9 +35,10 @@ export const joinPartySchema = z.object({
   params: z.object({
     partyId: z.string().min(1),
   }),
-  body: z.object({
-    userId: z.string().min(1).optional(),
-    dropoff: LocationPointSchema.optional(),
-    status: z.string().optional(),
-  }),
+  body: z
+    .object({
+      userId: z.string().min(1).optional(), // testing fallback, real auth will supply
+      dropoff: LocationPointSchema.optional(),
+      status: z.string().optional(),
+    })
 });

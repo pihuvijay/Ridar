@@ -4,6 +4,8 @@ import { Party, LocationPoint } from "./parties.types";
 import crypto from "crypto";
 
 const mockPartiesStore = new Map<string, Party>();
+
+// track which users have joined each mock ride
 const mockPartyRiders = new Map<string, Set<string>>();
 
 function generateId(): string {
@@ -90,6 +92,7 @@ export const partiesService = {
       return party;
     }
 
+    // some schemas don't auto‑generate a ride_id
     const rideId = crypto.randomUUID();
     const pickPoint = `POINT(${pickup.lng} ${pickup.lat})`;
     const destPoint = `POINT(${destination.lng} ${destination.lat})`;
@@ -99,7 +102,7 @@ export const partiesService = {
       .insert({
         ride_id: rideId,
         creator_user_id: leaderUserId,
-        course: name,
+        course: name,                        // store ride name in course field for now (fix later)
         max_riders: maxMembers,
         current_riders: 1,
         pickup_location: pickup.label,
@@ -299,7 +302,9 @@ export const partiesService = {
           .update({ current_riders: rideData.current_riders + 1 })
           .eq("ride_id", rideId);
       }
-    } catch {}
+    } catch {
+
+    }
 
     return {
       rideId: data.ride_id,

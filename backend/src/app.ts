@@ -13,8 +13,11 @@ import { partiesRouter } from "./models/parties/parties.routes";
 import { walletRouter } from "./models/wallet/wallet.routes";
 import { chatRouter } from "./models/chat/chat.routes";
 import { reportsRouter } from "./models/reports/reports.routes";
-import { emailRouter } from "./routes/emai.routes";
 import { authDevRouter } from "./models/auth/auth.dev.routes";
+
+import { stripeRouter } from "./routes/stripe.routes";
+import { uberRouter } from "./routes/uber.routes";
+import { emailRouter } from "./routes/emai.routes";
 
 export function createApp() {
 	const app = express();
@@ -28,7 +31,7 @@ export function createApp() {
 	// JSON parsing
 	app.use(express.json({ limit: "1mb" }));
 
-	// Request ID middleware (for better logging)
+	// Request ID middleware
 	app.use((req, res, next) => {
 		const requestId = randomUUID();
 		(req as any).requestId = requestId;
@@ -38,6 +41,7 @@ export function createApp() {
 
 	// Logging
 	morgan.token("id", (req) => (req as any).requestId ?? "-");
+
 	app.use(
 		morgan(
 			env.NODE_ENV === "production"
@@ -53,8 +57,14 @@ export function createApp() {
 			status: "up",
 			health: "/health",
 			auth: "/auth",
+			users: "/users",
 			parties: "/parties",
 			wallet: "/wallet",
+			chat: "/chat",
+			reports: "/reports",
+			stripe: "/stripe",
+			uber: "/uber",
+			email: "/email",
 		}),
 	);
 
@@ -71,6 +81,9 @@ export function createApp() {
 	app.use("/chat", chatRouter);
 	app.use("/reports", reportsRouter);
 	app.use("/auth-dev", authDevRouter);
+
+	app.use("/stripe", stripeRouter);
+	app.use("/uber", uberRouter);
 	app.use("/email", emailRouter);
 
 	// 404 handler
