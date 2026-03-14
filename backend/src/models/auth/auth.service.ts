@@ -13,7 +13,7 @@ export const authService = {
     const { email, password, fullName, courseMajor, age, gender } = params;
 
     // 1️⃣ Create user in Supabase Auth
-    const { data, error } = await supabaseAdmin().auth.admin.createUser({
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true, // skip email verification for MVP
@@ -25,7 +25,7 @@ export const authService = {
     }
 
     // 2️⃣ Upsert into public users table
-    await supabaseAdmin().from("users").upsert({
+    await supabaseAdmin.from("users").upsert({
       user_id: data.user.id,
       email,
       full_name: fullName,
@@ -36,7 +36,7 @@ export const authService = {
 
     // 3️⃣ Sign in immediately to get token
     const { data: session, error: signInError } =
-      await supabaseAuth().auth.signInWithPassword({
+      await supabaseAuth.auth.signInWithPassword({
         email,
         password,
       });
@@ -54,7 +54,7 @@ export const authService = {
   },
 
   async signIn(email: string, password: string): Promise<AuthSession> {
-    const { data, error } = await supabaseAuth().auth.signInWithPassword({
+    const { data, error } = await supabaseAuth.auth.signInWithPassword({
       email,
       password,
     });
@@ -73,18 +73,18 @@ export const authService = {
     const {
       data: { user },
       error: userError,
-    } = await supabaseAdmin().auth.getUser(token);
+    } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) throw new Error("Invalid token");
 
-    const { error } = await supabaseAdmin().auth.admin.signOut(user.id);
+    const { error } = await supabaseAdmin.auth.admin.signOut(user.id);
 
     if (error) throw new Error(error.message);
   },
 
   // 🔹 Keep your email verification flow
   async verifyEmail(email: string) {
-    const { data, error } = await supabaseAuth().auth.resend({
+    const { data, error } = await supabaseAuth.auth.resend({
       type: "signup",
       email,
     });

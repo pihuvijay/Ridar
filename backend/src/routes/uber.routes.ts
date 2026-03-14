@@ -2,11 +2,6 @@ import { Router } from 'express';
 import { env } from '../config/env';
 import { supabaseAdmin } from '../lib/supabase';
 
-
-
-
-
-
 interface UberTokenResponse {
   access_token: string;
   refresh_token: string;
@@ -42,9 +37,9 @@ uberRouter.get('/connect', (req, res) => {
   const state = Buffer.from(JSON.stringify({ userId })).toString('base64');
 
   const authUrl = new URL('https://login.uber.com/oauth/v2/authorize');
-  authUrl.searchParams.set('client_id', env.UBER_CLIENT_ID);
+  authUrl.searchParams.set('client_id', env.UBER_CLIENT_ID!);
   authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('redirect_uri', env.UBER_REDIRECT_URI);
+  authUrl.searchParams.set('redirect_uri', env.UBER_REDIRECT_URI!);
   authUrl.searchParams.set('scope', 'profile history');
   authUrl.searchParams.set('state', state);
 
@@ -75,10 +70,10 @@ uberRouter.get('/callback', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: env.UBER_CLIENT_ID,
-        client_secret: env.UBER_CLIENT_SECRET,
+        client_id: env.UBER_CLIENT_ID!,
+        client_secret: env.UBER_CLIENT_SECRET!,
         grant_type: 'authorization_code',
-        redirect_uri: env.UBER_REDIRECT_URI,
+        redirect_uri: env.UBER_REDIRECT_URI!,
         code: code as string,
       }),
     });

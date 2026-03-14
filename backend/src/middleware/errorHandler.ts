@@ -1,14 +1,40 @@
 import type { NextFunction, Request, Response } from "express";
 import { logger } from "../utils/logger";
 
-export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
-  logger.error({ err, path: req.path, method: req.method }, "Unhandled error");
+export class AppError extends Error {
+	status: number;
+	code?: string;
+	details?: unknown;
 
-  const status = typeof err?.status === "number" ? err.status : 500;
-  const message = err?.message ?? "Internal Server Error";
+	constructor(
+		message: string,
+		status = 500,
+		code?: string,
+		details?: unknown,
+	) {
+		super(message);
+		this.name = "AppError";
+		this.status = status;
+		this.code = code;
+		this.details = details;
+	}
+}
 
-  res.status(status).json({
-	success: false,
-	message,
-});
+export function errorHandler(
+	err: any,
+	req: Request,
+	res: Response,
+	_next: NextFunction,
+) {
+	logger.error({ err, path: req.path, method: req.method }, "Unhandled error");
+
+	const status = typeof err?.status === "number" ? err.status : 500;
+	const message = err?.message ?? "Internal Server Error";
+
+	res.status(status).json({
+		success: false,
+		message,
+		...(err?.code ? { code: err.code } : {}),
+		...(err?.details ? { details: err.details } : {}),
+	});
 }

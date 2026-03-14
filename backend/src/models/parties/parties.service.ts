@@ -27,7 +27,7 @@ export const partiesService = {
       return Array.from(mockPartiesStore.values());
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from("rides")
       .select("*")
       .order("created_at", { ascending: false });
@@ -97,7 +97,7 @@ export const partiesService = {
     const pickPoint = `POINT(${pickup.lng} ${pickup.lat})`;
     const destPoint = `POINT(${destination.lng} ${destination.lat})`;
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from("rides")
       .insert({
         ride_id: rideId,
@@ -139,7 +139,7 @@ export const partiesService = {
       return mockPartiesStore.get(partyId) ?? null;
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from("rides")
       .select("*")
       .eq("ride_id", partyId)
@@ -205,7 +205,7 @@ export const partiesService = {
       payload.destination_geog = `POINT(${updates.destination.lng} ${updates.destination.lat})`;
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from("rides")
       .update(payload)
       .eq("ride_id", partyId)
@@ -279,7 +279,7 @@ export const partiesService = {
       payload.user_destination = JSON.stringify(options.dropoff);
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from("user_rides")
       .insert(payload)
       .select()
@@ -290,14 +290,14 @@ export const partiesService = {
     }
 
     try {
-      const { data: rideData } = await supabaseAdmin()
+      const { data: rideData } = await supabaseAdmin
         .from("rides")
         .select("current_riders")
         .eq("ride_id", rideId)
         .single();
 
       if (rideData) {
-        await supabaseAdmin()
+        await supabaseAdmin
           .from("rides")
           .update({ current_riders: rideData.current_riders + 1 })
           .eq("ride_id", rideId);

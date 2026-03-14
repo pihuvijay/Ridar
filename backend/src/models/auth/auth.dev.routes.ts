@@ -18,7 +18,7 @@ authDevRouter.post("/reset-password", async (req, res, next) => {
       });
     }
 
-    const admin = supabaseAdmin();
+    const admin = supabaseAdmin;
 
     // Find user by email
     const { data: listData, error: listErr } =

@@ -39,6 +39,6 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   },
-  "type": "commonjs"
-  "description": ""
+  "type": "commonjs",
+  "description": "Backend for the Ridar application"
 }

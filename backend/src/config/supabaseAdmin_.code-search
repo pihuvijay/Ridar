@@ -1,0 +1,76 @@
+# Query: supabaseAdmin()
+# ContextLines: 1
+
+17 results - 5 files
+
+backend/src/lib/supabase.ts:
+  16  
+  17: function getSupabaseAdmin: SupabaseClient {
+  18  	if (!_supabaseAdmin) {
+
+  27  export const supabaseAuth = getSupabaseAuth();
+  28: export const supabaseAdmin = getSupabaseAdmin;
+
+backend/src/models/auth/auth.dev.routes.ts:
+  20  
+  21:     const admin = supabaseAdmin;
+  22  
+
+backend/src/models/auth/auth.service.ts:
+  15      // 1️⃣ Create user in Supabase Auth
+  16:     const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  17        email,
+
+  27      // 2️⃣ Upsert into public users table
+  28:     await supabaseAdmin.from("users").upsert({
+  29        user_id: data.user.id,
+
+  75        error: userError,
+  76:     } = await supabaseAdmin.auth.getUser(token);
+  77  
+
+  79  
+  80:     const { error } = await supabaseAdmin.auth.admin.signOut(user.id);
+  81  
+
+backend/src/models/parties/parties.service.ts:
+   29  
+   30:     const { data, error } = await supabaseAdmin
+   31        .from("rides")
+
+   99  
+  100:     const { data, error } = await supabaseAdmin
+  101        .from("rides")
+
+  141  
+  142:     const { data, error } = await supabaseAdmin
+  143        .from("rides")
+
+  207  
+  208:     const { data, error } = await supabaseAdmin
+  209        .from("rides")
+
+  281  
+  282:     const { data, error } = await supabaseAdmin
+  283        .from("user_rides")
+
+  292      try {
+  293:       const { data: rideData } = await supabaseAdmin
+  294          .from("rides")
+
+  299        if (rideData) {
+  300:         await supabaseAdmin
+  301            .from("rides")
+
+backend/src/models/users/users.service.ts:
+   4    // try get
+   5:   const { data: existing, error: selErr } = await supabaseAdmin
+   6      .from("profiles")
+
+  14    // create
+  15:   const { data: created, error: insErr } = await supabaseAdmin
+  16      .from("profiles")
+
+  28  export async function updateMyProfile(userId: string, patch: { full_name?: string; avatar_url?: string }) {
+  29:   const { data, error } = await supabaseAdmin
+  30      .from("profiles")

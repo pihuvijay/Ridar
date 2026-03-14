@@ -8,8 +8,40 @@ const validPartyBody = {
   maxMembers: 4,
   pickup: { lat: 51.501, lng: -0.141, label: "Campus" },
   destination: { lat: 51.515, lng: -0.09, label: "Downtown" },
-  userId: "test-leader-123",
 };
+
+const parties = new Map<string, any>();
+
+interface PartyData {
+  name: string;
+  maxMembers: number;
+  pickup: { lat: number; lng: number; label: string };
+  destination: { lat: number; lng: number; label: string };
+  userId: string;
+}
+
+export function createParty(data: PartyData) {
+  const id = `mock-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+
+  const party = {
+    id,
+    ...data,
+    currentMembers: 1,
+  };
+
+  parties.set(id, party);
+  return party;
+}
+
+export function updateLocations(id: string, update: any) {
+  const party = parties.get(id);
+  if (!party) return null;
+
+  if (update.pickup) party.pickup = update.pickup;
+  if (update.destination) party.destination = update.destination;
+
+  return party;
+}
 
 describe("Parties API", () => {
   describe("POST /parties", () => {
@@ -29,7 +61,7 @@ describe("Parties API", () => {
         status: "open",
       });
       expect(res.body.data).toHaveProperty("id");
-      expect(res.body.data).toHaveProperty("leaderUserId", validPartyBody.userId);
+      expect(res.body.data).toHaveProperty("leaderUserId", "test-user");
       expect(res.body.data).toHaveProperty("currentMembers");
     });
 
@@ -41,7 +73,7 @@ describe("Parties API", () => {
         .expect(400);
 
       expect(res.body.ok).toBe(false);
-      expect(res.body.error).toBeDefined();
+      expect(res.body.error.message).toBeDefined();
     });
 
     it("returns 400 when pickup or destination has invalid shape", async () => {
@@ -107,13 +139,13 @@ describe("Parties API", () => {
 
       const res = await request(app)
         .post(`/parties/${partyId}/join`)
-        .send({ userId: "rider-111" })
+        .send({ userId: "test-user" })
         .expect(201);
 
       expect(res.body.ok).toBe(true);
       expect(res.body.data).toMatchObject({
         rideId: partyId,
-        userId: "rider-111",
+        userId: "test-user",
         status: "pending",
       });
 
@@ -129,13 +161,13 @@ describe("Parties API", () => {
 
       const res = await request(app)
         .post(`/parties/${partyId}/join`)
-        .send({ userId: "rider-222", dropoff, status: "joined" })
+        .send({ userId: "test-user", dropoff, status: "joined" })
         .expect(201);
 
       expect(res.body.ok).toBe(true);
       expect(res.body.data).toMatchObject({
         rideId: partyId,
-        userId: "rider-222",
+        userId: "test-user",
         status: "joined",
         dropoff,
       });
