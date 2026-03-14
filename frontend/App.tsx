@@ -1,69 +1,211 @@
-import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { StripeProvider } from '@stripe/stripe-react-native';
-import { MapScreen } from './src/screens/MapScreen';
-import { SignInPage } from './src/screens/SignInPage';
-import { SignUpPage } from './src/screens/SignUpPage';
-import { CreateGroupPage } from './src/screens/CreateGroupPage';
-import { ConnectAccountsPage } from './src/screens/ConnectAccountsPage';
+import { StatusBar } from "expo-status-bar";
+import { useState, useEffect } from "react";
+import { View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StripeProvider } from "@stripe/stripe-react-native";
+import { AuthProvider } from "./src/contexts";
+import { COLORS } from "./src/theme/colors";
 
-export default function App() {
-  const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+// Screens
+import { SignInPage } from "./src/screens/SignInPage";
+import { SignUpPage } from "./src/screens/SignUpPage";
+import { CreateGroupPage } from "./src/screens/CreateGroupPage";
+import { ConnectAccountsPage } from "./src/screens/ConnectAccountsPage";
+import { MapScreen } from "./src/screens/MapScreen";
+import { RideGroupsScreen } from "./src/screens/RideGroupsScreen";
+import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { SettingsScreen } from "./src/screens/SettingsScreen";
+import { ModeratorLoginScreen } from "./src/screens/ModeratorLoginScreen";
+import { ModeratorDashboard } from "./src/screens/ModeratorDashboard";
+import { RideJoiningScreen } from "./src/screens/RideJoiningScreen";
+import { WaitScreen } from "./src/screens/WaitScreen";
+import { RideInsightsScreen } from "./src/screens/RideInsightsScreen";
 
-  if (!publishableKey) {
-    throw new Error('Stripe publishable key is missing. Add EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY to your .env file');
-  }
-  const [currentScreen, setCurrentScreen] = useState<'signin' | 'signup' | 'connectaccounts' | 'map' | 'creategroup'>('signin');
-
-  const handleSignUp = () => {
-    setCurrentScreen('signup');
-  };
-
-  const handleBackToSignIn = () => {
-    setCurrentScreen('signin');
-  };
-
-  const handleCreateAccount = () => {
-    setCurrentScreen('connectaccounts');
-  };
-
-  const handleAccountsConnected = () => {
-    setCurrentScreen('map');
-  };
-
-  const handleSignOut = () => {
-    setCurrentScreen('signin');
-  };
-
-  const handleCreateRideGroup = () => {
-    setCurrentScreen('creategroup');
-  };
-
-  const handleBackToMap = () => {
-    setCurrentScreen('map');
-  };
-
-  const handleModeratorLogin = () => {
-    setCurrentScreen('map');
-  };
-
-  return (
-    <StripeProvider publishableKey={publishableKey}>
-      <>
-        {currentScreen === 'signin' ? (
-          <SignInPage onSignUp={handleSignUp} onModeratorLogin={handleModeratorLogin} />
-        ) : currentScreen === 'signup' ? (
-          <SignUpPage onSignIn={handleBackToSignIn} onCreateAccount={handleCreateAccount} />
-        ) : currentScreen === 'connectaccounts' ? (
-          <ConnectAccountsPage onNavigateHome={handleAccountsConnected} />
-        ) : currentScreen === 'creategroup' ? (
-          <CreateGroupPage onBack={handleBackToMap} />
-        ) : (
-          <MapScreen onMenuPress={handleSignOut} onCreateRideGroup={handleCreateRideGroup} />
-        )}
-        <StatusBar style="auto" />
-      </>
-    </StripeProvider>
-  );
+interface ChatMessage {
+	id: string;
+	author: string;
+	content: string;
+	timestamp: string;
+	isVerified: boolean;
 }
 
+type ReportStatus = "pending" | "approved" | "rejected" | "investigating";
+
+interface Report {
+	id: string;
+	reporterName: string;
+	reportedUserName: string;
+	reason: string;
+	timestamp: string;
+	status: ReportStatus;
+	description: string;
+	evidence?: string;
+}
+
+const initialChatMessages: ChatMessage[] = [
+	{
+		id: "1",
+		author: "Sarah M.",
+		content:
+			"Hey everyone! Heading to Downtown Financial District. Join the ride!",
+		timestamp: "Just now",
+		isVerified: true,
+	},
+];
+
+const initialReports: Report[] = [];
+
+type Screen =
+	| "signin"
+	| "signup"
+	| "connectaccounts"
+	| "map"
+	| "ride-groups"
+	| "create-ride"
+	| "profile"
+	| "settings"
+	| "moderator-login"
+	| "moderator-dashboard"
+	| "ride-joining"
+	| "wait-screen"
+	| "ride-insights";
+
+export default function App() {
+	const [isLoading, setIsLoading] = useState(true);
+	const [currentScreen, setCurrentScreen] = useState<Screen>("signin");
+	const [userName, setUserName] = useState("");
+	const [selectedRideGroup, setSelectedRideGroup] = useState<any>(null);
+	const [chatMessages, setChatMessages] =
+		useState<ChatMessage[]>(initialChatMessages);
+	const [reports, setReports] = useState<Report[]>(initialReports);
+
+	useEffect(() => {
+		const timer = setTimeout(() => setIsLoading(false), 1500);
+		return () => clearTimeout(timer);
+	}, []);
+
+	const handleLogin = (name: string) => {
+		setUserName(name);
+		setCurrentScreen("map");
+	};
+
+	const handleSignup = (name: string) => {
+		setUserName(name);
+		setCurrentScreen("connectaccounts");
+	};
+
+	const handleViewRideGroups = () => setCurrentScreen("ride-groups");
+	const handleBackToMap = () => setCurrentScreen("map");
+	const handleCreateRideGroup = () => setCurrentScreen("create-ride");
+
+	const handleRideCreated = (rideData: any) => {
+		setSelectedRideGroup(rideData);
+		setCurrentScreen("ride-insights");
+	};
+
+	const handleJoinRide = (rideGroup: any) => {
+		setSelectedRideGroup(rideGroup);
+		setCurrentScreen("ride-joining");
+	};
+
+	const handleSendChatMessage = (text: string) => {
+		const msg: ChatMessage = {
+			id: Date.now().toString(),
+			author: userName || "You",
+			content: text,
+			timestamp: "Just now",
+			isVerified: false,
+		};
+		setChatMessages((prev) => [...prev, msg]);
+	};
+
+	if (isLoading) {
+		return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
+	}
+
+	return (
+		<SafeAreaProvider>
+			<StripeProvider publishableKey="pk_test_placeholder">
+				<AuthProvider>
+					<View style={{ flex: 1, backgroundColor: COLORS.primary }}>
+						{currentScreen === "signin" && (
+							<SignInPage
+								onLogin={handleLogin}
+								onSignUp={() => setCurrentScreen("signup")}
+							/>
+						)}
+
+						{currentScreen === "signup" && (
+							<SignUpPage
+								onCreateAccount={() => handleSignup("User")}
+							/>
+						)}
+
+						{currentScreen === "map" && (
+							<MapScreen
+								userName={userName}
+								onViewRideGroups={handleViewRideGroups}
+								onCreateRideGroup={handleCreateRideGroup}
+							/>
+						)}
+
+						{currentScreen === "ride-groups" && (
+							<RideGroupsScreen
+								userName={userName}
+								onBack={handleBackToMap}
+								onJoinRide={handleJoinRide}
+								onViewSettings={() =>
+									setCurrentScreen("settings")
+								}
+								onViewProfile={() =>
+									setCurrentScreen("profile")
+								}
+							/>
+						)}
+
+						{currentScreen === "create-ride" && (
+							<CreateGroupPage
+								onBack={handleBackToMap}
+								onCreateGroup={handleRideCreated}
+							/>
+						)}
+
+						{currentScreen === "ride-joining" &&
+							selectedRideGroup && (
+								<RideJoiningScreen
+									userName={userName}
+									rideGroup={selectedRideGroup}
+									messages={chatMessages}
+									onSendMessage={handleSendChatMessage}
+									onBack={() =>
+										setCurrentScreen("ride-groups")
+									}
+									onPartyFull={() =>
+										setCurrentScreen("wait-screen")
+									}
+								/>
+							)}
+
+						{currentScreen === "wait-screen" && (
+							<WaitScreen
+								rideGroup={selectedRideGroup}
+								onContinue={() =>
+									setCurrentScreen("ride-insights")
+								}
+							/>
+						)}
+
+						{currentScreen === "ride-insights" && (
+							<RideInsightsScreen
+								rideGroup={selectedRideGroup}
+								onDone={() => setCurrentScreen("map")}
+							/>
+						)}
+
+						<StatusBar style="light" />
+					</View>
+				</AuthProvider>
+			</StripeProvider>
+		</SafeAreaProvider>
+	);
+}

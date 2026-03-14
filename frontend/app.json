@@ -2,13 +2,14 @@
   "expo": {
     "name": "frontend",
     "slug": "frontend",
+    "scheme": "ridar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/RidarLogo.jpeg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/RidarLogo.jpeg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -26,15 +27,23 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.leno4.frontend"
+      "package": "com.nt785.frontend",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyClesU_tA8zhdeUY_QJpqNgZ-q8mGSTkhk"
+        }
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/RidarLogo.jpeg"
     },
     "extra": {
       "eas": {
-        "projectId": "ccad9319-e2fe-417c-b975-08b51bef0a1d"
+        "projectId": "2cb42736-584b-428e-8a9a-8d20b0efe6d6"
       }
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

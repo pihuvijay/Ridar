@@ -1,6 +1,5 @@
-import { ZodError, type ZodType } from "zod";
-import { NextFunction, Request, Response } from "express";
-import { AppError } from "../utils/http";
+import type { NextFunction, Request, Response } from "express";
+import type { ZodSchema } from "zod";
 
 export const validate =
   (schema: ZodType) => (req: Request, _res: Response, next: NextFunction) => {
@@ -23,4 +22,7 @@ export const validate =
       }
       next(err);
     }
+    req.body = parsed.data;
+    next();
   };
+}

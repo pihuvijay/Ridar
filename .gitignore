@@ -1,8 +1,3 @@
-.env
-*.env
-!*.env.example
-backend/.env
-frontend/.env
 backend/node_modules
 
 node_modules/

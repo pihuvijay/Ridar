@@ -1,26 +1,31 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabaseAdmin } from '../lib/supabase';
+import type { Request, Response, NextFunction } from "express";
+import { supabaseAuth } from "../lib/supabase";
 
-export const protect = async (req: Request, res: Response, next: NextFunction) => {
-  // This has been changed. Supabase auth is skipped in test environment.
-  // Leave req.user unset so the controller's body.userId fallback is used.
-  if (process.env.NODE_ENV === 'test') {
-    return next();
-  }
+function extractBearer(req: Request) {
+  const h = req.header("authorization");
+  if (!h) return null;
+  const [type, token] = h.split(" ");
+  if (type?.toLowerCase() !== "bearer" || !token) return null;
+  return token;
+}
 
-  const token = req.headers.authorization?.split(' ')[1];
+export async function requireAuth(req: any, res: Response, next: NextFunction) {
+  const token = extractBearer(req);
 
   if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+    return res.status(401).json({
+      error: { message: "Missing or invalid Authorization header", code: "AUTH_MISSING" },
+    });
   }
 
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+  const { data, error } = await supabaseAuth().auth.getUser(token);
 
-  if (error || !user) {
-    return res.status(401).json({ error: 'Invalid token' });
+  if (error || !data?.user) {
+    return res.status(401).json({
+      error: { message: "Invalid or expired token", code: "AUTH_INVALID" },
+    });
   }
 
-  // Attach user to request for use in controllers
-  (req as any).user = user;
-  next();
-};
+  req.user = { id: data.user.id, email: data.user.email ?? undefined };
+  return next();
+}

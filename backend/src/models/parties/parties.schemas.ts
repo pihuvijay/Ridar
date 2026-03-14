@@ -12,8 +12,8 @@ export const createPartySchema = z.object({
     maxMembers: z.number().int().min(2),
     pickup: LocationPointSchema,
     destination: LocationPointSchema,
-    leaveBy: z.string().datetime().optional().nullable(),
-    userId: z.string().min(1).optional(), // for testing without auth; auth middleware will set req.user.id
+    leaveBy: z.string().optional().nullable(), // relaxed for MVP
+    userId: z.string().min(1).optional(),
   }),
 });
 

@@ -1,76 +1,83 @@
-import { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction, Request } from "express";
 import { partiesService } from "./parties.service";
-import { ok } from "../../utils/http";
 
-export const partiesController = {
-  createParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = (req as any).user;
-      // Fallback: until auth middleware is made, allow userId in body (for testing only)
-      const leaderUserId = user?.id ?? req.body.userId;
+interface AuthedRequest extends Request {
+  user?: { id: string };
+}
 
-      const { name, maxMembers, pickup, destination, leaveBy } = req.body;
+export async function list(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const data = await partiesService.listParties(userId);
+    res.json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}
 
-      const party = await partiesService.createParty(leaderUserId, {
-        name,
-        maxMembers,
-        pickup,
-        destination,
-        leaveBy,
-      });
+export async function create(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const { name, maxMembers, pickup, destination, leaveBy } = req.body;
 
-      res.status(201).json(ok(party));
-    } catch (err) {
-      next(err);
+    const data = await partiesService.createParty(userId, {
+      name,
+      maxMembers,
+      pickup,
+      destination,
+      leaveBy,
+    });
+
+    res.status(201).json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getParty(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const { partyId } = req.params;
+    const data = await partiesService.getParty(partyId);
+
+    if (!data) {
+      return res.status(404).json({ ok: false, error: { message: "Party not found" } });
     }
-  },
 
-  getParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { partyId } = req.params;
-      const party = await partiesService.getParty(partyId);
+    res.json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}
 
-      if (!party) {
-        return res.status(404).json({ ok: false, error: { message: "Party not found" } });
-      }
+export async function updateLocations(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const { partyId } = req.params;
+    const { pickup, destination } = req.body;
 
-      res.json(ok(party));
-    } catch (err) {
-      next(err);
-    }
-  },
+    const data = await partiesService.updatePartyLocations(partyId, {
+      pickup,
+      destination,
+    });
 
-  updatePartyLocations: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { partyId } = req.params;
-      const { pickup, destination } = req.body;
+    res.json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}
 
-      const party = await partiesService.updatePartyLocations(partyId, {
-        pickup,
-        destination,
-      });
+export async function join(req: AuthedRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.id;
+    const { partyId } = req.params;
+    const { dropoff, status } = req.body;
 
-      res.json(ok(party));
-    } catch (err) {
-      next(err);
-    }
-  },
+    const data = await partiesService.joinParty(partyId, userId, {
+      dropoff,
+      status,
+    });
 
-  joinParty: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = (req as any).user;
-      const userId = user?.id ?? req.body.userId; // fallback for testing
-      const { partyId } = req.params;
-      const { dropoff, status } = req.body;
-
-      const record = await partiesService.joinParty(partyId, userId, {
-        dropoff,
-        status,
-      });
-
-      res.status(201).json(ok(record));
-    } catch (err) {
-      next(err);
-    }
-  },
-};
+    res.status(201).json({ ok: true, data });
+  } catch (e) {
+    next(e);
+  }
+}

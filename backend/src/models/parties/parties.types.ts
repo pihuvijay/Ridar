@@ -7,14 +7,13 @@ export type LocationPoint = LatLng & {
   label: string;
 };
 
-// ride_status values mirror the design doc (pending/confirmed/etc)
 export type PartyStatus = "open" | "full" | "closed" | "completed";
 
 export type UserRide = {
   rideId: string;
   userId: string;
   dropoff: LocationPoint | null;
-  status: string; // e.g. 'pending', 'joined', 'cancelled'
+  status: string;
 };
 
 export type Party = {

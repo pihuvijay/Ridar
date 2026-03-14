@@ -10,10 +10,12 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
-import { uberService, paymentService } from "../services/api";
+import { useAddPaymentMethod, useUberConnection } from "../hooks";
+import * as WebBrowser from "expo-web-browser";
 
 interface ConnectAccountsPageProps {
   userName?: string;
@@ -62,91 +64,46 @@ export const ConnectAccountsPage = ({
   onNavigateHome,
 }: ConnectAccountsPageProps): JSX.Element => {
   const { createToken } = useStripe();
-  const [uberConnected, setUberConnected] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [cardholderName, setCardholderName] = useState("");
+  const { addPaymentMethod, loading: isProcessing, error: paymentError } = useAddPaymentMethod();
+  const { isConnected: uberConnected, loading: uberLoading, connectUber, getAuthUrl } = useUberConnection();
 
   const handleUberConnect = async () => {
-    console.log("Connecting Uber...");
-    // In a real app, this would open Uber's OAuth flow
-    // For now, we'll simulate it and call the backend
     try {
-      // TODO: Implement proper OAuth flow with Uber
-      // Get auth URL from backend
-      // const authUrlResponse = await uberService.initiateUberAuth();
-      
-      // For demonstration, simulating the connection
-      setTimeout(() => {
-        setUberConnected(true);
-        Alert.alert("Success", "Uber account connected successfully");
-      }, 500);
+      const response = await getAuthUrl();
+      if (!response?.authUrl) {
+        Alert.alert("Error", "Could not get Uber auth URL from backend");
+        return;
+      }
+      const result = await WebBrowser.openAuthSessionAsync(response.authUrl, "ridar://");
+
+      if (result.type === "success" && result.url) {
+        const code = new URL(result.url).searchParams.get("code");
+        if (code) {
+          const success = await connectUber(code);
+          if (success) {
+            Alert.alert("Success", "Uber Account Connected successfully");
+          }
+        }
+      }
     } catch (error) {
-      Alert.alert("Error", "Failed to connect Uber account");
+      Alert.alert("Error", "Failed to connect Uber Account");
     }
   };
 
   const handleAddPaymentMethod = async () => {
-    if (!uberConnected) {
-      Alert.alert("Error", "Please connect Uber first");
-      return;
-    }
-
-    if (!cardholderName.trim()) {
-      Alert.alert("Error", "Please enter cardholder name");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      // Tokenize the card using Stripe SDK
-      const { token, error } = await createToken({
-        type: "Card",
-      });
-
-      if (error) {
-        Alert.alert("Card Error", error.message);
-        setIsProcessing(false);
-        return;
-      }
-
-      if (!token) {
-        Alert.alert("Error", "Failed to create card token");
-        setIsProcessing(false);
-        return;
-      }
-
-      // Send token to your backend
-      // TODO: Replace with actual user ID from auth context
-      const userId = "user_123"; // Placeholder - should come from auth context
-      const response = await paymentService.addPaymentMethod(
-        token.id,
-        cardholderName,
-        userId
-      );
-
-      if (response.success) {
-        console.log("Payment method created successfully");
-        Alert.alert("Success", "Payment method added successfully");
-        if (onNavigateHome) onNavigateHome();
-      } else {
-        Alert.alert("Error", response.message || "Failed to add payment method. Please try again.");
-      }
-    } catch (err) {
-      console.error("Payment error:", err);
-      Alert.alert("Error", "Network error. Please check your connection.");
-    } finally {
-      setIsProcessing(false);
+    // Navigate to home without payment details for now
+    if (onNavigateHome) {
+      onNavigateHome();
     }
   };
 
-  const isPaymentComplete =
-    uberConnected &&
-    cardholderName.trim().length > 0;
+  const isPaymentComplete = true;
 
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={["#2B7FFF", "#9810FA"]}
+        colors={["#1B5E20", "#2E7D32"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBackground}
@@ -159,7 +116,7 @@ export const ConnectAccountsPage = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.logoBadge}>
-              <Text style={styles.logoText}>R</Text>
+              <Image source={require("../../assets/RidarLogo.jpeg")} style={{ width: 104, height: 104, resizeMode: 'cover' }} />
             </View>
             <Text style={styles.headerTitle}>Welcome to Ridar, {userName}!</Text>
             <Text style={styles.headerSubtitle}>
@@ -172,7 +129,7 @@ export const ConnectAccountsPage = ({
             <AccountCard
               icon={
                 <View style={styles.iconContainer}>
-                  <Text style={styles.uberIcon}>🚗</Text>
+                  <Image source={require("../../assets/5ij5qdSHFzJ2piPRuoTL5F.jpg")} style={{ width: 40, height: 40, resizeMode: 'contain' }} />
                 </View>
               }
               title="Uber Account"
@@ -186,7 +143,7 @@ export const ConnectAccountsPage = ({
           {/* Payment Method Card */}
           <View style={styles.paymentCard}>
             <View style={styles.paymentHeader}>
-              <Text style={styles.paymentIcon}>💳</Text>
+                <Image source={require("../../assets/stripe-product-image-480x240.webp")} style={{ width: 80, height: 40, resizeMode: 'cover', borderRadius: 8 }} />
               <Text style={styles.paymentTitle}>Add Payment Method</Text>
             </View>
             <Text style={styles.paymentDescription}>
@@ -210,7 +167,7 @@ export const ConnectAccountsPage = ({
               <Text style={styles.inputLabel}>Card Details *</Text>
               <CardField
                 postalCodeEnabled={false}
-                placeholder={{
+                placeholders={{
                   number: "4242 4242 4242 4242",
                 }}
                 cardStyle={styles.cardField}
@@ -347,7 +304,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   connectButton: {
-    backgroundColor: "#155dfc",
+    backgroundColor: "#1B5E20",
     borderRadius: 10,
     paddingVertical: 11,
     paddingHorizontal: 16,
@@ -378,7 +335,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   continueButton: {
-    backgroundColor: "#155dfc",
+    backgroundColor: "#1B5E20",
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
@@ -464,9 +421,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.95,
     borderRadius: 10,
     fontSize: 14,
-    placeholderColor: "#0a0a0a80",
-    textColor: "#0a0a0a",
-    cursorColor: "#155dfc",
   },
   securityNote: {
     fontSize: 12,
