@@ -1,5 +1,7 @@
 import request from "supertest";
-import { app } from "../app";
+import { createApp } from "../app";
+
+const app = createApp();
 
 const validPartyBody = {
   name: "Campus to Downtown",

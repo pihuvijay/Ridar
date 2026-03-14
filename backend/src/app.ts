@@ -15,23 +15,18 @@ import { chatRouter } from "./models/chat/chat.routes";
 import { reportsRouter } from "./models/reports/reports.routes";
 import { authDevRouter } from "./models/auth/auth.dev.routes";
 
+import { emailRouter } from "./routes/email.routes";
 import { stripeRouter } from "./routes/stripe.routes";
 import { uberRouter } from "./routes/uber.routes";
-import { emailRouter } from "./routes/emai.routes";
+import { uberRidesRouter } from "./models/uber/uber.routes";
 
 export function createApp() {
 	const app = express();
 
-	// Security
 	app.use(helmet());
-
-	// CORS
 	app.use(cors({ origin: env.CORS_ORIGIN === "*" ? true : env.CORS_ORIGIN }));
-
-	// JSON parsing
 	app.use(express.json({ limit: "1mb" }));
 
-	// Request ID middleware
 	app.use((req, res, next) => {
 		const requestId = randomUUID();
 		(req as any).requestId = requestId;
@@ -39,9 +34,7 @@ export function createApp() {
 		next();
 	});
 
-	// Logging
 	morgan.token("id", (req) => (req as any).requestId ?? "-");
-
 	app.use(
 		morgan(
 			env.NODE_ENV === "production"
@@ -50,7 +43,6 @@ export function createApp() {
 		),
 	);
 
-	// Root
 	app.get("/", (_req, res) =>
 		res.json({
 			name: "Ridar API",
@@ -62,18 +54,16 @@ export function createApp() {
 			wallet: "/wallet",
 			chat: "/chat",
 			reports: "/reports",
+			email: "/email",
 			stripe: "/stripe",
 			uber: "/uber",
-			email: "/email",
 		}),
 	);
 
-	// Health check
 	app.get("/health", (_req, res) =>
 		res.status(200).json({ success: true, time: new Date().toISOString() }),
 	);
 
-	// Routes
 	app.use("/auth", authRouter);
 	app.use("/users", usersRouter);
 	app.use("/parties", partiesRouter);
@@ -82,11 +72,11 @@ export function createApp() {
 	app.use("/reports", reportsRouter);
 	app.use("/auth-dev", authDevRouter);
 
+	app.use("/email", emailRouter);
 	app.use("/stripe", stripeRouter);
 	app.use("/uber", uberRouter);
-	app.use("/email", emailRouter);
+	app.use("/uber", uberRidesRouter);
 
-	// 404 handler
 	app.use((_req, res) => {
 		res.status(404).json({
 			success: false,
@@ -94,7 +84,6 @@ export function createApp() {
 		});
 	});
 
-	// Error handler
 	app.use(errorHandler);
 
 	return app;
