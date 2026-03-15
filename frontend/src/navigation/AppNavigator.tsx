@@ -75,7 +75,10 @@ export default function AppNavigator({
 
 				<Stack.Screen name="CreateGroup">
 					{({ navigation }) => (
-						<CreateGroupPage onBack={() => navigation.goBack()} />
+						<CreateGroupPage
+							onBack={() => navigation.goBack()}
+							onCreateGroup={() => navigation.navigate("Wait")}
+						/>
 					)}
 				</Stack.Screen>
 
@@ -84,6 +87,8 @@ export default function AppNavigator({
 						<RideJoiningScreen
 							userName={userName}
 							rideGroup={route.params.rideGroup}
+							messages={[]}
+							onSendMessage={() => {}}
 							onBack={() => navigation.goBack()}
 							onViewSettings={() =>
 								navigation.navigate("Settings")
@@ -96,7 +101,7 @@ export default function AppNavigator({
 				<Stack.Screen name="Wait">
 					{({ navigation }) => (
 						<WaitScreen
-							onContinue={() => navigation.navigate("Map")}
+							onContinue={() => navigation.navigate("MainTabs")}
 						/>
 					)}
 				</Stack.Screen>

@@ -1,96 +1,144 @@
 import { supabaseAdmin, supabaseAuth } from "../../lib/supabase";
 import { AuthSession } from "./auth.types";
 
+async function ensurePublicUser(params: {
+	userId: string;
+	email: string;
+	fullName?: string;
+	courseMajor?: string;
+	age?: number;
+	gender?: string;
+}) {
+	const { userId, email, fullName, courseMajor, age, gender } = params;
+
+	const { data: existing, error: selectError } = await supabaseAdmin
+		.from("users")
+		.select("user_id")
+		.eq("user_id", userId)
+		.maybeSingle();
+
+	if (selectError) {
+		throw new Error(selectError.message);
+	}
+
+	if (existing) {
+		return;
+	}
+
+	const { error: insertError } = await supabaseAdmin.from("users").insert({
+		user_id: userId,
+		email,
+		name: fullName ?? email.split("@")[0],
+		course_major: courseMajor ?? null,
+		age: age ?? null,
+		gender: gender ?? null,
+	});
+
+	if (insertError) {
+		throw new Error(insertError.message);
+	}
+}
+
 export const authService = {
-  async signUp(params: {
-    email: string;
-    password: string;
-    fullName: string;
-    courseMajor: string;
-    age: number;
-    gender: string;
-  }): Promise<AuthSession> {
-    const { email, password, fullName, courseMajor, age, gender } = params;
+	async signUp(params: {
+		email: string;
+		password: string;
+		fullName: string;
+		courseMajor: string;
+		age: number;
+		gender: string;
+	}): Promise<AuthSession> {
+		const { email, password, fullName, courseMajor, age, gender } = params;
 
-    // 1️⃣ Create user in Supabase Auth
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // skip email verification for MVP
-      user_metadata: { fullName, courseMajor, age, gender },
-    });
+		const { data, error } = await supabaseAdmin.auth.admin.createUser({
+			email,
+			password,
+			email_confirm: true,
+			user_metadata: { fullName, courseMajor, age, gender },
+		});
 
-    if (error || !data.user) {
-      throw new Error(error?.message ?? "Failed to create user");
-    }
+		if (error || !data.user) {
+			throw new Error(error?.message ?? "Failed to create user");
+		}
 
-    // 2️⃣ Upsert into public users table
-    await supabaseAdmin.from("users").upsert({
-      user_id: data.user.id,
-      email,
-      full_name: fullName,
-      course: courseMajor,
-      age,
-      gender,
-    });
+		await ensurePublicUser({
+			userId: data.user.id,
+			email,
+			fullName,
+			courseMajor,
+			age,
+			gender,
+		});
 
-    // 3️⃣ Sign in immediately to get token
-    const { data: session, error: signInError } =
-      await supabaseAuth.auth.signInWithPassword({
-        email,
-        password,
-      });
+		const { data: session, error: signInError } =
+			await supabaseAuth.auth.signInWithPassword({
+				email,
+				password,
+			});
 
-    if (signInError || !session.session) {
-      throw new Error(
-        "Account created but could not sign in automatically"
-      );
-    }
+		if (signInError || !session.session) {
+			throw new Error("Account created but could not sign in automatically");
+		}
 
-    return {
-      user: { id: data.user.id, email: data.user.email! },
-      accessToken: session.session.access_token,
-    };
-  },
+		return {
+			user: { id: data.user.id, email: data.user.email! },
+			accessToken: session.session.access_token,
+		};
+	},
 
-  async signIn(email: string, password: string): Promise<AuthSession> {
-    const { data, error } = await supabaseAuth.auth.signInWithPassword({
-      email,
-      password,
-    });
+	async signIn(email: string, password: string): Promise<AuthSession> {
+		const { data, error } = await supabaseAuth.auth.signInWithPassword({
+			email,
+			password,
+		});
 
-    if (error || !data.session) {
-      throw new Error(error?.message ?? "Invalid credentials");
-    }
+		if (error || !data.session || !data.user) {
+			throw new Error(error?.message ?? "Invalid credentials");
+		}
 
-    return {
-      user: { id: data.user.id, email: data.user.email! },
-      accessToken: data.session.access_token,
-    };
-  },
+		const meta = (data.user.user_metadata ?? {}) as {
+			fullName?: string;
+			courseMajor?: string;
+			age?: number;
+			gender?: string;
+		};
 
-  async signOut(token: string): Promise<void> {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseAdmin.auth.getUser(token);
+		await ensurePublicUser({
+			userId: data.user.id,
+			email: data.user.email!,
+			fullName: meta.fullName,
+			courseMajor: meta.courseMajor,
+			age: meta.age,
+			gender: meta.gender,
+		});
 
-    if (userError || !user) throw new Error("Invalid token");
+		return {
+			user: { id: data.user.id, email: data.user.email! },
+			accessToken: data.session.access_token,
+		};
+	},
 
-    const { error } = await supabaseAdmin.auth.admin.signOut(user.id);
+	async signOut(token: string): Promise<void> {
+		const {
+			data: { user },
+			error: userError,
+		} = await supabaseAdmin.auth.getUser(token);
 
-    if (error) throw new Error(error.message);
-  },
+		if (userError || !user) throw new Error("Invalid token");
 
-  // 🔹 Keep your email verification flow
-  async verifyEmail(email: string) {
-    const { data, error } = await supabaseAuth.auth.resend({
-      type: "signup",
-      email,
-    });
+		const { error } = await supabaseAdmin.auth.admin.signOut(user.id);
 
-    if (error) throw new Error(error.message);
+		if (error) throw new Error(error.message);
+	},
 
-    return data;
-  },
+	async verifyEmail(email: string) {
+		const { data, error } = await supabaseAuth.auth.resend({
+			type: "signup",
+			email,
+		});
+
+		if (error) throw new Error(error.message);
+
+		return data;
+	},
 };

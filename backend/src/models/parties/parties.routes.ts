@@ -11,4 +11,5 @@ export const partiesRouter = Router();
 partiesRouter.get("/", requireAuth, c.list);
 partiesRouter.post("/", requireAuth, validateBody(createPartySchema.shape.body), c.create);
 partiesRouter.get("/:partyId", requireAuth, c.getParty);
+partiesRouter.patch("/:partyId/locations", requireAuth, c.updateLocations);
 partiesRouter.post("/:partyId/join", requireAuth, c.join);

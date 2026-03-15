@@ -20,21 +20,18 @@ export class AppError extends Error {
 	}
 }
 
-export function errorHandler(
-	err: any,
-	req: Request,
-	res: Response,
-	_next: NextFunction,
-) {
-	logger.error({ err, path: req.path, method: req.method }, "Unhandled error");
+export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
+  logger.error({ err, path: req.path, method: req.method }, "Unhandled error");
 
-	const status = typeof err?.status === "number" ? err.status : 500;
-	const message = err?.message ?? "Internal Server Error";
+  const status = typeof err?.status === "number" ? err.status : 500;
+  const message = err?.message ?? "Internal Server Error";
 
-	res.status(status).json({
-		success: false,
-		message,
-		...(err?.code ? { code: err.code } : {}),
-		...(err?.details ? { details: err.details } : {}),
-	});
+  res.status(status).json({
+    ok: false,
+    error: {
+      message,
+      code: err?.code ?? "INTERNAL_ERROR",
+      details: err?.details,
+    },
+  });
 }

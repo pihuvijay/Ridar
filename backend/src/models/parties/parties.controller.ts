@@ -54,20 +54,33 @@ export async function updateLocations(req: AuthedRequest, res: Response, next: N
     const { partyId } = req.params;
     const { pickup, destination } = req.body;
 
+    if (!pickup && !destination) {
+      return res.status(400).json({
+        ok: false,
+        error: { message: "pickup or destination required" },
+      });
+    }
+
     const data = await partiesService.updatePartyLocations(partyId, {
       pickup,
       destination,
     });
 
     res.json({ ok: true, data });
-  } catch (e) {
+  } catch (e: any) {
+    if (e instanceof Error && e.message === "Party not found") {
+      return res.status(404).json({
+        ok: false,
+        error: { message: "Party not found" },
+      });
+    }
     next(e);
   }
 }
 
 export async function join(req: AuthedRequest, res: Response, next: NextFunction) {
   try {
-    const userId = req.user!.id;
+    const userId = req.body.userId ?? req.user!.id;
     const { partyId } = req.params;
     const { dropoff, status } = req.body;
 
@@ -77,7 +90,13 @@ export async function join(req: AuthedRequest, res: Response, next: NextFunction
     });
 
     res.status(201).json({ ok: true, data });
-  } catch (e) {
+  } catch (e: any) {
+    if (e instanceof Error && e.message === "Party not found") {
+      return res.status(404).json({
+        ok: false,
+        error: { message: "Party not found" },
+      });
+    }
     next(e);
   }
 }

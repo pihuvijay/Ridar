@@ -1,336 +1,216 @@
-import React, { useState } from "react";
+import React from "react";
 import {
 	View,
 	Text,
 	ScrollView,
-	Pressable,
 	StyleSheet,
 	SafeAreaView,
-	Modal,
-	TextInput,
+	Pressable,
 } from "react-native";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
-interface Rider {
+interface PartyMember {
 	id: string;
 	name: string;
 	initial: string;
-	isCreator: boolean;
-	isSelf: boolean;
+	status: string;
+	isLeader: boolean;
 }
 
-interface RideInsightsScreenProps {
-	rideGroup: any;
-	onAddReport: (report: any) => void;
-	onDone: () => void;
+interface WaitScreenProps {
+	rideGroup?: any;
+	onContinue: () => void;
 }
 
-const REPORT_REASONS = [
-	"Aggressive Behavior",
-	"Inappropriate Conduct",
-	"Safety Concern",
-	"No Show",
-	"Other",
+const mockPartyMembers: PartyMember[] = [
+	{
+		id: "1",
+		name: "ndfjv",
+		initial: "n",
+		status: "At pickup point",
+		isLeader: false,
+	},
+	{
+		id: "2",
+		name: "Alex P.",
+		initial: "A",
+		status: "At pickup point",
+		isLeader: true,
+	},
 ];
 
-const mockPartyRiders: Rider[] = [
-	{ id: "1", name: "Sarah M.", initial: "S", isCreator: true, isSelf: false },
-	{ id: "2", name: "Alex P.", initial: "A", isCreator: false, isSelf: false },
-	{ id: "3", name: "You", initial: "Y", isCreator: false, isSelf: true },
-];
+const driverInfo = {
+	name: "David Smith",
+	vehicle: "Silver Toyota Prius",
+	licensePlate: "AB12 CDE",
+	distance: "2.1 miles away",
+	arrivalTime: "8 min",
+};
 
-export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
+const pickupLocation = "North Station - Main Entrance";
+
+export const WaitScreen: React.FC<WaitScreenProps> = ({
 	rideGroup,
-	onAddReport,
-	onDone,
+	onContinue,
 }) => {
-	const [reportModalVisible, setReportModalVisible] = useState(false);
-	const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
-	const [selectedReason, setSelectedReason] = useState("");
-	const [reportDescription, setReportDescription] = useState("");
-	const [reportSubmitted, setReportSubmitted] = useState(false);
-
-	const destination = rideGroup?.destination || "Downtown Financial District";
-	const pickup = rideGroup?.pickup || "North Station - Main Entrance";
-	const price = rideGroup?.price || 8;
-	const etaMinutes = 23;
-	const co2SavedKg = 1.8;
-
-	const openReportModal = (rider: Rider) => {
-		setSelectedRider(rider);
-		setSelectedReason("");
-		setReportDescription("");
-		setReportSubmitted(false);
-		setReportModalVisible(true);
-	};
-
-	const handleSubmitReport = () => {
-		if (!selectedReason || !selectedRider) return;
-		onAddReport({
-			id: Date.now().toString(),
-			reporterName: "You",
-			reportedUserName: selectedRider.name,
-			reason: selectedReason,
-			timestamp: "Just now",
-			status: "pending",
-			description: reportDescription || "No additional details provided.",
-		});
-		setReportSubmitted(true);
-	};
-
-	const handleCloseReport = () => {
-		setReportModalVisible(false);
-		setSelectedRider(null);
-		setSelectedReason("");
-		setReportDescription("");
-		setReportSubmitted(false);
-	};
+	const allMembersPresent = true;
+	const waitingForLeader = true;
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<View style={styles.headerContent}>
-					<Text style={styles.headerTitle}>Ride Insights</Text>
-					<Text style={styles.headerSubtitle}>{destination}</Text>
+			{/* Top Section - Driver Arrival Countdown */}
+			<View style={styles.topSection}>
+				<View style={styles.pickupMarker}>
+					<Text style={styles.pickupMarkerIcon}>📍</Text>
 				</View>
-				<View style={styles.activeBadge}>
-					<View style={styles.activeDot} />
-					<Text style={styles.activeBadgeText}>Active</Text>
+
+				<View style={styles.arrivalCard}>
+					<Text style={styles.arrivalLabel}>Driver arriving in</Text>
+					<Text style={styles.arrivalTime}>
+						{driverInfo.arrivalTime}
+					</Text>
+				</View>
+
+				<View style={styles.vehicleIcon}>
+					<Text style={styles.vehicleEmoji}>🚗</Text>
 				</View>
 			</View>
 
-			<ScrollView
-				style={styles.scroll}
-				contentContainerStyle={styles.scrollContent}
-			>
-				<View style={styles.statsRow}>
-					<View style={[styles.statCard, styles.statCardEta]}>
-						<Text style={styles.statIcon}>🕐</Text>
-						<Text style={styles.statValue}>{etaMinutes} min</Text>
-						<Text style={styles.statLabel}>Est. Arrival</Text>
-					</View>
-					<View style={[styles.statCard, styles.statCardCo2]}>
-						<Text style={styles.statIcon}>🌿</Text>
-						<Text style={styles.statValue}>{co2SavedKg} kg</Text>
-						<Text style={styles.statLabel}>CO2 Saved</Text>
-					</View>
-				</View>
-
-				<View style={styles.co2ContextCard}>
-					<Text style={styles.co2ContextIcon}>♻️</Text>
-					<View style={styles.co2ContextContent}>
-						<Text style={styles.co2ContextTitle}>
-							Great choice sharing this ride!
-						</Text>
-						<Text style={styles.co2ContextText}>
-							You and your party saved{" "}
-							{(co2SavedKg * mockPartyRiders.length).toFixed(1)}{" "}
-							kg of CO2 combined versus driving separately.
+			{/* Bottom Section - Ride Details */}
+			<View style={styles.bottomSection}>
+				{/* Driver Info Header */}
+				<View style={styles.driverSection}>
+					<View style={styles.driverAvatar}>
+						<Text style={styles.driverAvatarText}>
+							{driverInfo.name.charAt(0)}
 						</Text>
 					</View>
-				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Ride Details</Text>
-					<View style={styles.routeRow}>
-						<View style={styles.routeDots}>
-							<View style={styles.dotGreen} />
-							<View style={styles.routeLine} />
-							<View style={styles.dotDark} />
+					<View style={styles.driverInfo}>
+						<Text style={styles.driverName}>{driverInfo.name}</Text>
+						<View style={styles.vehicleDetails}>
+							<Text style={styles.vehicleModel}>
+								{driverInfo.vehicle}
+							</Text>
+							<View style={styles.licensePlate}>
+								<Text style={styles.licensePlateText}>
+									{driverInfo.licensePlate}
+								</Text>
+							</View>
 						</View>
-						<View style={styles.routeLabels}>
-							<Text style={styles.routeLocation}>{pickup}</Text>
-							<Text style={styles.routeLocation}>
-								{destination}
+						<View style={styles.distanceRow}>
+							<Text style={styles.distanceIcon}>📍</Text>
+							<Text style={styles.distanceText}>
+								{driverInfo.distance}
 							</Text>
 						</View>
 					</View>
-					<View style={styles.divider} />
-					<View style={styles.detailRow}>
-						<Text style={styles.detailIcon}>💷</Text>
-						<Text style={styles.detailText}>£{price}/person</Text>
+
+					<Pressable style={styles.contactButton}>
+						<Text style={styles.contactIcon}>📞</Text>
+					</Pressable>
+				</View>
+
+				<View style={styles.divider} />
+
+				{/* Pickup Location */}
+				<View style={styles.pickupSection}>
+					<View style={styles.locationRow}>
+						<Text style={styles.locationIcon}>📍</Text>
+						<View style={styles.locationContent}>
+							<Text style={styles.locationLabel}>
+								Pickup Location
+							</Text>
+							<Text style={styles.locationName}>
+								{pickupLocation}
+							</Text>
+						</View>
 					</View>
-					<View style={styles.detailRow}>
-						<Text style={styles.detailIcon}>👥</Text>
-						<Text style={styles.detailText}>
-							{mockPartyRiders.length} riders sharing
+				</View>
+
+				<View style={styles.divider} />
+
+				{/* Party Members */}
+				<View style={styles.partySection}>
+					<View style={styles.partyHeader}>
+						<Text style={styles.partyIcon}>👥</Text>
+						<Text style={styles.partyTitle}>
+							Your Party ({mockPartyMembers.length})
 						</Text>
 					</View>
-				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Your Party</Text>
-					{mockPartyRiders.map((rider) => (
-						<View key={rider.id} style={styles.riderRow}>
-							<View style={styles.riderAvatar}>
-								<Text style={styles.riderAvatarText}>
-									{rider.initial}
-								</Text>
-							</View>
-							<View style={styles.riderInfo}>
-								<Text style={styles.riderName}>
-									{rider.name}
-									{rider.isSelf ? "  (You)" : ""}
-								</Text>
-								{rider.isCreator && (
-									<View style={styles.creatorBadge}>
-										<Text style={styles.creatorText}>
-											Creator
-										</Text>
-									</View>
-								)}
-							</View>
-							{!rider.isSelf && (
-								<Pressable
-									style={styles.reportButton}
-									onPress={() => openReportModal(rider)}
-								>
-									<Text style={styles.reportButtonText}>
-										Report
+					<View style={styles.membersList}>
+						{mockPartyMembers.map((member) => (
+							<View key={member.id} style={styles.memberCard}>
+								<View style={styles.memberAvatar}>
+									<Text style={styles.memberAvatarText}>
+										{member.initial}
 									</Text>
-								</Pressable>
-							)}
-						</View>
-					))}
-				</View>
-			</ScrollView>
-
-			<View style={styles.footer}>
-				<Pressable style={styles.doneButton} onPress={onDone}>
-					<Text style={styles.doneButtonText}>Back to Map</Text>
-				</Pressable>
-			</View>
-
-			<Modal
-				visible={reportModalVisible}
-				transparent
-				animationType="slide"
-				onRequestClose={handleCloseReport}
-			>
-				<View style={styles.modalOverlay}>
-					<View style={styles.modalSheet}>
-						{reportSubmitted ? (
-							<View style={styles.reportSuccess}>
-								<Text style={styles.reportSuccessIcon}>✓</Text>
-								<Text style={styles.reportSuccessTitle}>
-									Report Submitted
-								</Text>
-								<Text style={styles.reportSuccessText}>
-									Thank you. Our moderation team will review
-									your report.
-								</Text>
-								<Pressable
-									style={styles.closeButton}
-									onPress={handleCloseReport}
-								>
-									<Text style={styles.closeButtonText}>
-										Close
-									</Text>
-								</Pressable>
-							</View>
-						) : (
-							<>
-								<View style={styles.modalHeader}>
-									<Text style={styles.modalTitle}>
-										Report User
-									</Text>
-									<Pressable onPress={handleCloseReport}>
-										<Text style={styles.modalCloseIcon}>
-											✕
-										</Text>
-									</Pressable>
-								</View>
-
-								{selectedRider && (
-									<View style={styles.reportingUserRow}>
-										<View style={styles.reportingAvatar}>
+									{member.isLeader && (
+										<View style={styles.leaderBadge}>
 											<Text
-												style={
-													styles.reportingAvatarText
-												}
+												style={styles.leaderBadgeText}
 											>
-												{selectedRider.initial}
+												👑
 											</Text>
 										</View>
-										<View>
-											<Text style={styles.reportingLabel}>
-												Reporting
-											</Text>
-											<Text style={styles.reportingName}>
-												{selectedRider.name}
-											</Text>
-										</View>
+									)}
+								</View>
+
+								<View style={styles.memberInfo}>
+									<View style={styles.memberNameRow}>
+										<Text style={styles.memberName}>
+											{member.name}
+										</Text>
+										{member.isLeader && (
+											<View style={styles.leaderLabel}>
+												<Text
+													style={
+														styles.leaderLabelText
+													}
+												>
+													Leader
+												</Text>
+											</View>
+										)}
 									</View>
-								)}
-
-								<Text style={styles.reasonTitle}>Reason</Text>
-								<View style={styles.reasonList}>
-									{REPORT_REASONS.map((reason) => (
-										<Pressable
-											key={reason}
-											style={[
-												styles.reasonChip,
-												selectedReason === reason &&
-													styles.reasonChipSelected,
-											]}
-											onPress={() =>
-												setSelectedReason(reason)
-											}
-										>
-											<Text
-												style={[
-													styles.reasonChipText,
-													selectedReason === reason &&
-														styles.reasonChipTextSelected,
-												]}
-											>
-												{reason}
-											</Text>
-										</Pressable>
-									))}
+									<Text style={styles.memberStatus}>
+										{member.status}
+									</Text>
 								</View>
 
-								<Text style={styles.descriptionLabel}>
-									Additional details (optional)
+								<Text style={styles.checkmark}>✓</Text>
+							</View>
+						))}
+					</View>
+
+					{/* Status Messages */}
+					<View style={styles.statusMessages}>
+						{allMembersPresent && (
+							<View style={styles.successMessage}>
+								<Text style={styles.successIcon}>✓</Text>
+								<Text style={styles.successText}>
+									All members are here!
 								</Text>
-								<TextInput
-									style={styles.descriptionInput}
-									placeholder="Describe what happened..."
-									placeholderTextColor={COLORS.textSecondary}
-									value={reportDescription}
-									onChangeText={setReportDescription}
-									multiline
-									numberOfLines={3}
-								/>
+							</View>
+						)}
 
-								<View style={styles.modalActions}>
-									<Pressable
-										style={styles.cancelButton}
-										onPress={handleCloseReport}
-									>
-										<Text style={styles.cancelButtonText}>
-											Cancel
-										</Text>
-									</Pressable>
-									<Pressable
-										style={[
-											styles.submitButton,
-											!selectedReason &&
-												styles.submitButtonDisabled,
-										]}
-										onPress={handleSubmitReport}
-										disabled={!selectedReason}
-									>
-										<Text style={styles.submitButtonText}>
-											Submit Report
-										</Text>
-									</Pressable>
-								</View>
-							</>
+						{waitingForLeader && (
+							<View style={styles.infoMessage}>
+								<Text style={styles.infoIcon}>⏳</Text>
+								<Text style={styles.infoText}>
+									Waiting for party leader to book the ride...
+								</Text>
+							</View>
 						)}
 					</View>
 				</View>
-			</Modal>
+
+				{/* Action Button */}
+				<Pressable style={styles.continueButton} onPress={onContinue}>
+					<Text style={styles.continueButtonText}>Ready to Go</Text>
+				</Pressable>
+			</View>
 		</SafeAreaView>
 	);
 };
@@ -338,426 +218,305 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: COLORS.background,
+		backgroundColor: COLORS.primaryLight,
 	},
-	header: {
-		flexDirection: "row",
+	topSection: {
+		flex: 0.3,
+		justifyContent: "center",
 		alignItems: "center",
-		justifyContent: "space-between",
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderBottomWidth: 1,
-		borderBottomColor: COLORS.border,
-		backgroundColor: COLORS.background,
+		position: "relative",
 	},
-	headerContent: {
-		gap: SPACING.xs,
+	pickupMarker: {
+		position: "absolute",
+		left: 30,
+		fontSize: FONT_SIZES.xxl,
 	},
-	headerTitle: {
-		fontSize: FONT_SIZES.lg,
-		fontWeight: "700",
+	pickupMarkerIcon: {
+		fontSize: FONT_SIZES.xxl,
 		color: COLORS.primary,
 	},
-	headerSubtitle: {
+	arrivalCard: {
+		backgroundColor: COLORS.background,
+		borderRadius: BORDER_RADIUS.full,
+		paddingHorizontal: SPACING.lg,
+		paddingVertical: SPACING.md,
+		alignItems: "center",
+		gap: SPACING.sm,
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.1,
+		shadowRadius: 8,
+		elevation: 4,
+	},
+	arrivalLabel: {
 		fontSize: FONT_SIZES.sm,
 		color: COLORS.textSecondary,
 	},
-	activeBadge: {
-		flexDirection: "row",
-		alignItems: "center",
-		backgroundColor: COLORS.success + "20",
-		borderRadius: BORDER_RADIUS.full,
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
-		gap: SPACING.sm,
-	},
-	activeDot: {
-		width: 8,
-		height: 8,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.success,
-	},
-	activeBadgeText: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.success,
-	},
-	scroll: {
-		flex: 1,
-	},
-	scrollContent: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		gap: SPACING.md,
-	},
-	statsRow: {
-		flexDirection: "row",
-		gap: SPACING.md,
-	},
-	statCard: {
-		flex: 1,
-		borderRadius: BORDER_RADIUS.xl,
-		paddingVertical: SPACING.xl,
-		alignItems: "center",
-		gap: SPACING.sm,
-		borderWidth: 1,
-	},
-	statCardEta: {
-		backgroundColor: COLORS.info + "10",
-		borderColor: COLORS.info + "30",
-	},
-	statCardCo2: {
-		backgroundColor: COLORS.success + "10",
-		borderColor: COLORS.success + "30",
-	},
-	statIcon: {
-		fontSize: FONT_SIZES.xxl,
-	},
-	statValue: {
+	arrivalTime: {
 		fontSize: FONT_SIZES.xxl,
 		fontWeight: "700",
 		color: COLORS.primary,
 	},
-	statLabel: {
-		fontSize: FONT_SIZES.xs,
-		color: COLORS.textSecondary,
-		fontWeight: "500",
+	vehicleIcon: {
+		position: "absolute",
+		right: 30,
+		fontSize: FONT_SIZES.xxl,
 	},
-	co2ContextCard: {
+	vehicleEmoji: {
+		fontSize: FONT_SIZES.xxl,
+	},
+	bottomSection: {
+		flex: 0.7,
+		backgroundColor: COLORS.background,
+		borderTopLeftRadius: BORDER_RADIUS.xl,
+		borderTopRightRadius: BORDER_RADIUS.xl,
+		paddingTop: SPACING.lg,
+		paddingHorizontal: SPACING.md,
+		paddingBottom: SPACING.lg,
+		gap: SPACING.md,
+	},
+	driverSection: {
 		flexDirection: "row",
 		alignItems: "flex-start",
-		backgroundColor: COLORS.success + "10",
-		borderRadius: BORDER_RADIUS.lg,
-		padding: SPACING.md,
-		borderWidth: 1,
-		borderColor: COLORS.success + "30",
 		gap: SPACING.md,
+		paddingBottom: SPACING.md,
 	},
-	co2ContextIcon: {
-		fontSize: FONT_SIZES.lg,
-		marginTop: SPACING.xs,
+	driverAvatar: {
+		width: 60,
+		height: 60,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.primary,
+		justifyContent: "center",
+		alignItems: "center",
 	},
-	co2ContextContent: {
+	driverAvatarText: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.xxl,
+		fontWeight: "700",
+	},
+	driverInfo: {
 		flex: 1,
-		gap: SPACING.xs,
+		gap: SPACING.sm,
 	},
-	co2ContextTitle: {
-		fontSize: FONT_SIZES.sm,
+	driverName: {
+		fontSize: FONT_SIZES.base,
 		fontWeight: "600",
 		color: COLORS.primary,
 	},
-	co2ContextText: {
+	vehicleDetails: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: SPACING.sm,
+	},
+	vehicleModel: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
+	},
+	licensePlate: {
+		backgroundColor: COLORS.primaryLight,
+		paddingHorizontal: SPACING.sm,
+		paddingVertical: SPACING.xs,
+		borderRadius: BORDER_RADIUS.md,
+	},
+	licensePlateText: {
 		fontSize: FONT_SIZES.xs,
 		color: COLORS.textSecondary,
-		lineHeight: 18,
+		fontFamily: "Courier New",
 	},
-	card: {
-		backgroundColor: COLORS.background,
-		borderRadius: BORDER_RADIUS.xl,
-		padding: SPACING.md,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		gap: SPACING.md,
-	},
-	cardTitle: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	routeRow: {
+	distanceRow: {
 		flexDirection: "row",
-		alignItems: "stretch",
-		gap: SPACING.md,
-	},
-	routeDots: {
 		alignItems: "center",
-		paddingTop: SPACING.xs,
-		gap: 0,
+		gap: SPACING.sm,
 	},
-	dotGreen: {
-		width: 10,
-		height: 10,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.success,
+	distanceIcon: {
+		fontSize: FONT_SIZES.base,
 	},
-	routeLine: {
-		width: 2,
-		flex: 1,
-		backgroundColor: COLORS.border,
-		marginVertical: SPACING.xs,
-	},
-	dotDark: {
-		width: 10,
-		height: 10,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.primary,
-	},
-	routeLabels: {
-		flex: 1,
-		justifyContent: "space-between",
-		paddingVertical: SPACING.xs,
-		gap: SPACING.xl,
-	},
-	routeLocation: {
+	distanceText: {
 		fontSize: FONT_SIZES.sm,
-		fontWeight: "500",
-		color: COLORS.primary,
+		color: COLORS.textSecondary,
+	},
+	contactButton: {
+		width: 40,
+		height: 40,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.primaryLight,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	contactIcon: {
+		fontSize: FONT_SIZES.lg,
 	},
 	divider: {
 		height: 1,
 		backgroundColor: COLORS.border,
 	},
-	detailRow: {
+	pickupSection: {
+		paddingVertical: SPACING.md,
+	},
+	locationRow: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		gap: SPACING.md,
+	},
+	locationIcon: {
+		fontSize: FONT_SIZES.lg,
+		marginTop: SPACING.xs,
+	},
+	locationContent: {
+		flex: 1,
+		gap: SPACING.xs,
+	},
+	locationLabel: {
+		fontSize: FONT_SIZES.xs,
+		color: COLORS.textSecondary,
+	},
+	locationName: {
+		fontSize: FONT_SIZES.base,
+		fontWeight: "600",
+		color: COLORS.primary,
+	},
+	partySection: {
+		gap: SPACING.md,
+		paddingVertical: SPACING.md,
+	},
+	partyHeader: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: SPACING.sm,
 	},
-	detailIcon: {
+	partyIcon: {
+		fontSize: FONT_SIZES.lg,
+	},
+	partyTitle: {
 		fontSize: FONT_SIZES.base,
-	},
-	detailText: {
-		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
 		color: COLORS.primary,
-		fontWeight: "500",
 	},
-	riderRow: {
+	membersList: {
+		gap: SPACING.sm,
+	},
+	memberCard: {
 		flexDirection: "row",
 		alignItems: "center",
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.success + "15",
+		borderWidth: 1,
+		borderColor: COLORS.success + "40",
 		gap: SPACING.md,
-		paddingVertical: SPACING.sm,
 	},
-	riderAvatar: {
+	memberAvatar: {
 		width: 40,
 		height: 40,
 		borderRadius: BORDER_RADIUS.full,
 		backgroundColor: COLORS.primary,
 		justifyContent: "center",
 		alignItems: "center",
+		position: "relative",
 	},
-	riderAvatarText: {
+	memberAvatarText: {
 		color: COLORS.textLight,
 		fontSize: FONT_SIZES.base,
 		fontWeight: "700",
 	},
-	riderInfo: {
+	leaderBadge: {
+		position: "absolute",
+		top: -8,
+		right: -8,
+		width: 28,
+		height: 28,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.accentYellow,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	leaderBadgeText: {
+		fontSize: FONT_SIZES.sm,
+	},
+	memberInfo: {
 		flex: 1,
+		gap: SPACING.xs,
+	},
+	memberNameRow: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: SPACING.sm,
-		flexWrap: "wrap",
 	},
-	riderName: {
+	memberName: {
 		fontSize: FONT_SIZES.sm,
 		fontWeight: "600",
 		color: COLORS.primary,
 	},
-	creatorBadge: {
+	leaderLabel: {
 		backgroundColor: COLORS.accentYellow,
 		paddingHorizontal: SPACING.sm,
 		paddingVertical: SPACING.xs,
 		borderRadius: BORDER_RADIUS.full,
 	},
-	creatorText: {
+	leaderLabelText: {
 		fontSize: FONT_SIZES.xs,
 		color: "#a65f00",
 		fontWeight: "500",
 	},
-	reportButton: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
-		borderRadius: BORDER_RADIUS.full,
-		borderWidth: 1,
-		borderColor: COLORS.danger,
-	},
-	reportButtonText: {
+	memberStatus: {
 		fontSize: FONT_SIZES.xs,
-		color: COLORS.danger,
-		fontWeight: "600",
+		color: COLORS.textSecondary,
 	},
-	footer: {
+	checkmark: {
+		fontSize: FONT_SIZES.lg,
+		color: COLORS.success,
+	},
+	statusMessages: {
+		gap: SPACING.md,
+		marginTop: SPACING.md,
+	},
+	successMessage: {
+		flexDirection: "row",
+		alignItems: "center",
 		paddingHorizontal: SPACING.md,
 		paddingVertical: SPACING.md,
-		borderTopWidth: 1,
-		borderTopColor: COLORS.border,
-		backgroundColor: COLORS.background,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.success + "15",
+		borderWidth: 1,
+		borderColor: COLORS.success + "40",
+		gap: SPACING.md,
 	},
-	doneButton: {
+	successIcon: {
+		fontSize: FONT_SIZES.lg,
+		color: COLORS.success,
+	},
+	successText: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.success,
+		fontWeight: "600",
+	},
+	infoMessage: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingHorizontal: SPACING.md,
+		paddingVertical: SPACING.md,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.primaryLight,
+		borderWidth: 1,
+		borderColor: COLORS.border,
+		gap: SPACING.md,
+	},
+	infoIcon: {
+		fontSize: FONT_SIZES.lg,
+	},
+	infoText: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
+	},
+	continueButton: {
 		paddingVertical: SPACING.lg,
 		borderRadius: BORDER_RADIUS.lg,
 		backgroundColor: COLORS.primary,
 		alignItems: "center",
-	},
-	doneButtonText: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.textLight,
-	},
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: COLORS.overlay,
-		justifyContent: "flex-end",
-	},
-	modalSheet: {
-		backgroundColor: COLORS.background,
-		borderTopLeftRadius: BORDER_RADIUS.xl,
-		borderTopRightRadius: BORDER_RADIUS.xl,
-		paddingHorizontal: SPACING.md,
-		paddingTop: SPACING.lg,
-		paddingBottom: SPACING.xxl,
-		gap: SPACING.md,
-	},
-	modalHeader: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-	},
-	modalTitle: {
-		fontSize: FONT_SIZES.lg,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	modalCloseIcon: {
-		fontSize: FONT_SIZES.lg,
-		color: COLORS.textSecondary,
-		padding: SPACING.sm,
-	},
-	reportingUserRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: SPACING.md,
-		backgroundColor: COLORS.primaryLight,
-		borderRadius: BORDER_RADIUS.lg,
-		padding: SPACING.md,
-	},
-	reportingAvatar: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.primary,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	reportingAvatarText: {
-		color: COLORS.textLight,
-		fontSize: FONT_SIZES.base,
-		fontWeight: "700",
-	},
-	reportingLabel: {
-		fontSize: FONT_SIZES.xs,
-		color: COLORS.textSecondary,
-	},
-	reportingName: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.primary,
-	},
-	reasonTitle: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.primary,
-	},
-	reasonList: {
-		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: SPACING.sm,
-	},
-	reasonChip: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
-		borderRadius: BORDER_RADIUS.full,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		backgroundColor: COLORS.primaryLight,
-	},
-	reasonChipSelected: {
-		borderColor: COLORS.danger,
-		backgroundColor: COLORS.danger + "15",
-	},
-	reasonChipText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-	},
-	reasonChipTextSelected: {
-		color: COLORS.danger,
-		fontWeight: "600",
-	},
-	descriptionLabel: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.primary,
-	},
-	descriptionInput: {
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		borderRadius: BORDER_RADIUS.lg,
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.text,
-		textAlignVertical: "top",
-		minHeight: 80,
-	},
-	modalActions: {
-		flexDirection: "row",
-		gap: SPACING.md,
-		marginTop: SPACING.sm,
-	},
-	cancelButton: {
-		flex: 1,
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		alignItems: "center",
-	},
-	cancelButtonText: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.textSecondary,
-	},
-	submitButton: {
-		flex: 2,
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.danger,
-		alignItems: "center",
-	},
-	submitButtonDisabled: {
-		backgroundColor: COLORS.disabled,
-	},
-	submitButtonText: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.textLight,
-	},
-	reportSuccess: {
-		alignItems: "center",
-		paddingVertical: SPACING.xl,
-		gap: SPACING.md,
-	},
-	reportSuccessIcon: {
-		fontSize: 48,
-		color: COLORS.success,
-	},
-	reportSuccessTitle: {
-		fontSize: FONT_SIZES.lg,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	reportSuccessText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-		textAlign: "center",
-		lineHeight: 22,
-	},
-	closeButton: {
 		marginTop: SPACING.md,
-		paddingVertical: SPACING.md,
-		paddingHorizontal: SPACING.xxl,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.primary,
 	},
-	closeButtonText: {
+	continueButtonText: {
 		fontSize: FONT_SIZES.base,
 		fontWeight: "600",
 		color: COLORS.textLight,

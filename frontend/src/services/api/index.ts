@@ -31,6 +31,21 @@ export type SignUpData = {
 
 export type AuthResponse = (ApiSuccess<any> & { token?: string }) | ApiError;
 
+export type EmailCodeSendResponse = {
+	success: boolean;
+	sent?: boolean;
+	message?: string;
+	status?: number;
+};
+
+export type EmailVerificationResponse = {
+	success: boolean;
+	verified?: boolean;
+	isValid?: boolean;
+	message?: string;
+	status?: number;
+};
+
 function isApiError(x: any): x is ApiError {
 	return x && typeof x === "object" && x.success === false;
 }

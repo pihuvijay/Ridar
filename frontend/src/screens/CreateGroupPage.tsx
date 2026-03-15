@@ -61,7 +61,7 @@ export const CreateGroupPage = ({
 				lng: 0,
 				label: finalDestination.trim(),
 			},
-			leaveBy: departureTime.trim() || null,
+			leaveBy: new Date().toISOString() || null,
 		};
 
 		if (!Number.isFinite(payload.maxMembers) || payload.maxMembers < 2) {
@@ -91,6 +91,8 @@ export const CreateGroupPage = ({
 				}
 				return;
 			}
+
+			onCreateGroup(response.data);
 		} catch (error) {
 			Alert.alert(
 				"Error",
