@@ -72,7 +72,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
       <Text
         style={
           {
-            "color": "#1d2838",
+            "color": "#1a4d2e",
             "fontSize": 24,
           }
         }
@@ -83,7 +83,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
     <Text
       style={
         {
-          "color": "#1d2838",
+          "color": "#1a4d2e",
           "fontSize": 16,
           "fontWeight": "600",
         }
@@ -128,7 +128,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
         <Text
           style={
             {
-              "color": "#1d2838",
+              "color": "#1a4d2e",
               "fontSize": 16,
               "fontWeight": "600",
             }
@@ -147,7 +147,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#495566",
+                "color": "#1a4d2e",
                 "fontSize": 14,
                 "fontWeight": "500",
               }
@@ -159,7 +159,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "borderColor": "#d0d5db",
+                "borderColor": "#1a4d2e33",
                 "borderRadius": 10,
                 "borderWidth": 1.4,
                 "flexDirection": "row",
@@ -182,10 +182,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               accessibilityLabel="Pickup point"
               onChangeText={[Function]}
               placeholder="Where will you pick up riders?"
-              placeholderTextColor="#0a0a0a80"
+              placeholderTextColor="#1a4d2e70"
               style={
                 {
-                  "color": "#0a0a0a",
+                  "color": "#1a4d2e",
                   "flex": 1,
                   "fontSize": 14,
                   "paddingVertical": 8,
@@ -215,7 +215,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495566",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                 }
@@ -260,7 +260,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#155cfb",
+                    "color": "#1a4d2e",
                     "fontSize": 14,
                     "fontWeight": "600",
                   }
@@ -274,7 +274,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "borderColor": "#d0d5db",
+                "borderColor": "#1a4d2e33",
                 "borderRadius": 10,
                 "borderWidth": 1.4,
                 "flexDirection": "row",
@@ -297,10 +297,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               accessibilityLabel="Optional stops"
               onChangeText={[Function]}
               placeholder="Add intermediate stops"
-              placeholderTextColor="#0a0a0a80"
+              placeholderTextColor="#1a4d2e70"
               style={
                 {
-                  "color": "#0a0a0a",
+                  "color": "#1a4d2e",
                   "flex": 1,
                   "fontSize": 14,
                   "paddingVertical": 8,
@@ -312,7 +312,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#697282",
+                "color": "#1a4d2e70",
                 "fontSize": 12,
                 "marginTop": 4,
               }
@@ -332,7 +332,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#495566",
+                "color": "#1a4d2e",
                 "fontSize": 14,
                 "fontWeight": "500",
               }
@@ -344,7 +344,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "borderColor": "#d0d5db",
+                "borderColor": "#1a4d2e33",
                 "borderRadius": 10,
                 "borderWidth": 1.4,
                 "flexDirection": "row",
@@ -367,10 +367,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               accessibilityLabel="Final destination"
               onChangeText={[Function]}
               placeholder="Where are you heading?"
-              placeholderTextColor="#0a0a0a80"
+              placeholderTextColor="#1a4d2e70"
               style={
                 {
-                  "color": "#0a0a0a",
+                  "color": "#1a4d2e",
                   "flex": 1,
                   "fontSize": 14,
                   "paddingVertical": 8,
@@ -402,7 +402,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
         <Text
           style={
             {
-              "color": "#1d2838",
+              "color": "#1a4d2e",
               "fontSize": 16,
               "fontWeight": "600",
             }
@@ -421,7 +421,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#495566",
+                "color": "#1a4d2e",
                 "fontSize": 14,
                 "fontWeight": "500",
               }
@@ -433,7 +433,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "borderColor": "#d0d5db",
+                "borderColor": "#1a4d2e33",
                 "borderRadius": 10,
                 "borderWidth": 1.4,
                 "flexDirection": "row",
@@ -456,10 +456,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               accessibilityLabel="Departure time"
               onChangeText={[Function]}
               placeholder="Select departure time"
-              placeholderTextColor="#0a0a0a80"
+              placeholderTextColor="#1a4d2e70"
               style={
                 {
-                  "color": "#0a0a0a",
+                  "color": "#1a4d2e",
                   "flex": 1,
                   "fontSize": 14,
                   "paddingVertical": 8,
@@ -493,7 +493,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495566",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                 }
@@ -505,7 +505,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               style={
                 {
                   "alignItems": "center",
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.4,
                   "flexDirection": "row",
@@ -529,10 +529,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
                 keyboardType="number-pad"
                 onChangeText={[Function]}
                 placeholder="4"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor="#1a4d2e70"
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "flex": 1,
                     "fontSize": 14,
                     "paddingVertical": 8,
@@ -558,7 +558,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495566",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                 }
@@ -570,7 +570,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               style={
                 {
                   "alignItems": "center",
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.4,
                   "flexDirection": "row",
@@ -594,10 +594,10 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
                 keyboardType="decimal-pad"
                 onChangeText={[Function]}
                 placeholder="10"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor="#1a4d2e70"
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "flex": 1,
                     "fontSize": 14,
                     "paddingVertical": 8,
@@ -632,7 +632,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495566",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                 }
@@ -643,7 +643,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <View
               style={
                 {
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.4,
                   "height": 48,
@@ -655,7 +655,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               <View
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "height": 48,
                   }
                 }
@@ -718,7 +718,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#697282",
+                  "color": "#1a4d2e70",
                   "fontSize": 12,
                   "marginTop": 4,
                 }
@@ -743,7 +743,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495566",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                 }
@@ -754,7 +754,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <View
               style={
                 {
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.4,
                   "height": 48,
@@ -766,7 +766,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
               <View
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "height": 48,
                   }
                 }
@@ -817,7 +817,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#697282",
+                  "color": "#1a4d2e70",
                   "fontSize": 12,
                   "marginTop": 4,
                 }
@@ -849,7 +849,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
         <Text
           style={
             {
-              "color": "#1d2838",
+              "color": "#1a4d2e",
               "fontSize": 16,
               "fontWeight": "600",
             }
@@ -881,7 +881,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#1d2838",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "600",
                   "marginBottom": 4,
@@ -893,7 +893,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#697282",
+                  "color": "#1a4d2e70",
                   "fontSize": 13,
                 }
               }
@@ -939,7 +939,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#1d2838",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "600",
                   "marginBottom": 4,
@@ -951,7 +951,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#697282",
+                  "color": "#1a4d2e70",
                   "fontSize": 13,
                 }
               }
@@ -997,7 +997,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#1d2838",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "600",
                   "marginBottom": 4,
@@ -1009,7 +1009,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#697282",
+                  "color": "#1a4d2e70",
                   "fontSize": 13,
                 }
               }
@@ -1064,7 +1064,7 @@ exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
         style={
           {
             "alignItems": "center",
-            "backgroundColor": "#155dfc",
+            "backgroundColor": "#1a4d2e",
             "borderRadius": 10,
             "elevation": 3,
             "marginBottom": 20,

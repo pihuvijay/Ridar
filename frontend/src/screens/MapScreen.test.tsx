@@ -1,5 +1,23 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+
+
+// idk what else to do, maybe add it to the config as a setup file?
+
+/*
+npm install --save-dev react-native-maps-mock
+"setupFiles": ["react-native-maps-mock"] ?
+}
+*/
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const MockMapView = (props: any) => <View {...props} />;
+  MockMapView.Marker = (props: any) => <View {...props} />;
+  MockMapView. PROVIDER_GOOGLE = 'google';
+  return MockMapView;
+});
+
 import { MapScreen } from './MapScreen';
 
 /*
@@ -17,61 +35,59 @@ i can't think of anything else :p
 */
 
 
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
 // snapshot test
 test('renders MapScreen correctly (snapshot test)', () => {
   const { toJSON } = render(<MapScreen />);
   expect(toJSON()).toMatchSnapshot(); 
 });
 
-
 // test 1
-test('Pressing to view available ride groups takes you to the onViewRideGroups section', () => {
+test('Pressing "View Available Ride Groups" calls onViewRideGroups', () => {
   const mockViewGroups = jest.fn();
-
-  const { getByText } = render(<MapScreen onViewRideGroups = {mockViewGroups} />);
+  const { getByText } = render(<MapScreen onViewRideGroups={mockViewGroups} />);
 
   fireEvent.press(getByText("View Available Ride Groups"));
-
   expect(mockViewGroups).toHaveBeenCalledTimes(1);
 });
 
-
 // test 2
-test('Pressing to create a new ride group takes you to CreateGroupPage.tsx', () => {
+test('Pressing "Create New Ride Group" calls onCreateRideGroup', () => {
   const mockCreateGroups = jest.fn();
-  const { getByText } = render(<MapScreen onCreateRideGroup = {mockCreateGroups} />);
+  const { getByText } = render(<MapScreen onCreateRideGroup={mockCreateGroups} />);
 
   fireEvent.press(getByText("Create New Ride Group"));
-  expect(mockCreateGroups).toHaveBeenCalled();
+  expect(mockCreateGroups).toHaveBeenCalledTimes(1);
 });
-
 
 // test 3
-test('Selecting menu opens the menu view', () => {
-  const mockView = jest.fn();
-  const { getByText } = render(<MapScreen onMenuPress = {mockView} />);
+test('Pressing "☰" calls onMenuPress', () => {
+  const mockMenu = jest.fn();
+  const { getByText } = render(<MapScreen onMenuPress={mockMenu} />);
 
   fireEvent.press(getByText("☰"));
-
-  expect(mockView).toHaveBeenCalled();
+  expect(mockMenu).toHaveBeenCalledTimes(1);
 });
 
-
 // test 4
-test('Pressing the settings icon takes you to the settings page', () => {
+test('Pressing "⚙️" calls onSettingsPress', () => {
   const mockSettings = jest.fn();
-  const { getByText } = render(<MapScreen onSettingsPress = {mockSettings} />);
+  const { getByText } = render(<MapScreen onSettingsPress={mockSettings} />);
 
   fireEvent.press(getByText("⚙️"));
-
-  expect(mockSettings).toHaveBeenCalled();
+  expect(mockSettings).toHaveBeenCalledTimes(1);
 });
 
 // test 5
-test('Selecting the profile section takes you to your profile page', () => {
+test('Pressing the username calls onProfilePress', () => {
   const mockProfile = jest.fn();
-  const { getByText } = render( <MapScreen userName = "Test User" onProfilePress = {mockProfile} />);
-  fireEvent.press(getByText("Test User"));
+  const { getByText } = render(
+    <MapScreen userName="Test User" onProfilePress={mockProfile} />
+  );
 
+  fireEvent.press(getByText("Test User"));
   expect(mockProfile).toHaveBeenCalledTimes(1);
 });

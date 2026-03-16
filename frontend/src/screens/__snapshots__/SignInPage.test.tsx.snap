@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders SignInPage correctly (snapshot test) 1`] = `
+exports[`renders SignInPage correctly (snapshot) 1`] = `
 <RCTScrollView
   contentContainerStyle={
     {
@@ -18,8 +18,8 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
     <ViewManagerAdapter_ExpoLinearGradient
       colors={
         [
-          4281040895,
-          4288155898,
+          4279913774,
+          4281170514,
         ]
       }
       endPoint={
@@ -98,7 +98,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#daeafe",
+                "color": "#e8ede8",
                 "fontSize": 16,
               }
             }
@@ -127,7 +127,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#1d2838",
+                "color": "#1a4d2e",
                 "fontSize": 16,
                 "fontWeight": "600",
                 "marginBottom": 24,
@@ -146,7 +146,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#354152",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                   "marginBottom": 8,
@@ -159,7 +159,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               style={
                 {
                   "alignItems": "center",
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.64,
                   "flexDirection": "row",
@@ -183,10 +183,10 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
                 keyboardType="email-address"
                 onChangeText={[Function]}
                 placeholder="you@example.com"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor="#1a4d2e70"
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "flex": 1,
                     "fontSize": 14,
                   }
@@ -205,7 +205,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#354152",
+                  "color": "#1a4d2e",
                   "fontSize": 14,
                   "fontWeight": "500",
                   "marginBottom": 8,
@@ -218,7 +218,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               style={
                 {
                   "alignItems": "center",
-                  "borderColor": "#d0d5db",
+                  "borderColor": "#1a4d2e33",
                   "borderRadius": 10,
                   "borderWidth": 1.64,
                   "flexDirection": "row",
@@ -241,11 +241,11 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
                 accessibilityLabel="Password"
                 onChangeText={[Function]}
                 placeholder="••••••••"
-                placeholderTextColor="#0a0a0a80"
+                placeholderTextColor="#1a4d2e70"
                 secureTextEntry={true}
                 style={
                   {
-                    "color": "#0a0a0a",
+                    "color": "#1a4d2e",
                     "flex": 1,
                     "fontSize": 14,
                   }
@@ -304,7 +304,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
                 style={
                   {
                     "alignItems": "center",
-                    "borderColor": "#d0d5db",
+                    "borderColor": "#1a4d2e33",
                     "borderRadius": 4,
                     "borderWidth": 2,
                     "height": 20,
@@ -318,7 +318,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#155cfb",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "bold",
                     }
@@ -328,7 +328,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#495565",
+                    "color": "#1a4d2e70",
                     "fontSize": 13,
                     "marginLeft": 0,
                   }
@@ -374,7 +374,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#155cfb",
+                    "color": "#1a4d2e",
                     "fontSize": 13,
                     "textDecorationLine": "underline",
                   }
@@ -389,7 +389,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               {
                 "busy": undefined,
                 "checked": undefined,
-                "disabled": undefined,
+                "disabled": false,
                 "expanded": undefined,
                 "selected": undefined,
               }
@@ -415,7 +415,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "backgroundColor": "#155dfc",
+                "backgroundColor": "#1a4d2e",
                 "borderRadius": 10,
                 "elevation": 3,
                 "marginBottom": 24,
@@ -447,7 +447,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
             style={
               {
                 "alignItems": "center",
-                "borderTopColor": "#0000001a",
+                "borderTopColor": "#1a4d2e33",
                 "borderTopWidth": 1.64,
                 "flexDirection": "row",
                 "justifyContent": "center",
@@ -459,7 +459,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
             <Text
               style={
                 {
-                  "color": "#495565",
+                  "color": "#1a4d2e70",
                   "fontSize": 14,
                   "marginRight": 4,
                 }
@@ -504,7 +504,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#155cfb",
+                    "color": "#1a4d2e",
                     "fontSize": 14,
                     "fontWeight": "600",
                     "textDecorationLine": "underline",
@@ -518,7 +518,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
           <View
             style={
               {
-                "borderTopColor": "#0000001a",
+                "borderTopColor": "#1a4d2e33",
                 "borderTopWidth": 1.64,
                 "paddingTop": 8,
               }
@@ -574,7 +574,7 @@ exports[`renders SignInPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#495565",
+                    "color": "#1a4d2e70",
                     "fontSize": 14,
                   }
                 }

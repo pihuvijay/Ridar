@@ -1,7 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders SignUpPage correctly (snapshot test) 1`] = `
-<RCTSafeAreaView
+<RNCSafeAreaView
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
   style={
     {
       "backgroundColor": "#ffffff",
@@ -12,8 +20,8 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
   <ViewManagerAdapter_ExpoLinearGradient
     colors={
       [
-        4281040895,
-        4288155898,
+        4279913774,
+        4281170514,
       ]
     }
     endPoint={
@@ -105,7 +113,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#daeafe",
+                "color": "#e8ede8",
                 "fontSize": 14,
               }
             }
@@ -134,7 +142,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#1e2939",
+                "color": "#1a4d2e",
                 "fontSize": 20,
                 "fontWeight": "600",
                 "marginBottom": 8,
@@ -146,7 +154,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
           <Text
             style={
               {
-                "color": "#4a5565",
+                "color": "#1a4d2e70",
                 "fontSize": 14,
                 "marginBottom": 24,
               }
@@ -179,7 +187,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#364153",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "500",
                       "marginBottom": 8,
@@ -192,7 +200,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   style={
                     {
                       "alignItems": "center",
-                      "borderColor": "#d1d5dc",
+                      "borderColor": "#1a4d2e33",
                       "borderRadius": 10,
                       "borderWidth": 0.95,
                       "flexDirection": "row",
@@ -216,10 +224,10 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     accessibilityLabel="Full Name"
                     onChangeText={[Function]}
                     placeholder="John Smith"
-                    placeholderTextColor="#0a0a0a80"
+                    placeholderTextColor="#1a4d2e70"
                     style={
                       {
-                        "color": "#0a0a0a",
+                        "color": "#1a4d2e",
                         "flex": 1,
                         "fontSize": 14,
                         "paddingVertical": 8,
@@ -239,7 +247,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#364153",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "500",
                       "marginBottom": 8,
@@ -252,7 +260,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   style={
                     {
                       "alignItems": "center",
-                      "borderColor": "#d1d5dc",
+                      "borderColor": "#1a4d2e33",
                       "borderRadius": 10,
                       "borderWidth": 0.95,
                       "flexDirection": "row",
@@ -276,10 +284,10 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     accessibilityLabel="Course/Major"
                     onChangeText={[Function]}
                     placeholder="Computer Science"
-                    placeholderTextColor="#0a0a0a80"
+                    placeholderTextColor="#1a4d2e70"
                     style={
                       {
-                        "color": "#0a0a0a",
+                        "color": "#1a4d2e",
                         "flex": 1,
                         "fontSize": 14,
                         "paddingVertical": 8,
@@ -308,7 +316,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#364153",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "500",
                       "marginBottom": 8,
@@ -321,7 +329,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   style={
                     {
                       "alignItems": "center",
-                      "borderColor": "#d1d5dc",
+                      "borderColor": "#1a4d2e33",
                       "borderRadius": 10,
                       "borderWidth": 0.95,
                       "flexDirection": "row",
@@ -346,10 +354,10 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     keyboardType="number-pad"
                     onChangeText={[Function]}
                     placeholder="21"
-                    placeholderTextColor="#0a0a0a80"
+                    placeholderTextColor="#1a4d2e70"
                     style={
                       {
-                        "color": "#0a0a0a",
+                        "color": "#1a4d2e",
                         "flex": 1,
                         "fontSize": 14,
                         "paddingVertical": 8,
@@ -369,7 +377,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#364153",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "500",
                       "marginBottom": 8,
@@ -410,7 +418,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     {
                       "alignItems": "center",
                       "backgroundColor": "#ffffff",
-                      "borderColor": "#d1d5dc",
+                      "borderColor": "#1a4d2e33",
                       "borderRadius": 10,
                       "borderWidth": 0.95,
                       "flexDirection": "row",
@@ -424,7 +432,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   <Text
                     style={
                       {
-                        "color": "#0a0a0a",
+                        "color": "#1a4d2e",
                         "flex": 1,
                         "fontSize": 14,
                         "fontWeight": "400",
@@ -436,7 +444,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   <Text
                     style={
                       {
-                        "color": "#6a7282",
+                        "color": "#1a4d2e70",
                         "fontSize": 12,
                         "marginLeft": 8,
                       }
@@ -457,7 +465,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#364153",
+                    "color": "#1a4d2e",
                     "fontSize": 14,
                     "fontWeight": "500",
                     "marginBottom": 8,
@@ -480,13 +488,13 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   keyboardType="email-address"
                   onChangeText={[Function]}
                   placeholder="your.name@university.ac.uk"
-                  placeholderTextColor="#0a0a0a80"
+                  placeholderTextColor="#1a4d2e70"
                   style={
                     {
-                      "borderColor": "#d1d5dc",
+                      "borderColor": "#1a4d2e33",
                       "borderRadius": 10,
                       "borderWidth": 0.95,
-                      "color": "#0a0a0a",
+                      "color": "#1a4d2e",
                       "flex": 1,
                       "fontSize": 14,
                       "height": 38,
@@ -500,7 +508,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     {
                       "busy": undefined,
                       "checked": undefined,
-                      "disabled": false,
+                      "disabled": true,
                       "expanded": undefined,
                       "selected": undefined,
                     }
@@ -515,7 +523,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   }
                   accessible={true}
                   collapsable={false}
-                  focusable={true}
+                  focusable={false}
                   onClick={[Function]}
                   onResponderGrant={[Function]}
                   onResponderMove={[Function]}
@@ -526,7 +534,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                   style={
                     {
                       "alignItems": "center",
-                      "backgroundColor": "#d1d5dc",
+                      "backgroundColor": "#f0f4f1",
                       "borderRadius": 10,
                       "flexDirection": "row",
                       "height": 38,
@@ -542,7 +550,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                     style={
                       [
                         {
-                          "color": "#6a7282",
+                          "color": "#1a4d2e70",
                           "fontSize": 14,
                           "fontWeight": "600",
                         },
@@ -550,9 +558,131 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                       ]
                     }
                   >
-                    Verify
+                    Send Code
                   </Text>
                 </View>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "marginTop": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "500",
+                    "marginBottom": 8,
+                  }
+                }
+              >
+                Password * (min 8 characters)
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderColor": "#1a4d2e33",
+                    "borderRadius": 10,
+                    "borderWidth": 0.95,
+                    "flexDirection": "row",
+                    "gap": 8,
+                    "height": 38,
+                    "paddingHorizontal": 10,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 16,
+                      "marginRight": 4,
+                    }
+                  }
+                >
+                  🔒
+                </Text>
+                <TextInput
+                  accessibilityLabel="Password"
+                  onChangeText={[Function]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#0a0a0a80"
+                  secureTextEntry={true}
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "flex": 1,
+                      "fontSize": 14,
+                      "paddingVertical": 8,
+                    }
+                  }
+                  value=""
+                />
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "marginTop": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "500",
+                    "marginBottom": 8,
+                  }
+                }
+              >
+                Confirm Password *
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderColor": "#1a4d2e33",
+                    "borderRadius": 10,
+                    "borderWidth": 0.95,
+                    "flexDirection": "row",
+                    "gap": 8,
+                    "height": 38,
+                    "paddingHorizontal": 10,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 16,
+                      "marginRight": 4,
+                    }
+                  }
+                >
+                  🔒
+                </Text>
+                <TextInput
+                  accessibilityLabel="Confirm Password"
+                  onChangeText={[Function]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#0a0a0a80"
+                  secureTextEntry={true}
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "flex": 1,
+                      "fontSize": 14,
+                      "paddingVertical": 8,
+                    }
+                  }
+                  value=""
+                />
               </View>
             </View>
             <View
@@ -617,7 +747,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#4a5565",
+                    "color": "#1a4d2e70",
                     "flex": 1,
                     "fontSize": 12,
                     "lineHeight": 16,
@@ -701,7 +831,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
               <Text
                 style={
                   {
-                    "color": "#4a5565",
+                    "color": "#1a4d2e70",
                     "fontSize": 14,
                   }
                 }
@@ -745,7 +875,7 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
                 <Text
                   style={
                     {
-                      "color": "#155dfc",
+                      "color": "#1a4d2e",
                       "fontSize": 14,
                       "fontWeight": "600",
                     }
@@ -760,5 +890,5 @@ exports[`renders SignUpPage correctly (snapshot test) 1`] = `
       </View>
     </RCTScrollView>
   </ViewManagerAdapter_ExpoLinearGradient>
-</RCTSafeAreaView>
+</RNCSafeAreaView>
 `;

@@ -1,6 +1,9 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { SignUpPage } from './SignUpPage';
+import React from "react";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { Alert } from "react-native";
+import { SignUpPage } from "./SignUpPage";
+import { useSignUp, useEmailVerificationCode } from "../hooks";
+
 
 /*
 tests to write:
@@ -15,70 +18,96 @@ tests to write:
 9. check if age is at least 18 to create an account
 */
 
+jest.mock("../hooks");
+
+const mockSignUp = jest.fn();
+const mockSendCode = jest.fn();
+const mockVerifyCode = jest.fn();
+
+beforeEach(() => {
+  jest.clearAllMocks();
+
+  (useSignUp as jest.Mock).mockReturnValue({
+    signUp: mockSignUp,
+    loading: false,
+    error: null,
+  });
+
+  (useEmailVerificationCode as jest.Mock).mockReturnValue({
+    sendVerificationCode: mockSendCode,
+    verifyEmailCode: mockVerifyCode,
+    sendingCode: false,
+    sendCodeError: null,
+    verifyingCode: false,
+    verifyCodeError: null,
+  });
+
+  jest.spyOn(Alert, "alert").mockImplementation(() => {});
+});
+
+
 
 
 // snapshot test
-test('renders SignUpPage correctly (snapshot test)', () => {
+test("renders SignUpPage correctly (snapshot test)", () => {
   const { toJSON } = render(<SignUpPage />);
-  expect(toJSON()).toMatchSnapshot(); 
+  expect(toJSON()).toMatchSnapshot();
 });
 
 
 // test 1
-test('Verifies if its a valid university email', () => {
-  const { getByLabelText, getByText } = render(<SignUpPage />);
-  
-  fireEvent.changeText(getByLabelText("University Email"), "abc@university.ac.uk");
-  fireEvent.press(getByText("Verify"));
+test("Verifies if its a valid university email", async () => {
+  mockSendCode.mockResolvedValue(true);
+  mockVerifyCode.mockResolvedValue(true);
 
-  expect(getByText("Email verified successfully")).toBeTruthy(); // could also be "✓ Verified"
+  const { getByLabelText, getByText } = render(<SignUpPage />);
+
+  fireEvent.changeText(
+    getByLabelText("University Email"),
+    "abc@university.ac.uk"
+  );
+
+  fireEvent.press(getByText("Send Code"));
+
+  await waitFor(() =>
+    expect(mockSendCode).toHaveBeenCalled()
+  );
+
+  fireEvent.changeText(getByLabelText("Verification Code"), "123456");
+  fireEvent.press(getByText("Verify Code"));
+
+  await waitFor(() => {
+    expect(mockVerifyCode).toHaveBeenCalled();
+  });
 });
 
 
 // test 2
 test("Rejects if its not a valid university email", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
-  
+
   fireEvent.changeText(
     getByLabelText("University Email"),
     "abc@gmail.com"
   );
 
-  fireEvent.press(getByText("Verify"));
-  expect(getByText("Email must end in .ac.uk")).toBeTruthy();
+  fireEvent.press(getByText("Send Code"));
+
+  expect(Alert.alert).toHaveBeenCalledWith(
+    "Invalid Email",
+    "Email must end in .ac.uk"
+  );
 });
 
 
 // test 3
-test('Fills form and verifies email', () => {
+test("Fills form and verifies email", async () => {
+  mockSendCode.mockResolvedValue(true);
+  mockVerifyCode.mockResolvedValue(true);
+  mockSignUp.mockResolvedValue(true);
+
   const mockCreateAccount = jest.fn();
-  const { getByLabelText, getByText } = render(
-    <SignUpPage onCreateAccount={mockCreateAccount} />
-  );
 
-  // fake inputs
-  fireEvent.changeText(getByLabelText("Full Name"), "Dave");
-  fireEvent.changeText(getByLabelText("Course/Major"), "Computer Science");
-  fireEvent.changeText(getByLabelText("Age"), "20");
-  fireEvent.changeText(getByLabelText("University Email"), "dv123@bath.ac.uk");
-
-  fireEvent.press(getByText("Select Gender"));
-  fireEvent.press(getByText("Male"));
-
-  // accepting the t&cs
-  fireEvent.press(getByText("☐"));
-
-  fireEvent.press(getByText("Verify"));
-  expect(getByText("Email verified successfully")).toBeTruthy();
-
-  fireEvent.press(getByText("Create Account & Connect Uber"));
-  expect(mockCreateAccount).toHaveBeenCalledTimes(1);
-});
-
-
-// test 4
-test("If they don't press 'verify' for their email, their account isn't created", () => {
-  const mockCreateAccount = jest.fn();
   const { getByLabelText, getByText } = render(
     <SignUpPage onCreateAccount={mockCreateAccount} />
   );
@@ -91,9 +120,54 @@ test("If they don't press 'verify' for their email, their account isn't created"
     "dv123@bath.ac.uk"
   );
 
+  fireEvent.changeText(getByLabelText("Password"), "password123");
+  fireEvent.changeText(getByLabelText("Confirm Password"), "password123");
+
+  fireEvent.press(getByText("Select Gender"));
+  fireEvent.press(getByText("Male"));
+
+  fireEvent.press(getByText("☐"));
+
+  fireEvent.press(getByText("Send Code"));
+
+  await waitFor(() => expect(mockSendCode).toHaveBeenCalled());
+
+  fireEvent.changeText(getByLabelText("Verification Code"), "123456");
+
+  fireEvent.press(getByText("Verify Code"));
+
+  await waitFor(() => expect(mockVerifyCode).toHaveBeenCalled());
+
+  fireEvent.press(getByText("Create Account & Connect Uber"));
+
+  await waitFor(() => {
+    expect(mockSignUp).toHaveBeenCalled();
+    expect(mockCreateAccount).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+// test 4
+test("If they don't press 'verify' for their email, their account isn't created", () => {
+  const mockCreateAccount = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignUpPage onCreateAccount={mockCreateAccount} />
+  );
+
+  fireEvent.changeText(getByLabelText("Full Name"), "Dave");
+  fireEvent.changeText(getByLabelText("Course/Major"), "Computer Science");
+  fireEvent.changeText(getByLabelText("Age"), "20");
+
+  fireEvent.changeText(
+    getByLabelText("University Email"),
+    "dv123@bath.ac.uk"
+  );
+
   fireEvent.press(getByText("Select Gender"));
   fireEvent.press(getByText("Male"));
   fireEvent.press(getByText("☐"));
+
   fireEvent.press(getByText("Create Account & Connect Uber"));
 
   expect(mockCreateAccount).not.toHaveBeenCalled();
@@ -101,18 +175,18 @@ test("If they don't press 'verify' for their email, their account isn't created"
 
 
 // test 5
-test('Create Account button is disabled if form incomplete', () => {
-  const mockCreateAccount = jest.fn();
-  const { getByText } = render(<SignUpPage onCreateAccount={mockCreateAccount} />);
+test("Create Account button is disabled if form incomplete", () => {
+  const { getByText } = render(<SignUpPage />);
   const createButton = getByText("Create Account & Connect Uber");
   expect(createButton).toBeDisabled();
 });
 
-// continuation of test 5, if some fields are filled but not all.
+
 test("Create button disabled when form partially filled", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
   fireEvent.changeText(getByLabelText("Full Name"), "Dave");
+
   const createButton = getByText("Create Account & Connect Uber");
   expect(createButton).toBeDisabled();
 });
@@ -121,17 +195,22 @@ test("Create button disabled when form partially filled", () => {
 // test 6
 test("Calls onSignIn when Sign in pressed", () => {
   const mockSignIn = jest.fn();
+
   const { getByText } = render(
     <SignUpPage onSignIn={mockSignIn} />
   );
 
   fireEvent.press(getByText("Sign in"));
+
   expect(mockSignIn).toHaveBeenCalledTimes(1);
 });
 
 
 // test 7
-test("Verify button is disabled after email is verified", () => {
+test("Verify button is disabled after email is verified", async () => {
+  mockSendCode.mockResolvedValue(true);
+  mockVerifyCode.mockResolvedValue(true);
+
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
   fireEvent.changeText(
@@ -139,44 +218,64 @@ test("Verify button is disabled after email is verified", () => {
     "abc@uni.ac.uk"
   );
 
-  fireEvent.press(getByText("Verify"));
+  fireEvent.press(getByText("Send Code"));
+
+  await waitFor(() => expect(mockSendCode).toHaveBeenCalled());
+
+  fireEvent.changeText(getByLabelText("Verification Code"), "123456");
+
+  fireEvent.press(getByText("Verify Code"));
+
+  await waitFor(() => expect(mockVerifyCode).toHaveBeenCalled());
+
+  // TDD expectation (logic not yet implemented)
   const verifiedButton = getByText("✓ Verified");
 
   expect(verifiedButton).toBeDisabled();
 });
 
 
-// test 8 (WE NEED A FUNCTION TO CHECK COURSE VALIDITY)
+// test 8
 test("Create Account is disabled if the course string is less than 5 characters", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
   fireEvent.changeText(getByLabelText("Full Name"), "Dave");
   fireEvent.changeText(getByLabelText("Course/Major"), "aa");
   fireEvent.changeText(getByLabelText("Age"), "18");
-  fireEvent.changeText(getByLabelText("University Email"), "dv123@bath.ac.uk");
+  fireEvent.changeText(
+    getByLabelText("University Email"),
+    "dv123@bath.ac.uk"
+  );
 
   fireEvent.press(getByText("Select Gender"));
   fireEvent.press(getByText("Male"));
   fireEvent.press(getByText("☐"));
+
   const createButton = getByText("Create Account & Connect Uber");
+
   expect(createButton).toBeDisabled();
 });
 
 
-// test 9 currently failing, works on the figma
+
+// test 9
 test("Create Account is disabled if the user inputs an age < 18", () => {
   const { getByLabelText, getByText } = render(<SignUpPage />);
 
   fireEvent.changeText(getByLabelText("Full Name"), "Dave");
   fireEvent.changeText(getByLabelText("Course/Major"), "Computer Science");
   fireEvent.changeText(getByLabelText("Age"), "17");
-  fireEvent.changeText(getByLabelText("University Email"), "dv123@bath.ac.uk");
+
+  fireEvent.changeText(
+    getByLabelText("University Email"),
+    "dv123@bath.ac.uk"
+  );
 
   fireEvent.press(getByText("Select Gender"));
   fireEvent.press(getByText("Male"));
   fireEvent.press(getByText("☐"));
+
   const createButton = getByText("Create Account & Connect Uber");
+
   expect(createButton).toBeDisabled();
 });
-
-// SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/th3rdwave/react-native-safe-area-context

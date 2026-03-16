@@ -1,6 +1,10 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import { SignInPage } from './SignInPage';
+import React from "react";
+import { render, fireEvent } from "@testing-library/react-native";
+import { SignInPage } from "./SignInPage";
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 /*
 tests to write:
@@ -21,137 +25,173 @@ tests to write:
 
 */
 
-afterEach(() => {
-  jest.clearAllMocks();
-});
 
-// snapshot test
-test('renders SignInPage correctly (snapshot test)', () => {
+
+// snapshot
+test("renders SignInPage correctly (snapshot)", () => {
   const { toJSON } = render(<SignInPage />);
-  expect(toJSON()).toMatchSnapshot(); 
+  expect(toJSON()).toMatchSnapshot();
 });
 
-// EVERYTHING IS FAILING BECAUSE WE DONT HAVE A PROP SET UP FOR THE SIGN IN BUTTON
-// test 1
-test('Verifies if these are valid login credentials', () => {
-  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-  const { getByLabelText, getByText } = render(<SignInPage />);
-  
-  fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
-  fireEvent.changeText(getByLabelText("Password"), "abc123");
-  fireEvent.press(getByText("Sign In"));
 
-  expect(consoleSpy).toHaveBeenCalledWith(
-    "Sign in submitted",
-    expect.objectContaining({email: "czl21@bath.ac.uk", password: "abc123", rememberMe: false,
-    })
+
+// test 1
+test("calls onLogin when valid credentials entered", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
   );
 
-  consoleSpy.mockRestore();
+  fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
+  fireEvent.changeText(getByLabelText("Password"), "abc123");
+
+  fireEvent.press(getByText("Sign In"));
+
+  expect(mockLogin).toHaveBeenCalledWith("czl21");
 });
+
 
 
 // test 2
-test('Fails if its not a .ac.uk email', () => {
-  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-  const { getByLabelText, getByText } = render(<SignInPage />);
-  
+test("fails if email is not .ac.uk", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
+  );
+
   fireEvent.changeText(getByLabelText("Email address"), "czl21@gmail.com");
   fireEvent.changeText(getByLabelText("Password"), "abc123");
+
   fireEvent.press(getByText("Sign In"));
 
-  expect(consoleSpy).not.toHaveBeenCalled();
+  expect(mockLogin).not.toHaveBeenCalled();
 });
-
 
 
 
 // test 3
-test('Fails Sign In if no email is entered', () => {
-  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-  const { getByLabelText, getByText } = render(<SignInPage />);
-  
+test("fails sign in if email missing", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
+  );
+
   fireEvent.changeText(getByLabelText("Password"), "abc123");
+
   fireEvent.press(getByText("Sign In"));
 
-  expect(consoleSpy).not.toHaveBeenCalled();
+  expect(mockLogin).not.toHaveBeenCalled();
 });
+
 
 
 // test 4
-test('Fails Sign In if no password is entered', () => {
-  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-  const { getByLabelText, getByText } = render(<SignInPage />);
-  
+test("fails sign in if password missing", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
+  );
+
   fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
+
   fireEvent.press(getByText("Sign In"));
 
-  expect(consoleSpy).not.toHaveBeenCalled();
+  expect(mockLogin).not.toHaveBeenCalled();
 });
+
 
 
 // test 5
-test('Remember Me checkbox toggles when pressed', () => {
-  const { getByLabelText, getByText, queryByText } = render(<SignInPage />);
+test("remember me checkbox toggles", () => {
+  const { getByLabelText, queryByText } = render(<SignInPage />);
 
-  expect(queryByText("✓")).toBeNull(); // before press
-  fireEvent.press(getByLabelText("Remember me"));
-  expect(getByText("✓")).toBeTruthy(); // after press
+  const checkbox = getByLabelText("Remember me");
+
+  expect(queryByText("✓")).toBeNull();
+
+  fireEvent.press(checkbox);
+
+  expect(queryByText("✓")).toBeTruthy();
 });
+
 
 
 // test 6
-test("Goes to the onSignIn when Sign in pressed", () => {
-  const mockSignIn = jest.fn();
-  const { getByText } = render(<SignInPage onSignUp = {mockSignIn} />
-    
+test("calls onSignUp when Sign up pressed", () => {
+  const mockSignUp = jest.fn();
+
+  const { getByText } = render(
+    <SignInPage onSignUp={mockSignUp} />
   );
 
   fireEvent.press(getByText("Sign up"));
-  expect(mockSignIn).toHaveBeenCalledTimes(1);
+
+  expect(mockSignUp).toHaveBeenCalledTimes(1);
 });
 
 
+
 // test 7
-test("Goes to the Moderator Login when that section is pressed", () => {
+test("calls onModeratorLogin when Moderator Login pressed", () => {
   const mockModeratorLogin = jest.fn();
-  const { getByText } = render(<SignInPage onModeratorLogin = {mockModeratorLogin} />
-    
+
+  const { getByText } = render(
+    <SignInPage onModeratorLogin={mockModeratorLogin} />
   );
 
   fireEvent.press(getByText("Moderator Login"));
+
   expect(mockModeratorLogin).toHaveBeenCalledTimes(1);
 });
 
 
 // test 8
-test("Goes to the forget password section when 'forget password pressed", () => {
-  const mockForgetPassword = jest.fn();
-  const { getByText } = render(<SignInPage onForgotPassword = {mockForgetPassword} />
-    
+test("calls onForgotPassword when Forgot password pressed", () => {
+  const mockForgotPassword = jest.fn();
+
+  const { getByText } = render(
+    <SignInPage onForgotPassword={mockForgotPassword} />
   );
 
   fireEvent.press(getByText("Forgot password?"));
-  expect(mockForgetPassword).toHaveBeenCalledTimes(1);
+
+  expect(mockForgotPassword).toHaveBeenCalledTimes(1);
 });
 
-test('Fails if the credentials do not match database info', () => {
-  const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-  const { getByLabelText, getByText } = render(<SignInPage />);
+// test 9
+test("successful login with valid database credentials", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
+  );
+
+  fireEvent.changeText(getByLabelText("Email address"), "czl21@bath.ac.uk");
+  fireEvent.changeText(getByLabelText("Password"), "abc123");
+
+  fireEvent.press(getByText("Sign In"));
+
+  expect(mockLogin).toHaveBeenCalled();
+});
+
+
+// test 10
+test("fails login if credentials incorrect", () => {
+  const mockLogin = jest.fn();
+
+  const { getByLabelText, getByText } = render(
+    <SignInPage onLogin={mockLogin} />
+  );
 
   fireEvent.changeText(getByLabelText("Email address"), "wrong@bath.ac.uk");
   fireEvent.changeText(getByLabelText("Password"), "wrongpass");
 
   fireEvent.press(getByText("Sign In"));
 
-  const callArgs = consoleSpy.mock.calls[0][1];
-
-  const isValidUser =
-    callArgs.email === "czl21@bath.ac.uk" &&
-    callArgs.password === "abc123";
-
-  expect(isValidUser).toBe(false);
-
-  consoleSpy.mockRestore();
+  expect(mockLogin).not.toHaveBeenCalled();
 });
