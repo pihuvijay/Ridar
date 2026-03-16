@@ -14,7 +14,7 @@ FLOW STEPS:
 5. logout back to signin page for moderators.
 */
 
-// because otherwise the login tests fail due to time constraints vs the jest test speeds.
+// because otherwise the login tests fail due to time constraints vs the jest test
 jest.useFakeTimers();
 
 type RootStackParamList = {
