@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { partiesService } from "../services/api";
 import type { JSX } from "react";
 import {
@@ -16,21 +16,33 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { COLORS } from "../theme/colors";
 
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+type PlaceSuggestion = {
+	placeId: string;
+	description: string;
+};
+
+type SelectedPlace = {
+	label: string;
+	lat: number;
+	lng: number;
+};
+
 interface CreateGroupPageProps {
 	onBack?: () => void;
-	onCreateGroup: (rideData: any) => void; // <-- Update this line
+	onCreateGroup: (rideData: any) => void;
+	userGender?: string;
 }
 
 export const CreateGroupPage = ({
 	onBack,
 	onCreateGroup,
+	userGender,
 }: CreateGroupPageProps): JSX.Element => {
 	const [pickupPoint, setPickupPoint] = useState("");
-	const [optionalStops, setOptionalStops] = useState("");
 	const [finalDestination, setFinalDestination] = useState("");
-	const [departureTime, setDepartureTime] = useState("");
-	const [maxRiders, setMaxRiders] = useState("");
-	const [pricePerPerson, setPricePerPerson] = useState("10");
+	const [maxRiders, setMaxRiders] = useState("4");
 	const [minRating, setMinRating] = useState("3");
 	const [maxWaitTime, setMaxWaitTime] = useState("30");
 	const [isCreating, setIsCreating] = useState(false);
@@ -39,42 +51,201 @@ export const CreateGroupPage = ({
 	const [femaleOnly, setFemaleOnly] = useState(false);
 	const [alcoholFree, setAlcoholFree] = useState(false);
 
+	const [pickupSuggestions, setPickupSuggestions] = useState<
+		PlaceSuggestion[]
+	>([]);
+	const [destinationSuggestions, setDestinationSuggestions] = useState<
+		PlaceSuggestion[]
+	>([]);
+	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+	const [activeField, setActiveField] = useState<
+		"pickup" | "destination" | null
+	>(null);
+
+	const [selectedPickup, setSelectedPickup] = useState<SelectedPlace | null>(
+		null,
+	);
+	const [selectedDestination, setSelectedDestination] =
+		useState<SelectedPlace | null>(null);
+
+	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+	const isFemaleUser = useMemo(() => {
+		return (userGender || "").trim().toLowerCase() === "female";
+	}, [userGender]);
+
+	const clearSuggestions = () => {
+		setPickupSuggestions([]);
+		setDestinationSuggestions([]);
+	};
+
+	const fetchPlaceSuggestions = async (
+		query: string,
+		field: "pickup" | "destination",
+	) => {
+		if (!query.trim() || !GOOGLE_MAPS_API_KEY) {
+			if (field === "pickup") setPickupSuggestions([]);
+			else setDestinationSuggestions([]);
+			return;
+		}
+
+		setLoadingSuggestions(true);
+
+		try {
+			const response = await fetch(
+				`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+					query,
+				)}&key=${GOOGLE_MAPS_API_KEY}&components=country:gb&location=51.3813,-2.3590&radius=25000`,
+			);
+
+			const data = await response.json();
+
+			if (data.status === "OK") {
+				const suggestions: PlaceSuggestion[] = data.predictions.map(
+					(p: any) => ({
+						placeId: p.place_id,
+						description: p.description,
+					}),
+				);
+
+				if (field === "pickup") setPickupSuggestions(suggestions);
+				else setDestinationSuggestions(suggestions);
+			} else {
+				if (field === "pickup") setPickupSuggestions([]);
+				else setDestinationSuggestions([]);
+			}
+		} catch (error) {
+			console.error("Autocomplete error:", error);
+			if (field === "pickup") setPickupSuggestions([]);
+			else setDestinationSuggestions([]);
+		} finally {
+			setLoadingSuggestions(false);
+		}
+	};
+
+	const handleInputChange = (
+		text: string,
+		field: "pickup" | "destination",
+	) => {
+		if (field === "pickup") {
+			setPickupPoint(text);
+			setSelectedPickup(null);
+		} else {
+			setFinalDestination(text);
+			setSelectedDestination(null);
+		}
+
+		setActiveField(field);
+
+		if (debounceTimer.current) {
+			clearTimeout(debounceTimer.current);
+		}
+
+		debounceTimer.current = setTimeout(() => {
+			fetchPlaceSuggestions(text, field);
+		}, 400);
+	};
+
+	const handlePlaceSelection = async (
+		suggestion: PlaceSuggestion,
+		field: "pickup" | "destination",
+	) => {
+		try {
+			const response = await fetch(
+				`https://maps.googleapis.com/maps/api/geocode/json?place_id=${suggestion.placeId}&key=${GOOGLE_MAPS_API_KEY}`,
+			);
+
+			const data = await response.json();
+
+			if (data.status !== "OK" || !data.results?.length) {
+				Alert.alert("Location Error", "Could not load selected place.");
+				return;
+			}
+
+			const result = data.results[0];
+			const location = result.geometry.location;
+
+			const selectedPlace: SelectedPlace = {
+				label: suggestion.description,
+				lat: location.lat,
+				lng: location.lng,
+			};
+
+			if (field === "pickup") {
+				setPickupPoint(suggestion.description);
+				setSelectedPickup(selectedPlace);
+				setPickupSuggestions([]);
+			} else {
+				setFinalDestination(suggestion.description);
+				setSelectedDestination(selectedPlace);
+				setDestinationSuggestions([]);
+			}
+
+			setActiveField(null);
+		} catch (error) {
+			console.error("Geocode error:", error);
+			Alert.alert("Location Error", "Could not get place coordinates.");
+		}
+	};
+
 	const handleCreateGroup = async () => {
-		if (!pickupPoint.trim() || !finalDestination.trim()) {
+		if (!selectedPickup || !selectedDestination) {
 			Alert.alert(
-				"Missing Fields",
-				"Please enter pickup point and destination.",
+				"Missing Locations",
+				"Please select both pickup and destination from the suggestions.",
 			);
 			return;
 		}
 
-		const payload = {
-			name: `${pickupPoint.trim()} → ${finalDestination.trim()}`,
-			maxMembers: Number(maxRiders || "4"),
-			pickup: {
-				lat: 0,
-				lng: 0,
-				label: pickupPoint.trim(),
-			},
-			destination: {
-				lat: 0,
-				lng: 0,
-				label: finalDestination.trim(),
-			},
-			leaveBy: new Date().toISOString() || null,
-		};
+		const parsedMaxRiders = Number(maxRiders || "4");
 
-		if (!Number.isFinite(payload.maxMembers) || payload.maxMembers < 2) {
+		if (!Number.isFinite(parsedMaxRiders) || parsedMaxRiders < 2) {
 			Alert.alert("Invalid Riders", "Max riders must be at least 2.");
 			return;
 		}
 
+		if (femaleOnly && !isFemaleUser) {
+			Alert.alert(
+				"Not Allowed",
+				"Only users with female gender can create female-only rides.",
+			);
+			return;
+		}
+
+		const leaveBy = new Date(
+			Date.now() + Number(maxWaitTime || "30") * 60 * 1000,
+		).toISOString();
+
+		const payload = {
+			name: `${selectedPickup.label} → ${selectedDestination.label}`,
+			maxMembers: parsedMaxRiders,
+			pickup: {
+				lat: selectedPickup.lat,
+				lng: selectedPickup.lng,
+				label: selectedPickup.label,
+			},
+			destination: {
+				lat: selectedDestination.lat,
+				lng: selectedDestination.lng,
+				label: selectedDestination.label,
+			},
+			leaveBy,
+			preferences: {
+				allowCustomStops,
+				femaleOnly: isFemaleUser ? femaleOnly : false,
+				alcoholFree,
+				minRating: minRating ? Number(minRating) : null,
+			},
+		};
+
 		setIsCreating(true);
+
 		try {
 			const response = await partiesService.create(payload);
 
 			if (!response.success) {
 				const details = (response as any).raw?.details?.fieldErrors;
+
 				if (details) {
 					const msg = Object.entries(details)
 						.map(
@@ -105,19 +276,35 @@ export const CreateGroupPage = ({
 		}
 	};
 
-	const handleBack = () => {
-		if (onBack) onBack();
+	const renderSuggestions = (field: "pickup" | "destination") => {
+		const suggestions =
+			field === "pickup" ? pickupSuggestions : destinationSuggestions;
+
+		if (activeField !== field || suggestions.length === 0) return null;
+
+		return (
+			<View style={styles.suggestionsContainer}>
+				{suggestions.map((item) => (
+					<TouchableOpacity
+						key={item.placeId}
+						style={styles.suggestionItem}
+						onPress={() => handlePlaceSelection(item, field)}
+						activeOpacity={0.8}
+					>
+						<Text style={styles.suggestionIcon}>📍</Text>
+						<Text style={styles.suggestionText}>
+							{item.description}
+						</Text>
+					</TouchableOpacity>
+				))}
+			</View>
+		);
 	};
 
 	return (
 		<SafeAreaView style={styles.container}>
-			{/* Header */}
 			<View style={styles.header}>
-				<TouchableOpacity
-					style={styles.backButton}
-					onPress={handleBack}
-					accessibilityLabel="Go back"
-				>
+				<TouchableOpacity style={styles.backButton} onPress={onBack}>
 					<Text style={styles.backIcon}>←</Text>
 				</TouchableOpacity>
 				<Text style={styles.headerTitle}>Create Ride Group</Text>
@@ -126,93 +313,69 @@ export const CreateGroupPage = ({
 			<ScrollView
 				style={styles.scrollView}
 				contentContainerStyle={styles.scrollContent}
+				keyboardShouldPersistTaps="handled"
 			>
-				{/* Route Details Section */}
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Route Details</Text>
+				<View style={styles.heroCard}>
+					<Text style={styles.heroTitle}>Set up your route</Text>
+					<Text style={styles.heroSubtitle}>
+						Choose exact pickup and destination places so riders can
+						find your trip easily.
+					</Text>
+				</View>
 
-					{/* Pickup Point */}
+				<View style={styles.card}>
+					<Text style={styles.cardTitle}>Route</Text>
+
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Pickup Point *</Text>
 						<View style={styles.inputContainer}>
 							<Text style={styles.inputIcon}>📍</Text>
 							<TextInput
 								style={styles.input}
-								placeholder="Where will you pick up riders?"
+								placeholder="Search pickup point"
 								placeholderTextColor={COLORS.textSecondary}
 								value={pickupPoint}
-								onChangeText={setPickupPoint}
-								accessibilityLabel="Pickup point"
+								onChangeText={(text) =>
+									handleInputChange(text, "pickup")
+								}
+								onFocus={() => setActiveField("pickup")}
 							/>
 						</View>
-					</View>
-
-					{/* Optional Stops */}
-					<View style={styles.inputGroup}>
-						<View style={styles.labelRow}>
-							<Text style={styles.label}>
-								Optional Stops Along the Way
+						{renderSuggestions("pickup")}
+						{selectedPickup && (
+							<Text style={styles.selectedText}>
+								Selected: {selectedPickup.label}
 							</Text>
-							<TouchableOpacity>
-								<Text style={styles.addStopButton}>
-									+ Add Stop
-								</Text>
-							</TouchableOpacity>
-						</View>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>🛑</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Add intermediate stops"
-								placeholderTextColor={COLORS.textSecondary}
-								value={optionalStops}
-								onChangeText={setOptionalStops}
-								accessibilityLabel="Optional stops"
-							/>
-						</View>
-						<Text style={styles.helpText}>
-							Riders can request to be dropped off at these stops
-						</Text>
+						)}
 					</View>
 
-					{/* Final Destination */}
 					<View style={styles.inputGroup}>
 						<Text style={styles.label}>Final Destination *</Text>
 						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>📌</Text>
+							<Text style={styles.inputIcon}>🎯</Text>
 							<TextInput
 								style={styles.input}
-								placeholder="Where are you heading?"
+								placeholder="Search destination"
 								placeholderTextColor={COLORS.textSecondary}
 								value={finalDestination}
-								onChangeText={setFinalDestination}
-								accessibilityLabel="Final destination"
+								onChangeText={(text) =>
+									handleInputChange(text, "destination")
+								}
+								onFocus={() => setActiveField("destination")}
 							/>
 						</View>
+						{renderSuggestions("destination")}
+						{selectedDestination && (
+							<Text style={styles.selectedText}>
+								Selected: {selectedDestination.label}
+							</Text>
+						)}
 					</View>
 				</View>
 
-				{/* Trip Details Section */}
 				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Trip Details</Text>
+					<Text style={styles.cardTitle}>Trip Settings</Text>
 
-					{/* Departure Time */}
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Departure Time *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>🕐</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Select departure time"
-								placeholderTextColor={COLORS.textSecondary}
-								value={departureTime}
-								onChangeText={setDepartureTime}
-								accessibilityLabel="Departure time"
-							/>
-						</View>
-					</View>
-
-					{/* Max Riders and Price Row */}
 					<View style={styles.rowContainer}>
 						<View style={[styles.inputGroup, styles.halfWidth]}>
 							<Text style={styles.label}>Max Riders *</Text>
@@ -225,51 +388,8 @@ export const CreateGroupPage = ({
 									value={maxRiders}
 									onChangeText={setMaxRiders}
 									keyboardType="number-pad"
-									accessibilityLabel="Maximum riders"
 								/>
 							</View>
-						</View>
-
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Price/Person *</Text>
-							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>💵</Text>
-								<TextInput
-									style={styles.input}
-									placeholder="10"
-									placeholderTextColor={COLORS.textSecondary}
-									value={pricePerPerson}
-									onChangeText={setPricePerPerson}
-									keyboardType="decimal-pad"
-									accessibilityLabel="Price per person"
-								/>
-							</View>
-						</View>
-					</View>
-
-					{/* Minimum Rating and Max Wait Time Row */}
-					<View style={styles.rowContainer}>
-						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>
-								Minimum Rider Rating
-							</Text>
-							<View style={styles.pickerContainer}>
-								<Picker
-									selectedValue={minRating}
-									onValueChange={setMinRating}
-									style={styles.picker}
-								>
-									<Picker.Item label="No Rating" value="" />
-									<Picker.Item label="1 Star" value="1" />
-									<Picker.Item label="2 Stars" value="2" />
-									<Picker.Item label="3 Stars" value="3" />
-									<Picker.Item label="4 Stars" value="4" />
-									<Picker.Item label="5 Stars" value="5" />
-								</Picker>
-							</View>
-							<Text style={styles.helpText}>
-								Only riders with this rating or higher can join
-							</Text>
 						</View>
 
 						<View style={[styles.inputGroup, styles.halfWidth]}>
@@ -286,18 +406,34 @@ export const CreateGroupPage = ({
 									<Picker.Item label="2 hours" value="120" />
 								</Picker>
 							</View>
-							<Text style={styles.helpText}>
-								How long to advertise before departure
-							</Text>
 						</View>
+					</View>
+
+					<View style={styles.inputGroup}>
+						<Text style={styles.label}>Minimum Rider Rating</Text>
+						<View style={styles.pickerContainer}>
+							<Picker
+								selectedValue={minRating}
+								onValueChange={setMinRating}
+								style={styles.picker}
+							>
+								<Picker.Item label="No Rating" value="" />
+								<Picker.Item label="1 Star" value="1" />
+								<Picker.Item label="2 Stars" value="2" />
+								<Picker.Item label="3 Stars" value="3" />
+								<Picker.Item label="4 Stars" value="4" />
+								<Picker.Item label="5 Stars" value="5" />
+							</Picker>
+						</View>
+						<Text style={styles.helpText}>
+							Only riders with this rating or higher can join
+						</Text>
 					</View>
 				</View>
 
-				{/* Ride Preferences Section */}
 				<View style={styles.card}>
 					<Text style={styles.cardTitle}>Ride Preferences</Text>
 
-					{/* Allow Custom Stops */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -310,11 +446,9 @@ export const CreateGroupPage = ({
 						<Switch
 							value={allowCustomStops}
 							onValueChange={setAllowCustomStops}
-							accessibilityLabel="Allow custom stops toggle"
 						/>
 					</View>
 
-					{/* Female Only */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -323,15 +457,28 @@ export const CreateGroupPage = ({
 							<Text style={styles.preferenceDescriptionText}>
 								Only female riders can join
 							</Text>
+							{!isFemaleUser && (
+								<Text style={styles.restrictionText}>
+									Only female users can enable this option
+								</Text>
+							)}
 						</View>
 						<Switch
 							value={femaleOnly}
-							onValueChange={setFemaleOnly}
-							accessibilityLabel="Female only toggle"
+							onValueChange={(value) => {
+								if (isFemaleUser) setFemaleOnly(value);
+							}}
+							disabled={!isFemaleUser}
+							trackColor={{
+								false: COLORS.border,
+								true: COLORS.primary,
+							}}
+							thumbColor={
+								isFemaleUser ? COLORS.textLight : "#d1d5db"
+							}
 						/>
 					</View>
 
-					{/* Alcohol Free */}
 					<View style={styles.preferenceItem}>
 						<View style={styles.preferenceContent}>
 							<Text style={styles.preferenceTitleText}>
@@ -344,17 +491,15 @@ export const CreateGroupPage = ({
 						<Switch
 							value={alcoholFree}
 							onValueChange={setAlcoholFree}
-							accessibilityLabel="Alcohol free toggle"
 						/>
 					</View>
 				</View>
 
-				{/* Create Group Button */}
 				<TouchableOpacity
 					style={styles.createButton}
 					onPress={handleCreateGroup}
-					accessibilityLabel="Create ride group"
 					disabled={isCreating}
+					activeOpacity={0.85}
 				>
 					{isCreating ? (
 						<ActivityIndicator size="small" color="#fff" />
@@ -380,12 +525,9 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		paddingHorizontal: 16,
 		paddingVertical: 16,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
 		gap: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#e5e7eb",
 	},
 	backButton: {
 		width: 40,
@@ -393,14 +535,15 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		alignItems: "center",
 		borderRadius: 10,
+		backgroundColor: COLORS.primaryLight,
 	},
 	backIcon: {
 		fontSize: 24,
 		color: COLORS.primary,
 	},
 	headerTitle: {
-		fontSize: 16,
-		fontWeight: "600",
+		fontSize: 18,
+		fontWeight: "700",
 		color: COLORS.primary,
 	},
 	scrollView: {
@@ -410,51 +553,58 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		gap: 16,
+		paddingBottom: 32,
+	},
+	heroCard: {
+		backgroundColor: COLORS.primary,
+		borderRadius: 18,
+		padding: 18,
+	},
+	heroTitle: {
+		fontSize: 18,
+		fontWeight: "700",
+		color: "#fff",
+		marginBottom: 6,
+	},
+	heroSubtitle: {
+		fontSize: 14,
+		lineHeight: 20,
+		color: "rgba(255,255,255,0.9)",
 	},
 	card: {
 		backgroundColor: "#fff",
-		borderRadius: 16,
-		padding: 24,
+		borderRadius: 18,
+		padding: 20,
 		shadowColor: "#000",
 		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 4,
-		elevation: 3,
+		shadowOpacity: 0.08,
+		shadowRadius: 6,
+		elevation: 2,
 		gap: 16,
 	},
 	cardTitle: {
-		fontSize: 16,
-		fontWeight: "600",
+		fontSize: 17,
+		fontWeight: "700",
 		color: COLORS.primary,
 	},
 	inputGroup: {
 		gap: 8,
-		marginBottom: 8,
 	},
 	label: {
 		fontSize: 14,
-		fontWeight: "500",
-		color: COLORS.primary,
-	},
-	labelRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-		alignItems: "center",
-	},
-	addStopButton: {
-		fontSize: 14,
-		color: COLORS.primary,
 		fontWeight: "600",
+		color: COLORS.primary,
 	},
 	inputContainer: {
 		flexDirection: "row",
 		alignItems: "center",
 		borderWidth: 1.4,
 		borderColor: COLORS.border,
-		borderRadius: 10,
+		borderRadius: 12,
 		paddingHorizontal: 12,
-		height: 48,
+		height: 52,
 		gap: 8,
+		backgroundColor: "#fff",
 	},
 	inputIcon: {
 		fontSize: 16,
@@ -468,7 +618,12 @@ const styles = StyleSheet.create({
 	helpText: {
 		fontSize: 12,
 		color: COLORS.textSecondary,
-		marginTop: 4,
+		marginTop: 2,
+	},
+	selectedText: {
+		fontSize: 12,
+		color: COLORS.primary,
+		fontWeight: "500",
 	},
 	rowContainer: {
 		flexDirection: "row",
@@ -480,31 +635,32 @@ const styles = StyleSheet.create({
 	pickerContainer: {
 		borderWidth: 1.4,
 		borderColor: COLORS.border,
-		borderRadius: 10,
+		borderRadius: 12,
 		overflow: "hidden",
-		height: 48,
+		height: 52,
 		justifyContent: "center",
+		backgroundColor: "#fff",
 	},
 	picker: {
-		height: 48,
+		height: 52,
 		color: COLORS.text,
 	},
 	preferenceItem: {
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		backgroundColor: "#f3f4f6",
-		borderRadius: 10,
-		paddingHorizontal: 12,
-		paddingVertical: 12,
-		marginBottom: 12,
+		backgroundColor: "#f8fafc",
+		borderRadius: 12,
+		paddingHorizontal: 14,
+		paddingVertical: 14,
 	},
 	preferenceContent: {
 		flex: 1,
+		paddingRight: 12,
 	},
 	preferenceTitleText: {
 		fontSize: 14,
-		fontWeight: "600",
+		fontWeight: "700",
 		color: COLORS.primary,
 		marginBottom: 4,
 	},
@@ -512,12 +668,18 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		color: COLORS.textSecondary,
 	},
+	restrictionText: {
+		fontSize: 12,
+		color: "#dc2626",
+		marginTop: 6,
+		fontWeight: "500",
+	},
 	createButton: {
 		backgroundColor: COLORS.primary,
-		borderRadius: 10,
-		paddingVertical: 14,
+		borderRadius: 14,
+		paddingVertical: 16,
 		alignItems: "center",
-		marginBottom: 20,
+		marginTop: 4,
 		shadowColor: "#000",
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.1,
@@ -527,6 +689,30 @@ const styles = StyleSheet.create({
 	createButtonText: {
 		color: "#fff",
 		fontSize: 16,
-		fontWeight: "600",
+		fontWeight: "700",
+	},
+	suggestionsContainer: {
+		backgroundColor: "#fff",
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: "#e5e7eb",
+		overflow: "hidden",
+	},
+	suggestionItem: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		borderBottomWidth: 1,
+		borderBottomColor: "#f1f5f9",
+	},
+	suggestionIcon: {
+		fontSize: 14,
+	},
+	suggestionText: {
+		flex: 1,
+		fontSize: 14,
+		color: "#1f2937",
 	},
 });

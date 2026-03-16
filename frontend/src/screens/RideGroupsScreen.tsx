@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { partiesService } from "../services/api";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
 	View,
 	Text,
-	ScrollView,
 	Pressable,
 	TextInput,
 	StyleSheet,
 	FlatList,
 	SafeAreaView,
+	TouchableOpacity,
+	ActivityIndicator,
+	ScrollView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { partiesService } from "../services/api";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface RideCard {
@@ -24,6 +27,10 @@ interface RideCard {
 	driverInitial: string;
 	driverTrips: number;
 	tags: string[];
+	pickupLat?: number;
+	pickupLng?: number;
+	destinationLat?: number;
+	destinationLng?: number;
 }
 
 interface RideGroupsScreenProps {
@@ -34,6 +41,43 @@ interface RideGroupsScreenProps {
 	onViewProfile: () => void;
 }
 
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+type PlaceSuggestion = {
+	placeId: string;
+	description: string;
+	mainText?: string;
+	secondaryText?: string;
+};
+
+type SelectedPlace = {
+	placeId: string;
+	description: string;
+	latitude: number;
+	longitude: number;
+};
+
+const toRadians = (value: number) => (value * Math.PI) / 180;
+
+const getDistanceKm = (
+	lat1: number,
+	lng1: number,
+	lat2: number,
+	lng2: number,
+) => {
+	const R = 6371;
+	const dLat = toRadians(lat2 - lat1);
+	const dLng = toRadians(lng2 - lng1);
+	const a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos(toRadians(lat1)) *
+			Math.cos(toRadians(lat2)) *
+			Math.sin(dLng / 2) *
+			Math.sin(dLng / 2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	return R * c;
+};
+
 export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 	onBack,
 	userName,
@@ -43,155 +87,382 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 }) => {
 	const [currentLocation, setCurrentLocation] = useState("");
 	const [destination, setDestination] = useState("");
-	const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
 	const [rides, setRides] = useState<RideCard[]>([]);
+	const [isLoadingRides, setIsLoadingRides] = useState(false);
 
-	const toggleFilter = (filterId: string) => {
-		setActiveFilters((prev) => {
-			const newFilters = new Set(prev);
-			if (newFilters.has(filterId)) {
-				newFilters.delete(filterId);
-			} else {
-				newFilters.add(filterId);
-			}
-			return newFilters;
-		});
-	};
+	const [selectedPickupPlace, setSelectedPickupPlace] =
+		useState<SelectedPlace | null>(null);
+	const [selectedDestinationPlace, setSelectedDestinationPlace] =
+		useState<SelectedPlace | null>(null);
+	const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
+
+	const [activeField, setActiveField] = useState<
+		"pickup" | "destination" | null
+	>(null);
+	const [pickupSuggestions, setPickupSuggestions] = useState<
+		PlaceSuggestion[]
+	>([]);
+	const [destinationSuggestions, setDestinationSuggestions] = useState<
+		PlaceSuggestion[]
+	>([]);
+	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
 		const fetchRides = async () => {
+			setIsLoadingRides(true);
 			try {
 				const response = await partiesService.list();
 
 				if (!response.success) {
-					console.log(
-						"[rides] failed to load parties:",
-						response.message,
-					);
+					console.log("[RideGroupsScreen] failed to load rides");
+					setRides([]);
 					return;
 				}
 
-				// For now assume backend shape is already close enough.
-				// We'll map it properly next if needed.
 				const mappedRides: RideCard[] = (response.data ?? []).map(
-					(party: any) => ({
-						id: party.id,
-						destination:
-							party.destination?.label ?? "Unknown destination",
-						pickup: party.pickup?.label ?? "Unknown pickup",
-						price: 0,
-						leavingIn: 5,
-						currentPassengers: party.currentMembers ?? 1,
-						maxPassengers: party.maxMembers ?? 4,
-						driverName: party.name ?? "Ride Group",
-						driverInitial: (party.name ?? "R")
-							.charAt(0)
-							.toUpperCase(),
-						driverTrips: 0,
-						tags: [],
-					}),
+					(party: any) => {
+						const pickupLabel =
+							party.pickup?.label ?? "Unknown pickup";
+						const destinationLabel =
+							party.destination?.label ?? "Unknown destination";
+
+						const leaveBy = party.leaveBy
+							? new Date(party.leaveBy).getTime()
+							: null;
+
+						const leavingIn = leaveBy
+							? Math.max(
+									1,
+									Math.round((leaveBy - Date.now()) / 60000),
+								)
+							: 5;
+
+						const preferences = party.preferences ?? {};
+
+						const tags: string[] = [];
+						if (preferences.femaleOnly) tags.push("Female Only");
+						if (preferences.alcoholFree) tags.push("Alcohol Free");
+
+						return {
+							id: String(party.id),
+							destination: destinationLabel,
+							pickup: pickupLabel,
+							price: Number(party.pricePerPerson ?? 0),
+							leavingIn,
+							currentPassengers: Number(
+								party.currentMembers ?? 1,
+							),
+							maxPassengers: Number(party.maxMembers ?? 4),
+							driverName: party.name ?? "Ride Group",
+							driverInitial: (
+								party.name?.charAt(0) ?? "R"
+							).toUpperCase(),
+							driverTrips: Number(party.driverTrips ?? 0),
+							tags,
+							pickupLat: party.pickup?.lat,
+							pickupLng: party.pickup?.lng,
+							destinationLat: party.destination?.lat,
+							destinationLng: party.destination?.lng,
+						};
+					},
 				);
 
 				setRides(mappedRides);
-			} catch (err) {
-				console.error("Failed to load rides", err);
+			} catch (error) {
+				console.error("Failed to load rides:", error);
+				setRides([]);
+			} finally {
+				setIsLoadingRides(false);
 			}
 		};
 
 		fetchRides();
 	}, []);
 
+	const toggleFilter = (filterId: string) => {
+		setActiveFilters((prev) => {
+			const updated = new Set(prev);
+			if (updated.has(filterId)) updated.delete(filterId);
+			else updated.add(filterId);
+			return updated;
+		});
+	};
+
+	const handleClearSearch = () => {
+		setCurrentLocation("");
+		setDestination("");
+		setSelectedPickupPlace(null);
+		setSelectedDestinationPlace(null);
+		setPickupSuggestions([]);
+		setDestinationSuggestions([]);
+		setActiveField(null);
+	};
+
+	const fetchSuggestions = async (
+		text: string,
+		field: "pickup" | "destination",
+	) => {
+		if (!text.trim() || !GOOGLE_MAPS_API_KEY) {
+			if (field === "pickup") setPickupSuggestions([]);
+			else setDestinationSuggestions([]);
+			return;
+		}
+
+		setLoadingSuggestions(true);
+
+		try {
+			const bathLat = 51.3813;
+			const bathLng = -2.359;
+
+			const response = await fetch(
+				`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+					text,
+				)}&key=${GOOGLE_MAPS_API_KEY}&language=en&components=country:gb&location=${bathLat},${bathLng}&radius=30000&strictbounds=false`,
+			);
+
+			const data = await response.json();
+
+			if (data.status === "OK") {
+				const results: PlaceSuggestion[] = data.predictions.map(
+					(item: any) => ({
+						placeId: item.place_id,
+						description: item.description,
+						mainText: item.structured_formatting?.main_text,
+						secondaryText:
+							item.structured_formatting?.secondary_text,
+					}),
+				);
+
+				if (field === "pickup") setPickupSuggestions(results);
+				else setDestinationSuggestions(results);
+			} else {
+				if (field === "pickup") setPickupSuggestions([]);
+				else setDestinationSuggestions([]);
+			}
+		} catch (error) {
+			console.error("Autocomplete error:", error);
+			if (field === "pickup") setPickupSuggestions([]);
+			else setDestinationSuggestions([]);
+		} finally {
+			setLoadingSuggestions(false);
+		}
+	};
+
+	const handleInputChange = (
+		text: string,
+		field: "pickup" | "destination",
+	) => {
+		if (field === "pickup") {
+			setCurrentLocation(text);
+			setSelectedPickupPlace(null);
+		} else {
+			setDestination(text);
+			setSelectedDestinationPlace(null);
+		}
+
+		if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+		debounceTimer.current = setTimeout(() => {
+			fetchSuggestions(text, field);
+		}, 400);
+	};
+
+	const handleSelectSuggestion = async (
+		suggestion: PlaceSuggestion,
+		field: "pickup" | "destination",
+	) => {
+		try {
+			const response = await fetch(
+				`https://maps.googleapis.com/maps/api/geocode/json?place_id=${suggestion.placeId}&key=${GOOGLE_MAPS_API_KEY}`,
+			);
+
+			const data = await response.json();
+
+			if (data.status !== "OK" || !data.results?.length) return;
+
+			const location = data.results[0].geometry.location;
+
+			const place: SelectedPlace = {
+				placeId: suggestion.placeId,
+				description: suggestion.description,
+				latitude: location.lat,
+				longitude: location.lng,
+			};
+
+			if (field === "pickup") {
+				setCurrentLocation(place.description);
+				setSelectedPickupPlace(place);
+				setPickupSuggestions([]);
+			} else {
+				setDestination(place.description);
+				setSelectedDestinationPlace(place);
+				setDestinationSuggestions([]);
+			}
+
+			setActiveField(null);
+		} catch (error) {
+			console.error("Place selection error:", error);
+		}
+	};
+
+	const filteredRides = useMemo(() => {
+		return rides.filter((ride) => {
+			let pickupMatch = true;
+			let destinationMatch = true;
+
+			if (selectedPickupPlace) {
+				if (
+					typeof ride.pickupLat === "number" &&
+					typeof ride.pickupLng === "number"
+				) {
+					const distance = getDistanceKm(
+						selectedPickupPlace.latitude,
+						selectedPickupPlace.longitude,
+						ride.pickupLat,
+						ride.pickupLng,
+					);
+					pickupMatch = distance <= 2;
+				} else {
+					pickupMatch = ride.pickup
+						.toLowerCase()
+						.includes(
+							selectedPickupPlace.description.toLowerCase(),
+						);
+				}
+			} else if (currentLocation.trim()) {
+				pickupMatch = ride.pickup
+					.toLowerCase()
+					.includes(currentLocation.toLowerCase());
+			}
+
+			if (selectedDestinationPlace) {
+				if (
+					typeof ride.destinationLat === "number" &&
+					typeof ride.destinationLng === "number"
+				) {
+					const distance = getDistanceKm(
+						selectedDestinationPlace.latitude,
+						selectedDestinationPlace.longitude,
+						ride.destinationLat,
+						ride.destinationLng,
+					);
+					destinationMatch = distance <= 2;
+				} else {
+					destinationMatch = ride.destination
+						.toLowerCase()
+						.includes(
+							selectedDestinationPlace.description.toLowerCase(),
+						);
+				}
+			} else if (destination.trim()) {
+				destinationMatch = ride.destination
+					.toLowerCase()
+					.includes(destination.toLowerCase());
+			}
+
+			const femaleOnlyMatch =
+				!activeFilters.has("female-only") ||
+				ride.tags.includes("Female Only");
+
+			const alcoholFreeMatch =
+				!activeFilters.has("alcohol-free") ||
+				ride.tags.includes("Alcohol Free");
+
+			return (
+				pickupMatch &&
+				destinationMatch &&
+				femaleOnlyMatch &&
+				alcoholFreeMatch
+			);
+		});
+	}, [
+		rides,
+		currentLocation,
+		destination,
+		selectedPickupPlace,
+		selectedDestinationPlace,
+		activeFilters,
+	]);
+
 	const renderRideCard = ({ item }: { item: RideCard }) => (
 		<Pressable
 			style={styles.rideCard}
 			onPress={() => onJoinRide(item)}
-			android_ripple={{ color: COLORS.primaryHover }}
+			android_ripple={{ color: "#e8f3ec" }}
 		>
-			<View style={styles.cardHeader}>
-				<View style={styles.cardDetails}>
-					<View style={styles.locationItem}>
-						<Text style={styles.locationLabel}>Going to</Text>
-						<Text style={styles.locationValue}>
-							{item.destination}
-						</Text>
+			<View style={styles.cardTopRow}>
+				<View style={styles.routeBlock}>
+					<View style={styles.routeRow}>
+						<View style={styles.routeDotPickup} />
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Pickup</Text>
+							<Text style={styles.routeValue}>{item.pickup}</Text>
+						</View>
 					</View>
-					<View style={styles.locationItem}>
-						<Text style={styles.locationLabel}>Pickup</Text>
-						<Text style={styles.locationValue}>{item.pickup}</Text>
+
+					<View style={styles.routeLine} />
+
+					<View style={styles.routeRow}>
+						<View style={styles.routeDotDestination} />
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Destination</Text>
+							<Text style={styles.routeValue}>
+								{item.destination}
+							</Text>
+						</View>
 					</View>
 				</View>
-				<View style={styles.priceSection}>
-					<Text style={styles.priceValue}>£{item.price}</Text>
-					<Text style={styles.priceLabel}>per person</Text>
+
+				<View style={styles.pricePill}>
+					<Text style={styles.priceAmount}>£{item.price}</Text>
+					<Text style={styles.priceCaption}>per seat</Text>
 				</View>
 			</View>
 
-			<View style={styles.cardDivider} />
-
-			<View style={styles.cardInfo}>
-				<View style={styles.infoLeft}>
-					<View style={styles.infoChip}>
-						<Text style={styles.infoChipText}>
-							⏱ Leaving in {item.leavingIn} min
-						</Text>
-					</View>
-					<View style={styles.infoChip}>
-						<Text style={styles.infoChipText}>
-							👥 {item.currentPassengers}/{item.maxPassengers}
-						</Text>
-					</View>
+			<View style={styles.cardMetaRow}>
+				<View style={styles.metaBadge}>
+					<Ionicons name="time-outline" size={14} color="#1B5E20" />
+					<Text style={styles.metaBadgeText}>
+						Leaving in {item.leavingIn} min
+					</Text>
 				</View>
 
-				{item.tags?.length > 0 && (
-					<View style={styles.tagsContainer}>
-						{item.tags.map((tag, index) => (
-							<View
-								key={index}
-								style={[
-									styles.tag,
-									{
-										backgroundColor:
-											tag === "Female Only"
-												? COLORS.primaryLight
-												: COLORS.success + "20",
-									},
-								]}
-							>
-								<Text
-									style={[
-										styles.tagText,
-										{
-											color:
-												tag === "Female Only"
-													? COLORS.primary
-													: COLORS.success,
-										},
-									]}
-								>
-									{tag}
-								</Text>
-							</View>
-						))}
-					</View>
-				)}
+				<View style={styles.metaBadge}>
+					<Ionicons name="people-outline" size={14} color="#1B5E20" />
+					<Text style={styles.metaBadgeText}>
+						{item.currentPassengers}/{item.maxPassengers}
+					</Text>
+				</View>
 			</View>
 
-			<View style={styles.cardDivider} />
+			{item.tags.length > 0 && (
+				<View style={styles.tagsContainer}>
+					{item.tags.map((tag, index) => (
+						<View key={index} style={styles.tag}>
+							<Text style={styles.tagText}>{tag}</Text>
+						</View>
+					))}
+				</View>
+			)}
 
-			<View style={styles.driverSection}>
+			<View style={styles.cardBottomRow}>
 				<View style={styles.driverAvatar}>
 					<Text style={styles.driverAvatarText}>
 						{item.driverInitial}
 					</Text>
-					<View style={styles.badgeContainer}>
-						<Text style={styles.badgeText}>⭐</Text>
-					</View>
 				</View>
+
 				<View style={styles.driverInfo}>
 					<Text style={styles.driverName}>{item.driverName}</Text>
 					<Text style={styles.driverTrips}>
-						{item.driverTrips} trips
+						{item.driverTrips} trips completed
 					</Text>
+				</View>
+
+				<View style={styles.joinChip}>
+					<Text style={styles.joinChipText}>Join</Text>
 				</View>
 			</View>
 		</Pressable>
@@ -199,97 +470,377 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<View style={styles.headerSection}>
-				<Pressable style={styles.headerButton} onPress={onBack}>
-					<View style={styles.headerButtonContent}>
-						<Text style={styles.headerTitle}>
-							Current Ride Groups
-						</Text>
-						<Text style={styles.headerSubtitle}>Leaving now</Text>
-					</View>
-				</Pressable>
-				<View style={styles.headerNav}>
-					<Pressable
-						onPress={onViewSettings}
-						style={styles.navButton}
-					>
-						<Text style={styles.navIcon}>⚙️</Text>
-					</Pressable>
-					<Pressable onPress={onViewProfile} style={styles.navButton}>
-						<Text style={styles.navIcon}>👤</Text>
-					</Pressable>
-				</View>
-			</View>
-
-			<View style={styles.filtersSection}>
-				<View style={styles.inputGroup}>
-					<Text style={styles.inputIcon}>📍</Text>
-					<TextInput
-						style={styles.input}
-						placeholder="Where are you?"
-						placeholderTextColor={COLORS.textSecondary}
-						value={currentLocation}
-						onChangeText={setCurrentLocation}
-					/>
-				</View>
-				<View style={styles.inputGroup}>
-					<Text style={styles.inputIcon}>🎯</Text>
-					<TextInput
-						style={styles.input}
-						placeholder="Where do you want to go?"
-						placeholderTextColor={COLORS.textSecondary}
-						value={destination}
-						onChangeText={setDestination}
-					/>
-				</View>
-			</View>
-
-			<View style={styles.filterButtonsSection}>
-				<Text style={styles.filtersTitle}>Filters</Text>
-				<View style={styles.filterButtonsContainer}>
-					<Pressable
-						style={[
-							styles.filterButton,
-							activeFilters.has("female-only") &&
-								styles.filterButtonActive,
-						]}
-						onPress={() => toggleFilter("female-only")}
-					>
-						<Text style={styles.filterButtonText}>Female Only</Text>
-					</Pressable>
-					<Pressable
-						style={[
-							styles.filterButton,
-							activeFilters.has("alcohol-free") &&
-								styles.filterButtonActive,
-						]}
-						onPress={() => toggleFilter("alcohol-free")}
-					>
-						<Text style={styles.filterButtonText}>
-							Alcohol Free
-						</Text>
-					</Pressable>
-					<Pressable
-						style={[
-							styles.filterButton,
-							activeFilters.has("same-course") &&
-								styles.filterButtonActive,
-						]}
-						onPress={() => toggleFilter("same-course")}
-					>
-						<Text style={styles.filterButtonText}>
-							Same Course as Me
-						</Text>
-					</Pressable>
-				</View>
-			</View>
-
 			<FlatList
-				data={rides}
+				data={filteredRides}
 				renderItem={renderRideCard}
 				keyExtractor={(item) => item.id}
-				scrollEnabled={false}
+				showsVerticalScrollIndicator={false}
 				contentContainerStyle={styles.listContent}
+				ListHeaderComponent={
+					<View>
+						<View style={styles.header}>
+							<Pressable
+								style={styles.backButton}
+								onPress={onBack}
+							>
+								<Ionicons
+									name="chevron-back"
+									size={22}
+									color="#1B5E20"
+								/>
+							</Pressable>
+
+							<Text style={styles.headerTitle}>
+								Current Ride Groups
+							</Text>
+
+							<View style={styles.headerActions}>
+								<Pressable
+									style={styles.iconButton}
+									onPress={onViewSettings}
+								>
+									<Ionicons
+										name="settings-outline"
+										size={20}
+										color="#1B5E20"
+									/>
+								</Pressable>
+								<Pressable
+									style={styles.iconButton}
+									onPress={onViewProfile}
+								>
+									<Ionicons
+										name="person-outline"
+										size={20}
+										color="#1B5E20"
+									/>
+								</Pressable>
+							</View>
+						</View>
+
+						<View style={styles.heroCard}>
+							<Text style={styles.heroTitle}>
+								Where are you heading?
+							</Text>
+							<Text style={styles.heroSubtitle}>
+								Choose your pickup and destination to find
+								matching rides.
+							</Text>
+
+							<View style={styles.searchBox}>
+								<View style={styles.searchField}>
+									<Ionicons
+										name="radio-button-on"
+										size={16}
+										color="#1B5E20"
+									/>
+									<TextInput
+										style={styles.searchInput}
+										placeholder="Start point"
+										placeholderTextColor={
+											COLORS.textSecondary
+										}
+										value={currentLocation}
+										onFocus={() => setActiveField("pickup")}
+										onChangeText={(text) =>
+											handleInputChange(text, "pickup")
+										}
+									/>
+								</View>
+
+								{activeField === "pickup" &&
+									(pickupSuggestions.length > 0 ||
+										loadingSuggestions) && (
+										<View style={styles.suggestionsBox}>
+											{loadingSuggestions ? (
+												<ActivityIndicator
+													size="small"
+													color="#1B5E20"
+													style={{ padding: 12 }}
+												/>
+											) : (
+												pickupSuggestions.map(
+													(item) => (
+														<TouchableOpacity
+															key={item.placeId}
+															style={
+																styles.suggestionItem
+															}
+															onPress={() =>
+																handleSelectSuggestion(
+																	item,
+																	"pickup",
+																)
+															}
+														>
+															<Ionicons
+																name="location-outline"
+																size={16}
+																color="#6b7280"
+															/>
+															<View
+																style={{
+																	flex: 1,
+																}}
+															>
+																<Text
+																	style={[
+																		styles.suggestionText,
+																		{
+																			fontWeight:
+																				"600",
+																			color: "#111827",
+																		},
+																	]}
+																>
+																	{item.mainText ??
+																		item.description}
+																</Text>
+																{!!item.secondaryText && (
+																	<Text
+																		style={{
+																			fontSize: 12,
+																			color: "#6b7280",
+																			marginTop: 2,
+																		}}
+																	>
+																		{
+																			item.secondaryText
+																		}
+																	</Text>
+																)}
+															</View>
+														</TouchableOpacity>
+													),
+												)
+											)}
+										</View>
+									)}
+
+								<View style={styles.searchDivider} />
+
+								<View style={styles.searchField}>
+									<Ionicons
+										name="location"
+										size={16}
+										color="#111827"
+									/>
+									<TextInput
+										style={styles.searchInput}
+										placeholder="Destination"
+										placeholderTextColor={
+											COLORS.textSecondary
+										}
+										value={destination}
+										onFocus={() =>
+											setActiveField("destination")
+										}
+										onChangeText={(text) =>
+											handleInputChange(
+												text,
+												"destination",
+											)
+										}
+									/>
+								</View>
+
+								{activeField === "destination" &&
+									(destinationSuggestions.length > 0 ||
+										loadingSuggestions) && (
+										<View style={styles.suggestionsBox}>
+											{loadingSuggestions ? (
+												<ActivityIndicator
+													size="small"
+													color="#1B5E20"
+													style={{ padding: 12 }}
+												/>
+											) : (
+												destinationSuggestions.map(
+													(item) => (
+														<TouchableOpacity
+															key={item.placeId}
+															style={
+																styles.suggestionItem
+															}
+															onPress={() =>
+																handleSelectSuggestion(
+																	item,
+																	"destination",
+																)
+															}
+														>
+															<Ionicons
+																name="location-outline"
+																size={16}
+																color="#6b7280"
+															/>
+															<View
+																style={{
+																	flex: 1,
+																}}
+															>
+																<Text
+																	style={[
+																		styles.suggestionText,
+																		{
+																			fontWeight:
+																				"600",
+																			color: "#111827",
+																		},
+																	]}
+																>
+																	{item.mainText ??
+																		item.description}
+																</Text>
+																{!!item.secondaryText && (
+																	<Text
+																		style={{
+																			fontSize: 12,
+																			color: "#6b7280",
+																			marginTop: 2,
+																		}}
+																	>
+																		{
+																			item.secondaryText
+																		}
+																	</Text>
+																)}
+															</View>
+														</TouchableOpacity>
+													),
+												)
+											)}
+										</View>
+									)}
+							</View>
+						</View>
+
+						<View style={styles.filterSection}>
+							<ScrollView
+								horizontal
+								showsHorizontalScrollIndicator={false}
+							>
+								<View style={styles.filterRow}>
+									<Pressable
+										style={[
+											styles.filterChip,
+											activeFilters.has("female-only") &&
+												styles.filterChipActive,
+										]}
+										onPress={() =>
+											toggleFilter("female-only")
+										}
+									>
+										<Text
+											style={[
+												styles.filterChipText,
+												activeFilters.has(
+													"female-only",
+												) &&
+													styles.filterChipTextActive,
+											]}
+										>
+											Female Only
+										</Text>
+									</Pressable>
+
+									<Pressable
+										style={[
+											styles.filterChip,
+											activeFilters.has("alcohol-free") &&
+												styles.filterChipActive,
+										]}
+										onPress={() =>
+											toggleFilter("alcohol-free")
+										}
+									>
+										<Text
+											style={[
+												styles.filterChipText,
+												activeFilters.has(
+													"alcohol-free",
+												) &&
+													styles.filterChipTextActive,
+											]}
+										>
+											Alcohol Free
+										</Text>
+									</Pressable>
+
+									<Pressable
+										style={[
+											styles.filterChip,
+											activeFilters.has("same-course") &&
+												styles.filterChipActive,
+										]}
+										onPress={() =>
+											toggleFilter("same-course")
+										}
+									>
+										<Text
+											style={[
+												styles.filterChipText,
+												activeFilters.has(
+													"same-course",
+												) &&
+													styles.filterChipTextActive,
+											]}
+										>
+											Same Course
+										</Text>
+									</Pressable>
+
+									{(currentLocation ||
+										destination ||
+										activeFilters.size > 0) && (
+										<Pressable
+											style={styles.clearChip}
+											onPress={handleClearSearch}
+										>
+											<Text style={styles.clearChipText}>
+												Clear
+											</Text>
+										</Pressable>
+									)}
+								</View>
+							</ScrollView>
+						</View>
+
+						<View style={styles.resultsHeader}>
+							<Text style={styles.resultsTitle}>
+								Available rides
+							</Text>
+							<Text style={styles.resultsCount}>
+								{filteredRides.length} found
+							</Text>
+						</View>
+					</View>
+				}
+				ListEmptyComponent={
+					isLoadingRides ? (
+						<View style={styles.emptyState}>
+							<ActivityIndicator size="large" color="#1B5E20" />
+							<Text style={styles.emptySubtitle}>
+								Loading rides...
+							</Text>
+						</View>
+					) : (
+						<View style={styles.emptyState}>
+							<Ionicons
+								name="car-outline"
+								size={34}
+								color="#9ca3af"
+							/>
+							<Text style={styles.emptyTitle}>
+								No ride groups found
+							</Text>
+							<Text style={styles.emptySubtitle}>
+								Try a different pickup point, destination, or
+								filter.
+							</Text>
+						</View>
+					)
+				}
 			/>
 		</SafeAreaView>
 	);
@@ -298,233 +849,335 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: COLORS.background,
+		backgroundColor: "#f7f7f7",
 	},
-	headerSection: {
+	listContent: {
+		paddingBottom: 28,
+	},
+	header: {
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
 		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderBottomWidth: 1,
-		borderBottomColor: COLORS.border,
-		backgroundColor: COLORS.background,
+		paddingTop: SPACING.md,
+		paddingBottom: SPACING.sm,
+		backgroundColor: "#f7f7f7",
 	},
-	headerButton: {
-		flex: 1,
-	},
-	headerButtonContent: {
-		gap: SPACING.xs,
+	backButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "#ffffff",
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	headerTitle: {
 		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.primary,
+		fontWeight: "700",
+		color: "#111827",
 	},
-	headerSubtitle: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-	},
-	headerNav: {
+	headerActions: {
 		flexDirection: "row",
-		gap: SPACING.md,
+		gap: 8,
 	},
-	navButton: {
-		padding: SPACING.sm,
-		borderRadius: BORDER_RADIUS.md,
-		backgroundColor: COLORS.primaryLight,
+	iconButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "#ffffff",
+		alignItems: "center",
+		justifyContent: "center",
 	},
-	navIcon: {
-		fontSize: FONT_SIZES.lg,
+	heroCard: {
+		marginHorizontal: SPACING.md,
+		marginTop: SPACING.sm,
+		backgroundColor: "#111827",
+		borderRadius: 24,
+		padding: 18,
 	},
-	filtersSection: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		gap: SPACING.md,
-		borderBottomWidth: 1,
-		borderBottomColor: COLORS.border,
-		backgroundColor: COLORS.background,
+	heroTitle: {
+		fontSize: 22,
+		fontWeight: "700",
+		color: "#ffffff",
+		marginBottom: 6,
 	},
-	inputGroup: {
+	heroSubtitle: {
+		fontSize: 13,
+		lineHeight: 18,
+		color: "#d1d5db",
+		marginBottom: 16,
+	},
+	searchBox: {
+		backgroundColor: "#ffffff",
+		borderRadius: 18,
+		paddingVertical: 4,
+		overflow: "hidden",
+	},
+	searchField: {
 		flexDirection: "row",
 		alignItems: "center",
-		borderRadius: BORDER_RADIUS.md,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		paddingHorizontal: SPACING.md,
-		backgroundColor: COLORS.background,
+		paddingHorizontal: 14,
+		paddingVertical: 14,
+		gap: 10,
 	},
-	inputIcon: {
-		fontSize: FONT_SIZES.lg,
-		marginRight: SPACING.sm,
-	},
-	input: {
+	searchInput: {
 		flex: 1,
-		paddingVertical: SPACING.md,
-		fontSize: FONT_SIZES.base,
-		color: COLORS.text,
+		fontSize: 15,
+		color: "#111827",
 	},
-	filterButtonsSection: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderBottomWidth: 1,
-		borderBottomColor: COLORS.border,
-		backgroundColor: COLORS.background,
+	searchDivider: {
+		height: 1,
+		backgroundColor: "#e5e7eb",
+		marginHorizontal: 14,
 	},
-	filtersTitle: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.primary,
-		marginBottom: SPACING.md,
+	suggestionsBox: {
+		backgroundColor: "#ffffff",
+		borderTopWidth: 1,
+		borderTopColor: "#f0f0f0",
 	},
-	filterButtonsContainer: {
+	suggestionItem: {
 		flexDirection: "row",
-		flexWrap: "wrap",
-		gap: SPACING.md,
+		alignItems: "center",
+		gap: 10,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+		borderTopWidth: 1,
+		borderTopColor: "#f3f4f6",
 	},
-	filterButton: {
+	suggestionText: {
+		flex: 1,
+		fontSize: 14,
+		color: "#374151",
+	},
+	filterSection: {
+		marginTop: 16,
+	},
+	filterRow: {
+		flexDirection: "row",
 		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.primaryLight,
+		gap: 10,
 	},
-	filterButtonActive: {
-		backgroundColor: COLORS.primary,
+	filterChip: {
+		paddingHorizontal: 14,
+		paddingVertical: 10,
+		borderRadius: 999,
+		backgroundColor: "#ffffff",
+		borderWidth: 1,
+		borderColor: "#e5e7eb",
 	},
-	filterButtonText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.primary,
-		fontWeight: "500",
+	filterChipActive: {
+		backgroundColor: "#1B5E20",
+		borderColor: "#1B5E20",
 	},
-	listContent: {
+	filterChipText: {
+		fontSize: 13,
+		fontWeight: "600",
+		color: "#111827",
+	},
+	filterChipTextActive: {
+		color: "#ffffff",
+	},
+	clearChip: {
+		paddingHorizontal: 14,
+		paddingVertical: 10,
+		borderRadius: 999,
+		backgroundColor: "#fee2e2",
+		borderWidth: 1,
+		borderColor: "#fecaca",
+	},
+	clearChipText: {
+		fontSize: 13,
+		fontWeight: "600",
+		color: "#b91c1c",
+	},
+	resultsHeader: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
 		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		gap: SPACING.md,
+		marginTop: 18,
+		marginBottom: 10,
+	},
+	resultsTitle: {
+		fontSize: 16,
+		fontWeight: "700",
+		color: "#111827",
+	},
+	resultsCount: {
+		fontSize: 13,
+		color: "#6b7280",
 	},
 	rideCard: {
-		backgroundColor: COLORS.background,
-		borderRadius: BORDER_RADIUS.lg,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		padding: SPACING.md,
-		marginBottom: SPACING.md,
+		marginHorizontal: SPACING.md,
+		marginBottom: 14,
+		backgroundColor: "#ffffff",
+		borderRadius: 22,
+		padding: 16,
 	},
-	cardHeader: {
+	cardTopRow: {
 		flexDirection: "row",
-		justifyContent: "space-between",
-		gap: SPACING.md,
+		gap: 12,
 	},
-	cardDetails: {
+	routeBlock: {
 		flex: 1,
-		gap: SPACING.md,
 	},
-	locationItem: {
-		gap: SPACING.xs,
+	routeRow: {
+		flexDirection: "row",
+		alignItems: "flex-start",
+		gap: 10,
 	},
-	locationLabel: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
+	routeDotPickup: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		backgroundColor: "#1B5E20",
+		marginTop: 6,
 	},
-	locationValue: {
-		fontSize: FONT_SIZES.base,
+	routeDotDestination: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		backgroundColor: "#111827",
+		marginTop: 6,
+	},
+	routeLine: {
+		width: 2,
+		height: 16,
+		backgroundColor: "#d1d5db",
+		marginLeft: 4,
+		marginVertical: 4,
+	},
+	routeTextWrap: {
+		flex: 1,
+	},
+	routeLabel: {
+		fontSize: 12,
+		color: "#6b7280",
+		marginBottom: 2,
+	},
+	routeValue: {
+		fontSize: 14,
 		fontWeight: "600",
-		color: COLORS.primary,
-		marginTop: SPACING.xs,
+		color: "#111827",
 	},
-	priceSection: {
-		alignItems: "flex-end",
-		gap: SPACING.xs,
-	},
-	priceValue: {
-		fontSize: FONT_SIZES.xxl,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	priceLabel: {
-		fontSize: FONT_SIZES.xs,
-		color: COLORS.textSecondary,
-	},
-	cardDivider: {
-		height: 1,
-		backgroundColor: COLORS.border,
-		marginVertical: SPACING.md,
-	},
-	cardInfo: {
-		flexDirection: "row",
-		justifyContent: "space-between",
+	pricePill: {
+		backgroundColor: "#f3f4f6",
+		borderRadius: 16,
+		paddingHorizontal: 14,
+		paddingVertical: 10,
 		alignItems: "center",
-		paddingVertical: SPACING.md,
+		justifyContent: "center",
+		minWidth: 76,
 	},
-	infoLeft: {
+	priceAmount: {
+		fontSize: 18,
+		fontWeight: "700",
+		color: "#111827",
+	},
+	priceCaption: {
+		fontSize: 11,
+		color: "#6b7280",
+	},
+	cardMetaRow: {
 		flexDirection: "row",
-		gap: SPACING.md,
+		gap: 8,
+		marginTop: 14,
+		flexWrap: "wrap",
 	},
-	infoChip: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
+	metaBadge: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+		backgroundColor: "#edf7f0",
+		paddingHorizontal: 10,
+		paddingVertical: 8,
+		borderRadius: 999,
 	},
-	infoChipText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.success,
-		fontWeight: "500",
+	metaBadgeText: {
+		fontSize: 12,
+		fontWeight: "600",
+		color: "#1B5E20",
 	},
 	tagsContainer: {
 		flexDirection: "row",
-		gap: SPACING.sm,
+		gap: 8,
+		marginTop: 12,
+		flexWrap: "wrap",
 	},
 	tag: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
-		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: "#fff7ed",
+		paddingHorizontal: 10,
+		paddingVertical: 7,
+		borderRadius: 999,
 	},
 	tagText: {
-		fontSize: FONT_SIZES.xs,
-		fontWeight: "500",
+		fontSize: 12,
+		fontWeight: "600",
+		color: "#9a3412",
 	},
-	driverSection: {
+	cardBottomRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: SPACING.md,
-		paddingTop: SPACING.md,
+		marginTop: 16,
+		paddingTop: 14,
+		borderTopWidth: 1,
+		borderTopColor: "#f3f4f6",
 	},
 	driverAvatar: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.primary,
-		justifyContent: "center",
+		width: 42,
+		height: 42,
+		borderRadius: 21,
+		backgroundColor: "#1B5E20",
 		alignItems: "center",
+		justifyContent: "center",
 	},
 	driverAvatarText: {
-		color: COLORS.textLight,
-		fontSize: FONT_SIZES.base,
+		color: "#ffffff",
+		fontSize: 15,
 		fontWeight: "700",
-	},
-	badgeContainer: {
-		position: "absolute",
-		top: -8,
-		right: -8,
-		width: 28,
-		height: 28,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.accentYellow,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	badgeText: {
-		fontSize: FONT_SIZES.sm,
 	},
 	driverInfo: {
 		flex: 1,
-		gap: SPACING.xs,
+		marginLeft: 10,
 	},
 	driverName: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
-		color: COLORS.primary,
+		fontSize: 14,
+		fontWeight: "700",
+		color: "#111827",
 	},
 	driverTrips: {
-		fontSize: FONT_SIZES.xs,
-		color: COLORS.textSecondary,
+		fontSize: 12,
+		color: "#6b7280",
+		marginTop: 2,
+	},
+	joinChip: {
+		backgroundColor: "#111827",
+		borderRadius: 999,
+		paddingHorizontal: 14,
+		paddingVertical: 9,
+	},
+	joinChipText: {
+		color: "#ffffff",
+		fontSize: 12,
+		fontWeight: "700",
+	},
+	emptyState: {
+		alignItems: "center",
+		justifyContent: "center",
+		paddingHorizontal: 24,
+		paddingVertical: 48,
+	},
+	emptyTitle: {
+		marginTop: 12,
+		fontSize: 16,
+		fontWeight: "700",
+		color: "#111827",
+	},
+	emptySubtitle: {
+		marginTop: 6,
+		fontSize: 13,
+		lineHeight: 18,
+		color: "#6b7280",
+		textAlign: "center",
 	},
 });

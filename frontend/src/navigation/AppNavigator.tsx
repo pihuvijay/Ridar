@@ -90,6 +90,7 @@ export default function AppNavigator({
 					{({ navigation }) => (
 						<CreateGroupPage
 							onBack={() => navigation.goBack()}
+							userGender={"female"} // replace with real user gender from your profile/session
 							onCreateGroup={(rideGroup: any) =>
 								navigation.navigate("Wait", { rideGroup })
 							}
