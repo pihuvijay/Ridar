@@ -2,10 +2,10 @@ import React from "react";
 import {
 	View,
 	Text,
-	ScrollView,
 	StyleSheet,
 	SafeAreaView,
 	Pressable,
+	ScrollView,
 } from "react-native";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
@@ -22,53 +22,84 @@ interface WaitScreenProps {
 	onContinue: () => void;
 }
 
-const mockPartyMembers: PartyMember[] = [
-	{
-		id: "1",
-		name: "ndfjv",
-		initial: "n",
-		status: "At pickup point",
-		isLeader: false,
-	},
-	{
-		id: "2",
-		name: "Alex P.",
-		initial: "A",
-		status: "At pickup point",
-		isLeader: true,
-	},
-];
-
-const driverInfo = {
-	name: "David Smith",
-	vehicle: "Silver Toyota Prius",
-	licensePlate: "AB12 CDE",
-	distance: "2.1 miles away",
-	arrivalTime: "8 min",
-};
-
-const pickupLocation = "North Station - Main Entrance";
-
 export const WaitScreen: React.FC<WaitScreenProps> = ({
 	rideGroup,
 	onContinue,
 }) => {
-	const allMembersPresent = true;
-	const waitingForLeader = true;
+	const members: PartyMember[] = rideGroup?.members?.map(
+		(member: any, index: number) => ({
+			id: member.id?.toString() ?? `${index}`,
+			name: member.name ?? member.full_name ?? "Unknown Rider",
+			initial: (member.name ?? member.full_name ?? "U")
+				.charAt(0)
+				.toUpperCase(),
+			status: member.status ?? "At pickup point",
+			isLeader:
+				member.isLeader === true ||
+				member.is_creator === true ||
+				member.role === "leader" ||
+				index === 0,
+		}),
+	) ?? [
+		{
+			id: "1",
+			name: rideGroup?.name ?? "Ride Group",
+			initial: (rideGroup?.name ?? "R").charAt(0).toUpperCase(),
+			status: "Waiting at pickup point",
+			isLeader: true,
+		},
+	];
+
+	const leader = members.find((member) => member.isLeader) ??
+		members[0] ?? {
+			name: "Ride Leader",
+			initial: "R",
+		};
+
+	const pickupLocation =
+		rideGroup?.pickup?.label ??
+		rideGroup?.pickupLocation ??
+		"Pickup location not set";
+
+	const destination =
+		rideGroup?.destination?.label ??
+		rideGroup?.destination ??
+		"Destination not set";
+
+	const vehicleName =
+		rideGroup?.driver?.vehicle ??
+		rideGroup?.vehicle ??
+		"Vehicle details unavailable";
+
+	const licensePlate =
+		rideGroup?.driver?.licensePlate ?? rideGroup?.licensePlate ?? "Pending";
+
+	const distance =
+		rideGroup?.driver?.distance ?? rideGroup?.distance ?? "On the way";
+
+	const arrivalTime =
+		rideGroup?.arrivalTime ??
+		(rideGroup?.leavingIn ? `${rideGroup.leavingIn} min` : "Soon");
+
+	const driverName =
+		rideGroup?.driver?.name ??
+		rideGroup?.driverName ??
+		leader.name ??
+		"Driver assigned";
+
+	const allMembersPresent = members.length > 0;
+	const waitingForLeader = !rideGroup?.driver && !!leader;
 
 	return (
 		<SafeAreaView style={styles.container}>
-			{/* Top Section - Driver Arrival Countdown */}
 			<View style={styles.topSection}>
 				<View style={styles.pickupMarker}>
 					<Text style={styles.pickupMarkerIcon}>📍</Text>
 				</View>
 
 				<View style={styles.arrivalCard}>
-					<Text style={styles.arrivalLabel}>Driver arriving in</Text>
-					<Text style={styles.arrivalTime}>
-						{driverInfo.arrivalTime}
-					</Text>
+					<Text style={styles.arrivalLabel}>Ride status</Text>
+					<Text style={styles.arrivalTime}>{arrivalTime}</Text>
 				</View>
 
 				<View style={styles.vehicleIcon}>
@@ -76,139 +107,155 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				</View>
 			</View>
 
-			{/* Bottom Section - Ride Details */}
 			<View style={styles.bottomSection}>
-				{/* Driver Info Header */}
-				<View style={styles.driverSection}>
-					<View style={styles.driverAvatar}>
-						<Text style={styles.driverAvatarText}>
-							{driverInfo.name.charAt(0)}
-						</Text>
-					</View>
-
-					<View style={styles.driverInfo}>
-						<Text style={styles.driverName}>{driverInfo.name}</Text>
-						<View style={styles.vehicleDetails}>
-							<Text style={styles.vehicleModel}>
-								{driverInfo.vehicle}
+				<ScrollView showsVerticalScrollIndicator={false}>
+					<View style={styles.driverSection}>
+						<View style={styles.driverAvatar}>
+							<Text style={styles.driverAvatarText}>
+								{driverName.charAt(0).toUpperCase()}
 							</Text>
-							<View style={styles.licensePlate}>
-								<Text style={styles.licensePlateText}>
-									{driverInfo.licensePlate}
+						</View>
+
+						<View style={styles.driverInfo}>
+							<Text style={styles.driverName}>{driverName}</Text>
+
+							<View style={styles.vehicleDetails}>
+								<Text style={styles.vehicleModel}>
+									{vehicleName}
+								</Text>
+								<View style={styles.licensePlate}>
+									<Text style={styles.licensePlateText}>
+										{licensePlate}
+									</Text>
+								</View>
+							</View>
+
+							<View style={styles.distanceRow}>
+								<Text style={styles.distanceIcon}>📍</Text>
+								<Text style={styles.distanceText}>
+									{distance}
 								</Text>
 							</View>
 						</View>
-						<View style={styles.distanceRow}>
-							<Text style={styles.distanceIcon}>📍</Text>
-							<Text style={styles.distanceText}>
-								{driverInfo.distance}
-							</Text>
+
+						<Pressable style={styles.contactButton}>
+							<Text style={styles.contactIcon}>📞</Text>
+						</Pressable>
+					</View>
+
+					<View style={styles.divider} />
+
+					<View style={styles.pickupSection}>
+						<View style={styles.locationRow}>
+							<Text style={styles.locationIcon}>📍</Text>
+							<View style={styles.locationContent}>
+								<Text style={styles.locationLabel}>
+									Pickup Location
+								</Text>
+								<Text style={styles.locationName}>
+									{pickupLocation}
+								</Text>
+							</View>
+						</View>
+
+						<View style={{ height: SPACING.md }} />
+
+						<View style={styles.locationRow}>
+							<Text style={styles.locationIcon}>🎯</Text>
+							<View style={styles.locationContent}>
+								<Text style={styles.locationLabel}>
+									Destination
+								</Text>
+								<Text style={styles.locationName}>
+									{destination}
+								</Text>
+							</View>
 						</View>
 					</View>
 
-					<Pressable style={styles.contactButton}>
-						<Text style={styles.contactIcon}>📞</Text>
-					</Pressable>
-				</View>
+					<View style={styles.divider} />
 
-				<View style={styles.divider} />
-
-				{/* Pickup Location */}
-				<View style={styles.pickupSection}>
-					<View style={styles.locationRow}>
-						<Text style={styles.locationIcon}>📍</Text>
-						<View style={styles.locationContent}>
-							<Text style={styles.locationLabel}>
-								Pickup Location
-							</Text>
-							<Text style={styles.locationName}>
-								{pickupLocation}
+					<View style={styles.partySection}>
+						<View style={styles.partyHeader}>
+							<Text style={styles.partyIcon}>👥</Text>
+							<Text style={styles.partyTitle}>
+								Your Party ({members.length})
 							</Text>
 						</View>
-					</View>
-				</View>
 
-				<View style={styles.divider} />
-
-				{/* Party Members */}
-				<View style={styles.partySection}>
-					<View style={styles.partyHeader}>
-						<Text style={styles.partyIcon}>👥</Text>
-						<Text style={styles.partyTitle}>
-							Your Party ({mockPartyMembers.length})
-						</Text>
-					</View>
-
-					<View style={styles.membersList}>
-						{mockPartyMembers.map((member) => (
-							<View key={member.id} style={styles.memberCard}>
-								<View style={styles.memberAvatar}>
-									<Text style={styles.memberAvatarText}>
-										{member.initial}
-									</Text>
-									{member.isLeader && (
-										<View style={styles.leaderBadge}>
-											<Text
-												style={styles.leaderBadgeText}
-											>
-												👑
-											</Text>
-										</View>
-									)}
-								</View>
-
-								<View style={styles.memberInfo}>
-									<View style={styles.memberNameRow}>
-										<Text style={styles.memberName}>
-											{member.name}
+						<View style={styles.membersList}>
+							{members.map((member) => (
+								<View key={member.id} style={styles.memberCard}>
+									<View style={styles.memberAvatar}>
+										<Text style={styles.memberAvatarText}>
+											{member.initial}
 										</Text>
 										{member.isLeader && (
-											<View style={styles.leaderLabel}>
+											<View style={styles.leaderBadge}>
 												<Text
 													style={
-														styles.leaderLabelText
+														styles.leaderBadgeText
 													}
 												>
-													Leader
+													👑
 												</Text>
 											</View>
 										)}
 									</View>
-									<Text style={styles.memberStatus}>
-										{member.status}
+
+									<View style={styles.memberInfo}>
+										<View style={styles.memberNameRow}>
+											<Text style={styles.memberName}>
+												{member.name}
+											</Text>
+											{member.isLeader && (
+												<View
+													style={styles.leaderLabel}
+												>
+													<Text
+														style={
+															styles.leaderLabelText
+														}
+													>
+														Leader
+													</Text>
+												</View>
+											)}
+										</View>
+										<Text style={styles.memberStatus}>
+											{member.status}
+										</Text>
+									</View>
+
+									<Text style={styles.checkmark}>✓</Text>
+								</View>
+							))}
+						</View>
+
+						<View style={styles.statusMessages}>
+							{allMembersPresent && (
+								<View style={styles.successMessage}>
+									<Text style={styles.successIcon}>✓</Text>
+									<Text style={styles.successText}>
+										Party details loaded
 									</Text>
 								</View>
+							)}
 
-								<Text style={styles.checkmark}>✓</Text>
-							</View>
-						))}
+							{waitingForLeader && (
+								<View style={styles.infoMessage}>
+									<Text style={styles.infoIcon}>⏳</Text>
+									<Text style={styles.infoText}>
+										Waiting for ride confirmation...
+									</Text>
+								</View>
+							)}
+						</View>
 					</View>
+				</ScrollView>
 
-					{/* Status Messages */}
-					<View style={styles.statusMessages}>
-						{allMembersPresent && (
-							<View style={styles.successMessage}>
-								<Text style={styles.successIcon}>✓</Text>
-								<Text style={styles.successText}>
-									All members are here!
-								</Text>
-							</View>
-						)}
-
-						{waitingForLeader && (
-							<View style={styles.infoMessage}>
-								<Text style={styles.infoIcon}>⏳</Text>
-								<Text style={styles.infoText}>
-									Waiting for party leader to book the ride...
-								</Text>
-							</View>
-						)}
-					</View>
-				</View>
-
-				{/* Action Button */}
 				<Pressable style={styles.continueButton} onPress={onContinue}>
-					<Text style={styles.continueButtonText}>Ready to Go</Text>
+					<Text style={styles.continueButtonText}>Continue</Text>
 				</Pressable>
 			</View>
 		</SafeAreaView>
@@ -229,7 +276,6 @@ const styles = StyleSheet.create({
 	pickupMarker: {
 		position: "absolute",
 		left: 30,
-		fontSize: FONT_SIZES.xxl,
 	},
 	pickupMarkerIcon: {
 		fontSize: FONT_SIZES.xxl,
@@ -260,7 +306,6 @@ const styles = StyleSheet.create({
 	vehicleIcon: {
 		position: "absolute",
 		right: 30,
-		fontSize: FONT_SIZES.xxl,
 	},
 	vehicleEmoji: {
 		fontSize: FONT_SIZES.xxl,
@@ -273,7 +318,6 @@ const styles = StyleSheet.create({
 		paddingTop: SPACING.lg,
 		paddingHorizontal: SPACING.md,
 		paddingBottom: SPACING.lg,
-		gap: SPACING.md,
 	},
 	driverSection: {
 		flexDirection: "row",
@@ -307,6 +351,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: SPACING.sm,
+		flexWrap: "wrap",
 	},
 	vehicleModel: {
 		fontSize: FONT_SIZES.sm,
@@ -442,6 +487,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		alignItems: "center",
 		gap: SPACING.sm,
+		flexWrap: "wrap",
 	},
 	memberName: {
 		fontSize: FONT_SIZES.sm,
