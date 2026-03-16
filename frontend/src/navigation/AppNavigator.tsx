@@ -9,21 +9,29 @@ import { CreateGroupPage } from "../screens/CreateGroupPage";
 import { RideJoiningScreen } from "../screens/RideJoiningScreen";
 import { WaitScreen } from "../screens/WaitScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
+import { ConnectAccountsPage } from "../screens/ConnectAccountsPage";
+import { ModeratorLoginScreen } from "../screens/ModeratorLoginScreen";
+import { ModeratorDashboard } from "../screens/ModeratorDashboard";
+import { RideInsightsScreen } from "../screens/RideInsightsScreen";
 
 export type RootStackParamList = {
 	MainTabs: undefined;
 	CreateGroup: undefined;
 	RideJoining: { rideGroup: any };
-	Wait: undefined;
+	Wait: { rideGroup?: any } | undefined;
 	Settings: undefined;
+	ConnectAccounts: undefined;
+	ModeratorLogin: undefined;
+	ModeratorDashboard: undefined;
+	RideInsights: { rideGroup?: any } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type AppNavigatorProps = {
 	isAuthed: boolean;
+	isModerator: boolean;
 	userName: string;
-
 	onLogin: (name: string) => void;
 	onModeratorLogin: () => void;
 	onCreateAccount: () => void;
@@ -32,6 +40,7 @@ type AppNavigatorProps = {
 
 export default function AppNavigator({
 	isAuthed,
+	isModerator,
 	userName,
 	onLogin,
 	onModeratorLogin,
@@ -52,12 +61,16 @@ export default function AppNavigator({
 
 	return (
 		<NavigationContainer>
-			<Stack.Navigator screenOptions={{ headerShown: false }}>
+			<Stack.Navigator
+				screenOptions={{ headerShown: false }}
+				initialRouteName={
+					isModerator ? "ModeratorDashboard" : "MainTabs"
+				}
+			>
 				<Stack.Screen name="MainTabs">
 					{({ navigation }) => (
 						<MainTabs
 							userName={userName}
-							onSignOut={onSignOut}
 							onCreateRideGroup={() =>
 								navigation.navigate("CreateGroup")
 							}
@@ -77,7 +90,9 @@ export default function AppNavigator({
 					{({ navigation }) => (
 						<CreateGroupPage
 							onBack={() => navigation.goBack()}
-							onCreateGroup={() => navigation.navigate("Wait")}
+							onCreateGroup={(rideGroup: any) =>
+								navigation.navigate("Wait", { rideGroup })
+							}
 						/>
 					)}
 				</Stack.Screen>
@@ -93,22 +108,64 @@ export default function AppNavigator({
 							onViewSettings={() =>
 								navigation.navigate("Settings")
 							}
-							onPartyFull={() => navigation.navigate("Wait")}
+							onPartyFull={() =>
+								navigation.navigate("Wait", {
+									rideGroup: route.params.rideGroup,
+								})
+							}
 						/>
 					)}
 				</Stack.Screen>
 
 				<Stack.Screen name="Wait">
-					{({ navigation }) => (
+					{({ navigation, route }) => (
 						<WaitScreen
-							onContinue={() => navigation.navigate("MainTabs")}
+							rideGroup={route.params?.rideGroup}
+							onContinue={() =>
+								navigation.navigate("RideInsights", {
+									rideGroup: route.params?.rideGroup,
+								})
+							}
+						/>
+					)}
+				</Stack.Screen>
+
+				<Stack.Screen name="RideInsights">
+					{({ navigation, route }) => (
+						<RideInsightsScreen
+							rideGroup={route.params?.rideGroup}
+							onAddReport={() => {}}
+							onDone={() => navigation.navigate("MainTabs")}
+						/>
+					)}
+				</Stack.Screen>
+
+				<Stack.Screen name="ConnectAccounts">
+					{({ navigation }) => (
+						<ConnectAccountsPage
+							onNavigateHome={() =>
+								navigation.navigate("MainTabs")
+							}
+						/>
+					)}
+				</Stack.Screen>
+
+				<Stack.Screen name="ModeratorDashboard">
+					{({ navigation }) => (
+						<ModeratorDashboard
+							reports={[]}
+							onUpdateReport={() => {}}
+							onLogout={() => navigation.replace("MainTabs")}
 						/>
 					)}
 				</Stack.Screen>
 
 				<Stack.Screen name="Settings">
 					{({ navigation }) => (
-						<SettingsScreen onBack={() => navigation.goBack()} />
+						<SettingsScreen
+							onBack={() => navigation.goBack()}
+							onLogout={onSignOut}
+						/>
 					)}
 				</Stack.Screen>
 			</Stack.Navigator>

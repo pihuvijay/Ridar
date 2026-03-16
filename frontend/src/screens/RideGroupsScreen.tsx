@@ -80,7 +80,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 							party.destination?.label ?? "Unknown destination",
 						pickup: party.pickup?.label ?? "Unknown pickup",
 						price: 0,
-						leavingIn: Number(party.leaveBy ?? 0),
+						leavingIn: 5,
 						currentPassengers: party.currentMembers ?? 1,
 						maxPassengers: party.maxMembers ?? 4,
 						driverName: party.name ?? "Ride Group",

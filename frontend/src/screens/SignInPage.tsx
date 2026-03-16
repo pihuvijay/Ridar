@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { saveToken } from "../utils/authStorage";
-import { authService, userService } from "../services/api";
-import { getToken } from "../utils/authStorage";
 import type { JSX } from "react";
+import { saveToken, getToken } from "../utils/authStorage";
+import { authService, userService } from "../services/api";
 import { LinearGradient } from "expo-linear-gradient";
 import {
 	View,
@@ -12,11 +11,10 @@ import {
 	ScrollView,
 	Image,
 	StyleSheet,
-	ImageSourcePropType,
 	ActivityIndicator,
 	Alert,
-	Button,
 } from "react-native";
+import { COLORS } from "../theme/colors";
 
 interface SignInPageProps {
 	onSignUp?: () => void;
@@ -36,6 +34,64 @@ export const SignInPage = ({
 	const [rememberMe, setRememberMe] = useState(false);
 	const [isSigningIn, setIsSigningIn] = useState(false);
 
+	// const handleSubmit = async () => {
+	// 	if (!email || !password) {
+	// 		Alert.alert(
+	// 			"Missing Fields",
+	// 			"Please enter both email and password",
+	// 		);
+	// 		return;
+	// 	}
+
+	// 	setIsSigningIn(true);
+
+	// 	try {
+	// 		const response = await authService.signIn({ email, password });
+
+	// 		if (!response.success) {
+	// 			Alert.alert(
+	// 				"Login Failed",
+	// 				response.message || "Invalid credentials",
+	// 			);
+	// 			return;
+	// 		}
+
+	// 		if (response.token) {
+	// 			await saveToken(response.token);
+	// 		}
+
+	// 		let name =
+	// 			response.data?.user?.full_name ??
+	// 			response.data?.user?.name ??
+	// 			response.data?.email ??
+	// 			email.split("@")[0] ??
+	// 			"User";
+
+	// 		try {
+	// 			const me = await userService.me();
+
+	// 			if (!("success" in me && me.success === false)) {
+	// 				name =
+	// 					me.data?.profile?.full_name ??
+	// 					me.data?.profile?.name ??
+	// 					me.data?.email ??
+	// 					name;
+	// 			}
+	// 		} catch (e) {
+	// 			console.log("[SignInPage] /users/me failed, continuing anyway");
+	// 		}
+
+	// 		onLogin(name);
+	// 	} catch (error) {
+	// 		Alert.alert(
+	// 			"Login Error",
+	// 			error instanceof Error ? error.message : "Failed to sign in",
+	// 		);
+	// 	} finally {
+	// 		setIsSigningIn(false);
+	// 	}
+	// };
+
 	const handleSubmit = async () => {
 		if (!email || !password) {
 			Alert.alert(
@@ -46,55 +102,36 @@ export const SignInPage = ({
 		}
 
 		setIsSigningIn(true);
+		console.log("1️⃣ Starting login request");
 
 		try {
 			const response = await authService.signIn({ email, password });
 
-			console.log(
-				"[SignInPage] login response =",
-				JSON.stringify(response, null, 2),
-			);
-			console.log(
-				"[SignInPage] token returned? ",
-				response.success && !!response.token,
-			);
+			console.log("2️⃣ Login response received:", response);
 
 			if (!response.success) {
 				Alert.alert(
-					"Sign In Failed",
+					"Login Failed",
 					response.message || "Invalid credentials",
 				);
 				return;
 			}
 
 			if (response.token) {
+				console.log("3️⃣ Saving token");
 				await saveToken(response.token);
 			}
 
-			const saved = await getToken();
-			console.log(
-				"[SignInPage] saved token exists after login? ",
-				!!saved,
-			);
-
-			const me = await userService.me();
-
-			if ("success" in me && me.success === false) {
-				Alert.alert("Sign In Failed", "Could not load your profile.");
-				return;
-			}
-
-			const name =
-				me.data?.profile?.full_name ?? me.data?.email ?? "User";
-
-			// ✅ go to next screen (no popups)
-			onLogin(name);
+			console.log("4️⃣ Calling onLogin");
+			onLogin(email.split("@")[0]);
 		} catch (error) {
+			console.log("❌ Login error:", error);
 			Alert.alert(
-				"Error",
+				"Login Error",
 				error instanceof Error ? error.message : "Failed to sign in",
 			);
 		} finally {
+			console.log("5️⃣ Finished login flow");
 			setIsSigningIn(false);
 		}
 	};
@@ -117,16 +154,18 @@ export const SignInPage = ({
 			contentContainerStyle={styles.contentContainer}
 		>
 			<LinearGradient
-				colors={["#2B7FFF", "#9810FA"]}
+				colors={[COLORS.primary, "#2d7a52"]}
 				start={{ x: 0, y: 0 }}
 				end={{ x: 1, y: 1 }}
 				style={styles.gradientContainer}
 			>
 				<View style={styles.contentWrapper}>
-					{/* Header */}
 					<View style={styles.header}>
 						<View style={styles.logoPlaceholder}>
-							<Text style={styles.logoText}>🚗</Text>
+							<Image
+								source={require("../../assets/RidarLogo.jpeg")}
+								style={styles.logoImage}
+							/>
 						</View>
 						<Text style={styles.appTitle}>RideShare</Text>
 						<Text style={styles.appSubtitle}>
@@ -134,10 +173,9 @@ export const SignInPage = ({
 						</Text>
 					</View>
 
-					{/* Main Form Card */}
 					<View style={styles.card}>
 						<Text style={styles.welcomeText}>Welcome Back</Text>
-						{/* Email Input */}
+
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Email</Text>
 							<View style={styles.inputContainer}>
@@ -145,15 +183,16 @@ export const SignInPage = ({
 								<TextInput
 									style={styles.input}
 									placeholder="you@example.com"
-									placeholderTextColor="#0a0a0a80"
+									placeholderTextColor={COLORS.textSecondary}
 									value={email}
 									onChangeText={setEmail}
 									keyboardType="email-address"
+									autoCapitalize="none"
 									accessibilityLabel="Email address"
 								/>
 							</View>
 						</View>
-						{/* Password Input */}
+
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Password</Text>
 							<View style={styles.inputContainer}>
@@ -161,7 +200,7 @@ export const SignInPage = ({
 								<TextInput
 									style={styles.input}
 									placeholder="••••••••"
-									placeholderTextColor="#0a0a0a80"
+									placeholderTextColor={COLORS.textSecondary}
 									value={password}
 									onChangeText={setPassword}
 									secureTextEntry
@@ -170,7 +209,6 @@ export const SignInPage = ({
 							</View>
 						</View>
 
-						{/* Remember Me & Forgot Password */}
 						<View style={styles.optionsRow}>
 							<View style={styles.rememberMeContainer}>
 								<TouchableOpacity
@@ -186,13 +224,14 @@ export const SignInPage = ({
 									Remember me
 								</Text>
 							</View>
+
 							<TouchableOpacity onPress={handleForgotPassword}>
 								<Text style={styles.forgotPasswordText}>
 									Forgot password?
 								</Text>
 							</TouchableOpacity>
 						</View>
-						{/* Sign In Button */}
+
 						<TouchableOpacity
 							style={[
 								styles.signInButton,
@@ -213,7 +252,7 @@ export const SignInPage = ({
 								</Text>
 							)}
 						</TouchableOpacity>
-						{/* Sign Up Link */}
+
 						<View style={styles.signUpPrompt}>
 							<Text style={styles.signUpPromptText}>
 								Don't have an account?
@@ -222,7 +261,7 @@ export const SignInPage = ({
 								<Text style={styles.signUpLink}>Sign up</Text>
 							</TouchableOpacity>
 						</View>
-						{/* Moderator Login */}
+
 						<View style={styles.moderatorSection}>
 							<TouchableOpacity
 								style={styles.moderatorButton}
@@ -272,9 +311,12 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 		alignItems: "center",
 		marginBottom: 16,
+		overflow: "hidden",
 	},
-	logoText: {
-		fontSize: 48,
+	logoImage: {
+		width: 104,
+		height: 104,
+		resizeMode: "cover",
 	},
 	appTitle: {
 		fontSize: 18,
@@ -284,7 +326,7 @@ const styles = StyleSheet.create({
 	},
 	appSubtitle: {
 		fontSize: 16,
-		color: "#daeafe",
+		color: COLORS.textLightSecondary,
 	},
 	card: {
 		backgroundColor: "#fff",
@@ -300,7 +342,7 @@ const styles = StyleSheet.create({
 	welcomeText: {
 		fontSize: 16,
 		fontWeight: "600",
-		color: "#1d2838",
+		color: COLORS.primary,
 		marginBottom: 24,
 	},
 	inputGroup: {
@@ -309,14 +351,14 @@ const styles = StyleSheet.create({
 	label: {
 		fontSize: 14,
 		fontWeight: "500",
-		color: "#354152",
+		color: COLORS.primary,
 		marginBottom: 8,
 	},
 	inputContainer: {
 		flexDirection: "row",
 		alignItems: "center",
 		borderWidth: 1.64,
-		borderColor: "#d0d5db",
+		borderColor: COLORS.border,
 		borderRadius: 10,
 		paddingHorizontal: 12,
 		height: 51,
@@ -328,7 +370,7 @@ const styles = StyleSheet.create({
 	input: {
 		flex: 1,
 		fontSize: 14,
-		color: "#0a0a0a",
+		color: COLORS.text,
 	},
 	optionsRow: {
 		flexDirection: "row",
@@ -344,7 +386,7 @@ const styles = StyleSheet.create({
 		width: 20,
 		height: 20,
 		borderWidth: 2,
-		borderColor: "#d0d5db",
+		borderColor: COLORS.border,
 		borderRadius: 4,
 		justifyContent: "center",
 		alignItems: "center",
@@ -352,21 +394,21 @@ const styles = StyleSheet.create({
 	},
 	checkboxInner: {
 		fontSize: 14,
-		color: "#155cfb",
+		color: COLORS.primary,
 		fontWeight: "bold",
 	},
 	rememberMeText: {
 		fontSize: 13,
-		color: "#495565",
+		color: COLORS.textSecondary,
 		marginLeft: 0,
 	},
 	forgotPasswordText: {
 		fontSize: 13,
-		color: "#155cfb",
+		color: COLORS.primary,
 		textDecorationLine: "underline",
 	},
 	signInButton: {
-		backgroundColor: "#155dfc",
+		backgroundColor: COLORS.primary,
 		borderRadius: 10,
 		padding: 12,
 		alignItems: "center",
@@ -392,24 +434,24 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingTop: 16,
 		borderTopWidth: 1.64,
-		borderTopColor: "#0000001a",
+		borderTopColor: COLORS.border,
 		marginBottom: 16,
 	},
 	signUpPromptText: {
 		fontSize: 14,
-		color: "#495565",
+		color: COLORS.textSecondary,
 		marginRight: 4,
 	},
 	signUpLink: {
 		fontSize: 14,
 		fontWeight: "600",
-		color: "#155cfb",
+		color: COLORS.primary,
 		textDecorationLine: "underline",
 	},
 	moderatorSection: {
 		paddingTop: 8,
 		borderTopWidth: 1.64,
-		borderTopColor: "#0000001a",
+		borderTopColor: COLORS.border,
 	},
 	moderatorButton: {
 		flexDirection: "row",
@@ -422,6 +464,6 @@ const styles = StyleSheet.create({
 	},
 	moderatorText: {
 		fontSize: 14,
-		color: "#495565",
+		color: COLORS.textSecondary,
 	},
 });
