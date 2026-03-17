@@ -9,6 +9,7 @@ export default function App() {
 	const [isAuthed, setIsAuthed] = useState(false);
 	const [userName, setUserName] = useState("");
 	const [isModerator, setIsModerator] = useState(false);
+	const [justSignedUp, setJustSignedUp] = useState(false);
 
 	const handleLogin = (name: string) => {
 		setUserName(name);
@@ -26,12 +27,14 @@ export default function App() {
 		setUserName("User");
 		setIsModerator(false);
 		setIsAuthed(true);
+		setJustSignedUp(true);
 	};
 
 	const handleSignOut = () => {
 		setUserName("");
 		setIsModerator(false);
 		setIsAuthed(false);
+		setJustSignedUp(false);
 	};
 
 	return (
@@ -42,6 +45,8 @@ export default function App() {
 						isAuthed={isAuthed}
 						userName={userName}
 						isModerator={isModerator}
+						justSignedUp={justSignedUp}
+						setJustSignedUp={setJustSignedUp}
 						onLogin={handleLogin}
 						onModeratorLogin={handleModeratorLogin}
 						onCreateAccount={handleCreateAccount}

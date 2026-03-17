@@ -32,6 +32,8 @@ type AppNavigatorProps = {
 	isAuthed: boolean;
 	isModerator: boolean;
 	userName: string;
+	justSignedUp?: boolean;
+	setJustSignedUp?: (v: boolean) => void;
 	onLogin: (name: string) => void;
 	onModeratorLogin: () => void;
 	onCreateAccount: () => void;
@@ -42,6 +44,8 @@ export default function AppNavigator({
 	isAuthed,
 	isModerator,
 	userName,
+	justSignedUp,
+	setJustSignedUp,
 	onLogin,
 	onModeratorLogin,
 	onCreateAccount,
@@ -59,13 +63,18 @@ export default function AppNavigator({
 		);
 	}
 
+	// If just signed up, start at ConnectAccounts, otherwise normal logic
+	const initialRoute = isModerator
+		? "ModeratorDashboard"
+		: justSignedUp
+			? "ConnectAccounts"
+			: "MainTabs";
+
 	return (
 		<NavigationContainer>
 			<Stack.Navigator
 				screenOptions={{ headerShown: false }}
-				initialRouteName={
-					isModerator ? "ModeratorDashboard" : "MainTabs"
-				}
+				initialRouteName={initialRoute}
 			>
 				<Stack.Screen name="MainTabs">
 					{({ navigation }) => (
@@ -144,9 +153,10 @@ export default function AppNavigator({
 				<Stack.Screen name="ConnectAccounts">
 					{({ navigation }) => (
 						<ConnectAccountsPage
-							onNavigateHome={() =>
-								navigation.navigate("MainTabs")
-							}
+							onNavigateHome={() => {
+								if (setJustSignedUp) setJustSignedUp(false);
+								navigation.navigate("MainTabs");
+							}}
 						/>
 					)}
 				</Stack.Screen>

@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/AppNavigator';
 import { JSX } from "react";
 import {
 	View,
@@ -27,6 +30,7 @@ export const SignUpPage = ({
 	onSignIn,
 	onCreateAccount,
 }: SignUpPageProps): JSX.Element => {
+	const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 	const [formData, setFormData] = useState({
 		fullName: "",
 		courseMajor: "",

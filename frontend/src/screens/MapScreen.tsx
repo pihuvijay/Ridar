@@ -362,7 +362,10 @@ export const MapScreen = ({
 
 					<TouchableOpacity
 						style={styles.searchButton}
-						onPress={() => setShowSearchPanel(false)}
+						onPress={() => {
+							// When Apply is pressed, close the panel and trigger route calculation if both locations are set
+							setShowSearchPanel(false);
+						}}
 					>
 						<Text style={styles.searchButtonText}>Apply</Text>
 					</TouchableOpacity>
@@ -466,25 +469,33 @@ export const MapScreen = ({
 
 							<View style={styles.routeCardActions}>
 								<TouchableOpacity
-									style={styles.routePrimaryButton}
-									onPress={() => setShowSearchPanel(true)}
+									style={[styles.routePrimaryButton, { backgroundColor: '#1B5E20' }]}
+									onPress={() => {
+										// Pre-load locations and open search panel
+										setShowSearchPanel(true);
+										// Optionally, trigger ride group logic here if needed
+										if (typeof onViewRideGroups === 'function') {
+											onViewRideGroups();
+										}
+									}}
 									activeOpacity={0.85}
 								>
-									<Text style={styles.routePrimaryButtonText}>
-										Edit Route
-									</Text>
+									<Text style={[styles.routePrimaryButtonText, { color: '#fff' }]}>Find Ride</Text>
 								</TouchableOpacity>
 
 								<TouchableOpacity
-									style={styles.routeSecondaryButton}
-									onPress={handleClearLocations}
+									style={[styles.routePrimaryButton, { backgroundColor: '#1B5E20' }]}
+									onPress={() => {
+										// Pre-load locations and open search panel
+										setShowSearchPanel(true);
+										// Optionally, trigger create group logic here if needed
+										if (typeof onCreateRideGroup === 'function') {
+											onCreateRideGroup();
+										}
+									}}
 									activeOpacity={0.85}
 								>
-									<Text
-										style={styles.routeSecondaryButtonText}
-									>
-										Clear
-									</Text>
+									<Text style={[styles.routePrimaryButtonText, { color: '#fff' }]}>Create Group</Text>
 								</TouchableOpacity>
 							</View>
 						</View>
@@ -642,7 +653,7 @@ const styles = StyleSheet.create({
 	},
 
 	searchButton: {
-		backgroundColor: "#155dfc",
+		backgroundColor: "#1B5E20",
 		borderRadius: 10,
 		paddingVertical: 16,
 		alignItems: "center",
