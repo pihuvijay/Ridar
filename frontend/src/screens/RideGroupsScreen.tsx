@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRoute, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { partiesService } from "../services/api";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface RideCard {
     id: string;
@@ -86,6 +87,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
     onViewSettings,
     onViewProfile,
 }) => {
+    const { colors } = useTheme();
     const route = useRoute();
     const navigation = useNavigation();
 
@@ -354,9 +356,9 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 
     const renderRideCard = ({ item }: { item: RideCard }) => (
         <Pressable
-            style={styles.rideCard}
+            style={[styles.rideCard, { backgroundColor: colors.cardBackground }]}
             onPress={() => onJoinRide(item)}
-            android_ripple={{ color: "#e8f3ec" }}
+            android_ripple={{ color: colors.primary + '20' }}
         >
             <View style={styles.cardTopRow}>
                 <View style={styles.routeBlock}>
@@ -379,21 +381,21 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                     </View>
                 </View>
 
-                <View style={styles.pricePill}>
-                    <Text style={styles.priceAmount}>£{item.price}</Text>
-                    <Text style={styles.priceCaption}>per seat</Text>
+                <View style={[styles.pricePill, { backgroundColor: colors.cardBackground }]}> 
+                    <Text style={[styles.priceAmount, { color: colors.text } ]}>£{item.price}</Text>
+                    <Text style={[styles.priceCaption, { color: colors.textSecondary }]}>per seat</Text>
                 </View>
             </View>
 
             <View style={styles.cardMetaRow}>
-                <View style={styles.metaBadge}>
-                    <Ionicons name="time-outline" size={14} color="#1B5E20" />
-                    <Text style={styles.metaBadgeText}>Leaving in {item.leavingIn} min</Text>
+                <View style={[styles.metaBadge, { backgroundColor: colors.primaryLight }]}> 
+                    <Ionicons name="time-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.metaBadgeText, { color: colors.primary } ]}>Leaving in {item.leavingIn} min</Text>
                 </View>
 
-                <View style={styles.metaBadge}>
-                    <Ionicons name="people-outline" size={14} color="#1B5E20" />
-                    <Text style={styles.metaBadgeText}>{item.currentPassengers}/{item.maxPassengers}</Text>
+                <View style={[styles.metaBadge, { backgroundColor: colors.primaryLight }]}> 
+                    <Ionicons name="people-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.metaBadgeText, { color: colors.primary }]}>{item.currentPassengers}/{item.maxPassengers}</Text>
                 </View>
             </View>
 
@@ -417,15 +419,15 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                     <Text style={styles.driverTrips}>{item.driverTrips} trips completed</Text>
                 </View>
 
-                <View style={styles.joinChip}>
-                    <Text style={styles.joinChipText}>Join</Text>
+                <View style={[styles.joinChip, { backgroundColor: colors.primaryLight, borderWidth: 1, borderColor: colors.primary }]}> 
+                    <Text style={[styles.joinChipText, { color: colors.background }]}>Join</Text>
                 </View>
             </View>
         </Pressable>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
             <FlatList
                 data={filteredRides}
                 renderItem={renderRideCard}
@@ -434,34 +436,34 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                 contentContainerStyle={styles.listContent}
                 ListHeaderComponent={
                     <View>
-                        <View style={styles.header}>
-                            <Pressable style={styles.backButton} onPress={onBack}>
-                                <Ionicons name="chevron-back" size={22} color="#1B5E20" />
-                            </Pressable>
-
-                            <Text style={styles.headerTitle}>Current Ride Groups</Text>
-
-                            <View style={styles.headerActions}>
-                                <Pressable style={styles.iconButton} onPress={onViewSettings}>
-                                    <Ionicons name="settings-outline" size={20} color="#1B5E20" />
+                            <View style={[styles.header, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+                                <Pressable style={[styles.backButton, { backgroundColor: colors.cardBackground }]} onPress={onBack}>
+                                    <Ionicons name="chevron-back" size={22} color={colors.primary} />
                                 </Pressable>
-                                <Pressable style={styles.iconButton} onPress={onViewProfile}>
-                                    <Ionicons name="person-outline" size={20} color="#1B5E20" />
-                                </Pressable>
+
+                                <Text style={[styles.headerTitle, { color: colors.text }]}>Current Ride Groups</Text>
+
+                                <View style={styles.headerActions}>
+                                    <Pressable style={[styles.iconButton, { backgroundColor: colors.cardBackground }]} onPress={onViewSettings}>
+                                        <Ionicons name="settings-outline" size={20} color={colors.primary} />
+                                    </Pressable>
+                                    <Pressable style={[styles.iconButton, { backgroundColor: colors.cardBackground }]} onPress={onViewProfile}>
+                                        <Ionicons name="person-outline" size={20} color={colors.primary} />
+                                    </Pressable>
+                                </View>
                             </View>
-                        </View>
 
-                        <View style={styles.heroCard}>
-                            <Text style={styles.heroTitle}>Where are you heading?</Text>
-                            <Text style={styles.heroSubtitle}>Choose your pickup and destination to find matching rides.</Text>
+                        <View style={[styles.heroCard, { backgroundColor: colors.cardBackground }]}> 
+                            <Text style={[styles.heroTitle, { color: colors.text }]}>Where are you heading?</Text>
+                            <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Choose your pickup and destination to find matching rides.</Text>
 
-                            <View style={styles.searchBox}>
+                            <View style={[styles.searchBox, { backgroundColor: colors.cardBackground }]}> 
                                 <View style={styles.searchField}>
-                                    <Ionicons name="radio-button-on" size={16} color="#1B5E20" />
+                                    <Ionicons name="radio-button-on" size={16} color={colors.primary} />
                                     <TextInput
-                                        style={styles.searchInput}
+                                        style={[styles.searchInput, { color: colors.text }]}
                                         placeholder="Start point"
-                                        placeholderTextColor={COLORS.textSecondary}
+                                        placeholderTextColor={colors.textSecondary}
                                         value={currentLocation}
                                         onFocus={() => setActiveField("pickup")}
                                         onChangeText={(text) => handleInputChange(text, "pickup")}
@@ -469,9 +471,9 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                 </View>
 
                                 {activeField === "pickup" && (pickupSuggestions.length > 0 || loadingSuggestions) && (
-                                    <View style={styles.suggestionsBox}>
+                                    <View style={[styles.suggestionsBox, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}> 
                                         {loadingSuggestions ? (
-                                            <ActivityIndicator size="small" color="#1B5E20" style={{ padding: 12 }} />
+                                            <ActivityIndicator size="small" color={colors.primary} style={{ padding: 12 }} />
                                         ) : (
                                             pickupSuggestions.map((item) => (
                                                 <TouchableOpacity
@@ -479,13 +481,13 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                                     style={styles.suggestionItem}
                                                     onPress={() => handleSelectSuggestion(item, "pickup")}
                                                 >
-                                                    <Ionicons name="location-outline" size={16} color="#6b7280" />
+                                                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
                                                     <View style={{ flex: 1 }}>
-                                                        <Text style={[styles.suggestionText, { fontWeight: "600", color: "#111827" }]}>
+                                                        <Text style={[styles.suggestionText, { fontWeight: "600", color: colors.text }]}> 
                                                             {item.mainText ?? item.description}
                                                         </Text>
                                                         {!!item.secondaryText && (
-                                                            <Text style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+                                                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
                                                                 {item.secondaryText}
                                                             </Text>
                                                         )}
@@ -499,11 +501,11 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                 <View style={styles.searchDivider} />
 
                                 <View style={styles.searchField}>
-                                    <Ionicons name="location" size={16} color="#111827" />
+                                    <Ionicons name="location" size={16} color={colors.text} />
                                     <TextInput
-                                        style={styles.searchInput}
+                                        style={[styles.searchInput, { color: colors.text }]}
                                         placeholder="Destination"
-                                        placeholderTextColor={COLORS.textSecondary}
+                                        placeholderTextColor={colors.textSecondary}
                                         value={destination}
                                         onFocus={() => setActiveField("destination")}
                                         onChangeText={(text) => handleInputChange(text, "destination")}
@@ -511,9 +513,9 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                 </View>
 
                                 {activeField === "destination" && (destinationSuggestions.length > 0 || loadingSuggestions) && (
-                                    <View style={styles.suggestionsBox}>
+                                    <View style={[styles.suggestionsBox, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}> 
                                         {loadingSuggestions ? (
-                                            <ActivityIndicator size="small" color="#1B5E20" style={{ padding: 12 }} />
+                                            <ActivityIndicator size="small" color={colors.primary} style={{ padding: 12 }} />
                                         ) : (
                                             destinationSuggestions.map((item) => (
                                                 <TouchableOpacity
@@ -521,13 +523,13 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                                     style={styles.suggestionItem}
                                                     onPress={() => handleSelectSuggestion(item, "destination")}
                                                 >
-                                                    <Ionicons name="location-outline" size={16} color="#6b7280" />
+                                                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
                                                     <View style={{ flex: 1 }}>
-                                                        <Text style={[styles.suggestionText, { fontWeight: "600", color: "#111827" }]}>
+                                                        <Text style={[styles.suggestionText, { fontWeight: "600", color: colors.text }]}> 
                                                             {item.mainText ?? item.description}
                                                         </Text>
                                                         {!!item.secondaryText && (
-                                                            <Text style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+                                                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
                                                                 {item.secondaryText}
                                                             </Text>
                                                         )}

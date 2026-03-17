@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../contexts/ThemeContext";
 import { MapScreen } from "../screens/MapScreen";
 import { RideGroupsScreen } from "../screens/RideGroupsScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
@@ -26,6 +27,7 @@ export default function MainTabs({
     onJoinRide,
     onViewSettings,
 }: MainTabsProps) {
+    const { colors } = useTheme();
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -34,17 +36,17 @@ export default function MainTabs({
                     height: 84,
                     paddingTop: 8,
                     paddingBottom: 18,
-                    backgroundColor: "#ffffff",
+                    backgroundColor: colors.cardBackground,
                     borderTopWidth: 1,
-                    borderTopColor: "#e5e7eb",
+                    borderTopColor: colors.border,
                 },
                 tabBarItemStyle: {
                     paddingVertical: 2,
                 },
                 sceneStyle: {
-                    backgroundColor: "#ffffff",
+                    backgroundColor: colors.background,
                 },
-                tabBarActiveTintColor: "#1B5E20",
+                tabBarActiveTintColor: colors.primary,
                 tabBarInactiveTintColor: "#8b8b8b",
                 tabBarIcon: ({ color, size }) => {
                     if (route.name === "Map") {
@@ -79,8 +81,8 @@ export default function MainTabs({
                 {({ navigation }) => (
                     <MapScreen
                         userName={userName}
-                        onViewRideGroups={() =>
-                            navigation.navigate("RideGroups")
+                        onViewRideGroups={(params?: any) =>
+                            navigation.navigate("RideGroups", params)
                         }
                         onCreateRideGroup={onCreateRideGroup}
                         onSettingsPress={onViewSettings}

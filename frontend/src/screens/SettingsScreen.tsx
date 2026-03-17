@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
 	View,
 	Text,
@@ -10,49 +10,39 @@ import {
 	TouchableOpacity,
 } from "react-native";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
+import { useTheme } from "../contexts/ThemeContext";
+import { useNavigation } from "@react-navigation/native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+
 
 interface SettingsScreenProps {
-	onBack: () => void;
 	onLogout: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({
-	onBack,
-	onLogout,
-}) => {
-	const [pushNotifications, setPushNotifications] = useState(true);
-	const [rideReminders, setRideReminders] = useState(true);
-	const [chatMessages, setChatMessages] = useState(true);
-	const [darkMode, setDarkMode] = useState(false);
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
+	const { themeName, colors, setThemeName, toggleTheme } = useTheme();
+	const navigation = useNavigation();
+
+	const [pushNotifications, setPushNotifications] = React.useState(true);
+	const [rideReminders, setRideReminders] = React.useState(true);
+	const [chatMessages, setChatMessages] = React.useState(true);
 
 	return (
-		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<Pressable style={styles.backButton} onPress={onBack}>
-					<Text style={styles.backIcon}>←</Text>
-				</Pressable>
-				<Text style={styles.headerTitle}>Settings</Text>
-			</View>
-
-			<ScrollView
-				style={styles.scrollContent}
-				showsVerticalScrollIndicator={false}
-			>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+			<ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 				{/* Appearance Section */}
-				<View style={styles.section}>
-					<View style={styles.sectionHeader}>
-						<Text style={styles.sectionTitle}>Appearance</Text>
+					<View style={[styles.section, { borderColor: colors.border }]}> 
+					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight }]}> 
+						<Text style={[styles.sectionTitle, { color: colors.primary }]}>Appearance</Text>
 					</View>
 
 					<View style={styles.settingItem}>
-						<View style={styles.settingIconContainer}>
+						<View style={[styles.settingIconContainer, { backgroundColor: colors.cardBackground }]}> 
 							<Text style={styles.settingIcon}>🌐</Text>
 						</View>
 						<View style={styles.settingContent}>
-							<Text style={styles.settingName}>Language</Text>
-							<Text style={styles.settingDescription}>
-								English
-							</Text>
+							<Text style={[styles.settingName, { color: colors.primary }]}>Language</Text>
+							<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>English</Text>
 						</View>
 					</View>
 
@@ -60,26 +50,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
 					<View style={styles.settingItemWithToggle}>
 						<View style={styles.settingLeft}>
-							<View style={styles.settingIconContainer}>
+							<View style={[styles.settingIconContainer, { backgroundColor: colors.cardBackground }]}> 
 								<Text style={styles.settingIcon}>🌙</Text>
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Dark Mode
-								</Text>
-								<Text style={styles.settingDescription}>
-									Use dark theme
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Dark Mode</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Use dark theme</Text>
 							</View>
 						</View>
 						<Switch
-							value={darkMode}
-							onValueChange={setDarkMode}
+							value={themeName === "dark"}
+							onValueChange={() => setThemeName(themeName === "dark" ? "light" : "dark")}
 							trackColor={{
-								false: COLORS.border,
-								true: COLORS.primary,
+								false: colors.border,
+								true: colors.primary,
 							}}
-							thumbColor={COLORS.textLight}
+							thumbColor={colors.textLight}
 						/>
 					</View>
 				</View>
@@ -268,6 +254,36 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
 				<View style={styles.spacing} />
 			</ScrollView>
+
+			{/* Bottom tab replica so navigation remains available */}
+			<View style={[styles.bottomNavBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}> 
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() => (navigation as any).navigate("MainTabs", { screen: "Map" })}
+					activeOpacity={0.8}
+				>
+					<Ionicons name="map-outline" size={22} color={colors.primary} />
+					<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Map</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() => (navigation as any).navigate("MainTabs", { screen: "RideGroups" })}
+					activeOpacity={0.8}
+				>
+					<Ionicons name="people-outline" size={22} color={colors.textSecondary} />
+					<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Ride Groups</Text>
+				</TouchableOpacity>
+
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() => (navigation as any).navigate("MainTabs", { screen: "Profile" })}
+					activeOpacity={0.8}
+				>
+					<Ionicons name="person-outline" size={22} color={colors.textSecondary} />
+					<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Profile</Text>
+				</TouchableOpacity>
+			</View>
 		</SafeAreaView>
 	);
 };
@@ -400,5 +416,28 @@ const styles = StyleSheet.create({
 	},
 	spacing: {
 		height: SPACING.xl,
+	},
+	bottomNavBar: {
+		position: "absolute",
+		left: 0,
+		right: 0,
+		bottom: 0,
+		flexDirection: "row",
+		justifyContent: "space-around",
+		alignItems: "center",
+		paddingTop: 8,
+		paddingBottom: 18,
+		borderTopWidth: 1,
+	},
+	tabButton: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: 6,
+	},
+	tabButtonText: {
+		fontSize: 12,
+		color: "#374151",
+		marginTop: 4,
 	},
 });

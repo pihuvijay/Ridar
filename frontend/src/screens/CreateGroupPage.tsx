@@ -1,4 +1,6 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useCallback } from "react";
+import { useRoute, useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSearchContext } from "../contexts/SearchContexts";
 import { partiesService } from "../services/api";
 import type { JSX } from "react";
 import {
@@ -14,7 +16,9 @@ import {
 	Switch,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS } from "../theme/colors";
+import { useTheme } from "../contexts/ThemeContext";
 
 const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -40,6 +44,7 @@ export const CreateGroupPage = ({
 	onCreateGroup,
 	userGender,
 }: CreateGroupPageProps): JSX.Element => {
+	const { colors } = useTheme();
 	const [pickupPoint, setPickupPoint] = useState("");
 	const [finalDestination, setFinalDestination] = useState("");
 	const [maxRiders, setMaxRiders] = useState("4");
@@ -69,6 +74,66 @@ export const CreateGroupPage = ({
 		useState<SelectedPlace | null>(null);
 
 	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+	const route = useRoute();
+	const navigation = useNavigation();
+
+	const { startLocation: ctxStart, endLocation: ctxEnd, startCoords: ctxStartCoords, endCoords: ctxEndCoords } = useSearchContext();
+
+	// If navigated with preloaded params, or context has saved search, apply them when screen focuses
+	useFocusEffect(
+		useCallback(() => {
+			const params = (route.params as any) || {};
+			if (params?.preloadedRoute && params?.stamp) {
+				const data = params.preloadedRoute;
+
+				if (data.startLocation) setPickupPoint(data.startLocation);
+				if (data.endLocation) setFinalDestination(data.endLocation);
+
+				if (data.startCoords) {
+					setSelectedPickup({
+						label: data.startLocation,
+						lat: data.startCoords.latitude,
+						lng: data.startCoords.longitude,
+					});
+				}
+
+				if (data.endCoords) {
+					setSelectedDestination({
+						label: data.endLocation,
+						lat: data.endCoords.latitude,
+						lng: data.endCoords.longitude,
+					});
+				}
+
+				// clear params so they don't persist
+				navigation.setParams({ preloadedRoute: undefined, stamp: undefined } as any);
+				return;
+			}
+
+			// fallback to context if available
+			if (ctxStart || ctxEnd || ctxStartCoords || ctxEndCoords) {
+				if (ctxStart) setPickupPoint(ctxStart);
+				if (ctxEnd) setFinalDestination(ctxEnd);
+
+				if (ctxStartCoords) {
+					setSelectedPickup({
+						label: ctxStart,
+						lat: ctxStartCoords.latitude,
+						lng: ctxStartCoords.longitude,
+					});
+				}
+
+				if (ctxEndCoords) {
+					setSelectedDestination({
+						label: ctxEnd,
+						lat: ctxEndCoords.latitude,
+						lng: ctxEndCoords.longitude,
+					});
+				}
+			}
+		}, [route.params, navigation, ctxStart, ctxEnd, ctxStartCoords, ctxEndCoords])
+	);
 
 	const isFemaleUser = useMemo(() => {
 		return (userGender || "").trim().toLowerCase() === "female";
@@ -283,7 +348,7 @@ export const CreateGroupPage = ({
 		if (activeField !== field || suggestions.length === 0) return null;
 
 		return (
-			<View style={styles.suggestionsContainer}>
+			<View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
 				{suggestions.map((item) => (
 					<TouchableOpacity
 						key={item.placeId}
@@ -291,8 +356,8 @@ export const CreateGroupPage = ({
 						onPress={() => handlePlaceSelection(item, field)}
 						activeOpacity={0.8}
 					>
-						<Text style={styles.suggestionIcon}>📍</Text>
-						<Text style={styles.suggestionText}>
+						<View style={styles.suggestionIcon} />
+						<Text style={[styles.suggestionText, { color: colors.text }] }>
 							{item.description}
 						</Text>
 					</TouchableOpacity>
@@ -302,12 +367,12 @@ export const CreateGroupPage = ({
 	};
 
 	return (
-		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<TouchableOpacity style={styles.backButton} onPress={onBack}>
-					<Text style={styles.backIcon}>←</Text>
+		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+			<View style={[styles.header, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+				<TouchableOpacity style={[styles.backButton, { backgroundColor: colors.cardBackground }]} onPress={onBack}>
+					<Text style={[styles.backIcon, { color: colors.text }]}>←</Text>
 				</TouchableOpacity>
-				<Text style={styles.headerTitle}>Create Ride Group</Text>
+				<Text style={[styles.headerTitle, { color: colors.text }]}>Create Ride Group</Text>
 			</View>
 
 			<ScrollView
@@ -315,65 +380,69 @@ export const CreateGroupPage = ({
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
 			>
-				<View style={styles.heroCard}>
-					<Text style={styles.heroTitle}>Set up your route</Text>
-					<Text style={styles.heroSubtitle}>
-						Choose exact pickup and destination places so riders can
-						find your trip easily.
-					</Text>
+				<View style={[styles.heroCard, { backgroundColor: colors.primary }]}> 
+						<Text style={styles.heroTitle}>Set up your route</Text>
+						<Text style={styles.heroSubtitle}>
+							Choose exact pickup and destination places so riders can
+							find your trip easily.
+						</Text>
+
+						{/* Inner white box with inputs to match design */}
+						<View style={[styles.innerBox, { backgroundColor: colors.cardBackground }]}> 
+							<View style={[styles.searchBox, { backgroundColor: colors.cardBackground }]}> 
+								<View style={styles.searchField}>
+									<View style={styles.dotOuter}>
+										<View style={styles.dotInnerActive} />
+									</View>
+									<TextInput
+										style={[styles.searchInput, { color: colors.text }]}
+										placeholder="Start point"
+										placeholderTextColor={colors.textSecondary}
+										value={pickupPoint}
+										onChangeText={(text) =>
+											handleInputChange(text, "pickup")
+										}
+										onFocus={() => setActiveField("pickup")}
+									/>
+								</View>
+
+								<View style={styles.searchDivider} />
+
+								<View style={styles.searchField}>
+									<View style={styles.dotOuter}>
+										<View style={styles.dotInner} />
+									</View>
+									<TextInput
+										style={[styles.searchInput, { color: colors.text }]}
+										placeholder="Destination"
+										placeholderTextColor={colors.textSecondary}
+										value={finalDestination}
+										onChangeText={(text) =>
+											handleInputChange(text, "destination")
+										}
+										onFocus={() => setActiveField("destination")}
+									/>
+								</View>
+
+								{renderSuggestions("pickup")}
+								{renderSuggestions("destination")}
+
+								{selectedPickup && (
+									<Text style={styles.selectedText}>
+										Selected: {selectedPickup.label}
+									</Text>
+								)}
+
+								{selectedDestination && (
+									<Text style={styles.selectedText}>
+										Selected: {selectedDestination.label}
+									</Text>
+								)}
+							</View>
+						</View>
 				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.cardTitle}>Route</Text>
-
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Pickup Point *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>📍</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Search pickup point"
-								placeholderTextColor={COLORS.textSecondary}
-								value={pickupPoint}
-								onChangeText={(text) =>
-									handleInputChange(text, "pickup")
-								}
-								onFocus={() => setActiveField("pickup")}
-							/>
-						</View>
-						{renderSuggestions("pickup")}
-						{selectedPickup && (
-							<Text style={styles.selectedText}>
-								Selected: {selectedPickup.label}
-							</Text>
-						)}
-					</View>
-
-					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Final Destination *</Text>
-						<View style={styles.inputContainer}>
-							<Text style={styles.inputIcon}>🎯</Text>
-							<TextInput
-								style={styles.input}
-								placeholder="Search destination"
-								placeholderTextColor={COLORS.textSecondary}
-								value={finalDestination}
-								onChangeText={(text) =>
-									handleInputChange(text, "destination")
-								}
-								onFocus={() => setActiveField("destination")}
-							/>
-						</View>
-						{renderSuggestions("destination")}
-						{selectedDestination && (
-							<Text style={styles.selectedText}>
-								Selected: {selectedDestination.label}
-							</Text>
-						)}
-					</View>
-				</View>
-
-				<View style={styles.card}>
+				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
 					<Text style={styles.cardTitle}>Trip Settings</Text>
 
 					<View style={styles.rowContainer}>
@@ -431,7 +500,7 @@ export const CreateGroupPage = ({
 					</View>
 				</View>
 
-				<View style={styles.card}>
+				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
 					<Text style={styles.cardTitle}>Ride Preferences</Text>
 
 					<View style={styles.preferenceItem}>
@@ -510,6 +579,36 @@ export const CreateGroupPage = ({
 					)}
 				</TouchableOpacity>
 			</ScrollView>
+
+					{/* Bottom tab replica so navigation remains available */}
+					<View style={styles.bottomNavBar}>
+						<TouchableOpacity
+							style={styles.tabButton}
+							onPress={() => navigation.navigate("MainTabs", { screen: "Map" })}
+							activeOpacity={0.8}
+						>
+							<Ionicons name="map-outline" size={22} color="#1B5E20" />
+							<Text style={styles.tabButtonText}>Map</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							style={styles.tabButton}
+							onPress={() => navigation.navigate("MainTabs", { screen: "RideGroups" })}
+							activeOpacity={0.8}
+						>
+							<Ionicons name="people-outline" size={22} color="#6b7280" />
+							<Text style={styles.tabButtonText}>Ride Groups</Text>
+						</TouchableOpacity>
+
+						<TouchableOpacity
+							style={styles.tabButton}
+							onPress={() => navigation.navigate("MainTabs", { screen: "Profile" })}
+							activeOpacity={0.8}
+						>
+							<Ionicons name="person-outline" size={22} color="#6b7280" />
+							<Text style={styles.tabButtonText}>Profile</Text>
+						</TouchableOpacity>
+					</View>
 		</SafeAreaView>
 	);
 };
@@ -517,34 +616,33 @@ export const CreateGroupPage = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f3f4f6",
+		backgroundColor: "#f7f7f7",
 	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#fff",
+		backgroundColor: "#f7f7f7",
 		paddingHorizontal: 16,
-		paddingVertical: 16,
+		paddingTop: 12,
+		paddingBottom: 8,
 		gap: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#e5e7eb",
 	},
 	backButton: {
 		width: 40,
 		height: 40,
-		justifyContent: "center",
+		borderRadius: 20,
+		backgroundColor: "#ffffff",
 		alignItems: "center",
-		borderRadius: 10,
-		backgroundColor: COLORS.primaryLight,
+		justifyContent: "center",
 	},
 	backIcon: {
-		fontSize: 24,
-		color: COLORS.primary,
+		fontSize: 18,
+		color: "#111827",
 	},
 	headerTitle: {
-		fontSize: 18,
+		fontSize: 16,
 		fontWeight: "700",
-		color: COLORS.primary,
+		color: "#111827",
 	},
 	scrollView: {
 		flex: 1,
@@ -553,23 +651,26 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		gap: 16,
-		paddingBottom: 32,
+		paddingBottom: 120,
 	},
 	heroCard: {
-		backgroundColor: COLORS.primary,
-		borderRadius: 18,
+		marginHorizontal: 16,
+		marginTop: 8,
+		backgroundColor: "#111827",
+		borderRadius: 24,
 		padding: 18,
 	},
 	heroTitle: {
-		fontSize: 18,
+		fontSize: 22,
 		fontWeight: "700",
-		color: "#fff",
+		color: "#ffffff",
 		marginBottom: 6,
 	},
 	heroSubtitle: {
-		fontSize: 14,
-		lineHeight: 20,
-		color: "rgba(255,255,255,0.9)",
+		fontSize: 13,
+		lineHeight: 18,
+		color: "#d1d5db",
+		marginBottom: 16,
 	},
 	card: {
 		backgroundColor: "#fff",
@@ -698,21 +799,110 @@ const styles = StyleSheet.create({
 		borderColor: "#e5e7eb",
 		overflow: "hidden",
 	},
+	suggestionsBox: {
+		backgroundColor: "#ffffff",
+		borderTopWidth: 1,
+		borderTopColor: "#f0f0f0",
+	},
+	searchBox: {
+		backgroundColor: "#ffffff",
+		borderRadius: 18,
+		overflow: "hidden",
+		marginTop: 8,
+	},
+	searchField: {
+		flexDirection: "row",
+		alignItems: "center",
+		paddingHorizontal: 14,
+		paddingVertical: 14,
+		gap: 10,
+	},
+	searchInput: {
+		flex: 1,
+		fontSize: 15,
+		color: "#111827",
+	},
+	searchDivider: {
+		height: 1,
+		backgroundColor: "#e5e7eb",
+		marginHorizontal: 0,
+	},
+	searchIcon: {
+		fontSize: 16,
+	},
 	suggestionItem: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 10,
 		paddingHorizontal: 14,
 		paddingVertical: 12,
-		borderBottomWidth: 1,
-		borderBottomColor: "#f1f5f9",
+		borderTopWidth: 1,
+		borderTopColor: "#f3f4f6",
 	},
 	suggestionIcon: {
-		fontSize: 14,
+		width: 10,
+		height: 10,
+		borderRadius: 6,
+		backgroundColor: COLORS.primary,
+		marginRight: 8,
+	},
+	innerBox: {
+		backgroundColor: "#fff",
+		borderRadius: 14,
+		marginTop: 12,
+		marginHorizontal: 8,
+		overflow: "hidden",
+	},
+	dotOuter: {
+		width: 22,
+		height: 22,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: COLORS.border,
+		alignItems: "center",
+		justifyContent: "center",
+		marginRight: 10,
+	},
+	dotInner: {
+		width: 8,
+		height: 8,
+		borderRadius: 6,
+		backgroundColor: COLORS.textSecondary,
+	},
+	dotInnerActive: {
+		width: 8,
+		height: 8,
+		borderRadius: 6,
+		backgroundColor: COLORS.primary,
 	},
 	suggestionText: {
 		flex: 1,
 		fontSize: 14,
-		color: "#1f2937",
+		color: "#374151",
+	},
+	bottomNavBar: {
+		position: "absolute",
+		left: 0,
+		right: 0,
+		bottom: 0,
+		flexDirection: "row",
+		justifyContent: "space-around",
+		alignItems: "center",
+		backgroundColor: "#fff",
+		paddingTop: 8,
+		paddingBottom: 18,
+		borderTopWidth: 1,
+		borderTopColor: "#e5e7eb",
+	},
+	tabButton: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: 6,
+	},
+	tabButtonText: {
+		fontSize: 12,
+		color: "#374151",
+		marginTop: 4,
 	},
 });
