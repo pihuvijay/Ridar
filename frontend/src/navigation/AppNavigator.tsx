@@ -18,7 +18,7 @@ export type RootStackParamList = {
 	MainTabs: undefined;
 	CreateGroup: undefined;
 	RideJoining: { rideGroup: any };
-	Wait: { rideGroup?: any } | undefined;
+	Wait: { rideGroup?: any; uberRide?: any } | undefined;
 	Settings: undefined;
 	ConnectAccounts: undefined;
 	ModeratorLogin: undefined;
@@ -100,9 +100,10 @@ export default function AppNavigator({
 						<CreateGroupPage
 							onBack={() => navigation.goBack()}
 							userGender={"female"} // replace with real user gender from your profile/session
-							onCreateGroup={(rideGroup: any) =>
-								navigation.navigate("Wait", { rideGroup })
-							}
+							onCreateGroup={(rideData: any) => {
+								const { uberRide, ...rideGroup } = rideData;
+								navigation.navigate("Wait", { rideGroup, uberRide });
+							}}
 						/>
 					)}
 				</Stack.Screen>
@@ -131,6 +132,7 @@ export default function AppNavigator({
 					{({ navigation, route }) => (
 						<WaitScreen
 							rideGroup={route.params?.rideGroup}
+							uberRide={route.params?.uberRide}
 							onContinue={() =>
 								navigation.navigate("RideInsights", {
 									rideGroup: route.params?.rideGroup,

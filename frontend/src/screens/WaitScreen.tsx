@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
 	View,
 	Text,
@@ -6,8 +6,10 @@ import {
 	SafeAreaView,
 	Pressable,
 	ScrollView,
+	ActivityIndicator,
 } from "react-native";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
+import { uberService } from "../services/api";
 
 interface PartyMember {
 	id: string;
@@ -17,15 +19,81 @@ interface PartyMember {
 	isLeader: boolean;
 }
 
+type UberRideStatus = 'processing' | 'accepted' | 'arriving' | 'in_progress' | 'cancelled';
+
+const STATUS_LABELS: Record<UberRideStatus, string> = {
+	processing: 'Finding your driver...',
+	accepted: 'Driver on the way',
+	arriving: 'Almost here!',
+	in_progress: 'Ride in progress',
+	cancelled: 'Ride cancelled',
+};
+
 interface WaitScreenProps {
 	rideGroup?: any;
+	uberRide?: any;  // initial ride data from POST /uber/request
 	onContinue: () => void;
 }
 
 export const WaitScreen: React.FC<WaitScreenProps> = ({
 	rideGroup,
+	uberRide: initialUberRide,
 	onContinue,
 }) => {
+	const [uberRide, setUberRide] = useState<any>(initialUberRide ?? null);
+	const [pricePerPerson, setPricePerPerson] = useState<number | null>(null);
+	const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+	useEffect(() => {
+		const fetchPrice = async () => {
+			const startLat = uberRide?.pickup?.lat ?? rideGroup?.pickup?.lat;
+			const startLng = uberRide?.pickup?.lng ?? rideGroup?.pickup?.lng;
+			const endLat = uberRide?.dropoff?.lat ?? rideGroup?.destination?.lat;
+			const endLng = uberRide?.dropoff?.lng ?? rideGroup?.destination?.lng;
+
+			if (startLat && startLng && endLat && endLng) {
+				try {
+					const res = await uberService.getPriceEstimates(startLat, startLng, endLat, endLng);
+					if (res.success && res.data?.length > 0) {
+						const uberX = res.data.find((p: any) => p.display_name === 'UberX') || res.data[0];
+						const totalEst = (uberX.low_estimate + uberX.high_estimate) / 2;
+						const membersCount = rideGroup?.members?.length || 1;
+						setPricePerPerson(totalEst / membersCount);
+					}
+				} catch (err) {
+					console.warn('[WaitScreen] price estimate error:', err);
+				}
+			}
+		};
+		fetchPrice();
+	}, [uberRide?.pickup?.lat, rideGroup?.pickup?.lat]);
+
+	useEffect(() => {
+		const rideId = uberRide?.rideId;
+		if (!rideId) return;
+
+		const poll = async () => {
+			try {
+				const res = await uberService.getRideStatus(rideId);
+				if (res.success) {
+					setUberRide(res.data);
+					// Stop polling once ride is terminal
+					if (res.data?.status === 'in_progress' || res.data?.status === 'cancelled') {
+						if (pollRef.current) clearInterval(pollRef.current);
+					}
+				}
+			} catch (err) {
+				console.warn('[WaitScreen] poll error:', err);
+			}
+		};
+
+		poll(); // immediate first fetch
+		pollRef.current = setInterval(poll, 5000);
+
+		return () => {
+			if (pollRef.current) clearInterval(pollRef.current);
+		};
+	}, [uberRide?.rideId]);
 	const members: PartyMember[] = rideGroup?.members?.map(
 		(member: any, index: number) => ({
 			id: member.id?.toString() ?? `${index}`,
@@ -57,38 +125,39 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		};
 
 	const pickupLocation =
+		uberRide?.pickup?.label ??
 		rideGroup?.pickup?.label ??
 		rideGroup?.pickupLocation ??
 		"Pickup location not set";
 
 	const destination =
+		uberRide?.dropoff?.label ??
 		rideGroup?.destination?.label ??
 		rideGroup?.destination ??
 		"Destination not set";
 
-	const vehicleName =
-		rideGroup?.driver?.vehicle ??
-		rideGroup?.vehicle ??
-		"Vehicle details unavailable";
+	const vehicleName = uberRide?.vehicle
+		? `${uberRide.vehicle.make} ${uberRide.vehicle.model}`
+		: rideGroup?.vehicle ?? "Vehicle details pending";
 
 	const licensePlate =
-		rideGroup?.driver?.licensePlate ?? rideGroup?.licensePlate ?? "Pending";
+		uberRide?.vehicle?.license_plate ?? rideGroup?.licensePlate ?? "Pending";
 
 	const distance =
-		rideGroup?.driver?.distance ?? rideGroup?.distance ?? "On the way";
+		uberRide?.eta != null ? `${uberRide.eta} min away` : "On the way";
 
-	const arrivalTime =
-		rideGroup?.arrivalTime ??
-		(rideGroup?.leavingIn ? `${rideGroup.leavingIn} min` : "Soon");
+	const uberStatus: UberRideStatus = uberRide?.status ?? 'processing';
+	const arrivalTime = STATUS_LABELS[uberStatus] ?? "Soon";
 
 	const driverName =
+		uberRide?.driver?.name ??
 		rideGroup?.driver?.name ??
 		rideGroup?.driverName ??
 		leader.name ??
-		"Driver assigned";
+		"Awaiting driver";
 
 	const allMembersPresent = members.length > 0;
-	const waitingForLeader = !rideGroup?.driver && !!leader;
+	const isProcessing = uberStatus === 'processing';
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -98,8 +167,14 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				</View>
 
 				<View style={styles.arrivalCard}>
-					<Text style={styles.arrivalLabel}>Ride status</Text>
+					{isProcessing
+						? <ActivityIndicator size="small" color={COLORS.primary} />
+						: <Text style={styles.arrivalLabel}>ETA</Text>
+					}
 					<Text style={styles.arrivalTime}>{arrivalTime}</Text>
+					<View style={[styles.statusBadge, styles[`status_${uberStatus}` as keyof typeof styles] as any]}>
+						<Text style={styles.statusBadgeText}>{uberStatus.replace('_', ' ').toUpperCase()}</Text>
+					</View>
 				</View>
 
 				<View style={styles.vehicleIcon}>
@@ -173,6 +248,20 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						</View>
 					</View>
 
+					{pricePerPerson !== null && (
+						<View style={[styles.locationRow, { marginTop: SPACING.md }]}>
+							<Text style={styles.locationIcon}>💷</Text>
+							<View style={styles.locationContent}>
+								<Text style={styles.locationLabel}>
+									Estimated Price
+								</Text>
+								<Text style={styles.locationName}>
+									£{pricePerPerson.toFixed(2)} / person
+								</Text>
+							</View>
+						</View>
+					)}
+
 					<View style={styles.divider} />
 
 					<View style={styles.partySection}>
@@ -242,11 +331,11 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 								</View>
 							)}
 
-							{waitingForLeader && (
+							{isProcessing && (
 								<View style={styles.infoMessage}>
 									<Text style={styles.infoIcon}>⏳</Text>
 									<Text style={styles.infoText}>
-										Waiting for ride confirmation...
+										Finding your driver...
 									</Text>
 								</View>
 							)}
@@ -555,6 +644,22 @@ const styles = StyleSheet.create({
 		fontSize: FONT_SIZES.sm,
 		color: COLORS.textSecondary,
 	},
+	statusBadge: {
+		paddingHorizontal: SPACING.sm,
+		paddingVertical: 3,
+		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: COLORS.primaryLight,
+	},
+	statusBadgeText: {
+		fontSize: FONT_SIZES.xs,
+		fontWeight: "700" as const,
+		color: COLORS.primary,
+	},
+	status_processing: { backgroundColor: '#fef3c7' },
+	status_accepted:   { backgroundColor: '#d1fae5' },
+	status_arriving:   { backgroundColor: '#dbeafe' },
+	status_in_progress: { backgroundColor: '#ede9fe' },
+	status_cancelled:  { backgroundColor: '#fee2e2' },
 	continueButton: {
 		paddingVertical: SPACING.lg,
 		borderRadius: BORDER_RADIUS.lg,

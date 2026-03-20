@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useCallback } from "react";
 import { useRoute, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSearchContext } from "../contexts/SearchContexts";
-import { partiesService } from "../services/api";
+import { partiesService, uberService } from "../services/api";
 import type { JSX } from "react";
 import {
 	View,
@@ -328,7 +328,25 @@ export const CreateGroupPage = ({
 				return;
 			}
 
-			onCreateGroup(response.data);
+			// Request an Uber ride immediately after party creation
+			const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
+			let uberRide: any = null;
+			try {
+				const rideResponse = await uberService.requestRide({
+					productId: UBERX_PRODUCT_ID,
+					startLat: selectedPickup!.lat,
+					startLng: selectedPickup!.lng,
+					endLat: selectedDestination!.lat,
+					endLng: selectedDestination!.lng,
+				});
+				if (rideResponse.success) {
+					uberRide = rideResponse.data;
+				}
+			} catch (rideErr) {
+				console.warn("[uber] ride request failed, continuing without ride:", rideErr);
+			}
+
+			onCreateGroup({ ...response.data, uberRide });
 		} catch (error) {
 			Alert.alert(
 				"Error",

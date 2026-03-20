@@ -226,10 +226,40 @@ export const userService = {
 };
 
 export const uberService = {
-	initiateUberAuth: async () => ({ authUrl: "" }),
-	connectUber: async (_code: string, _token: string) => ({ success: false }),
-	isConnected: async (_token: string) => ({ connected: false }),
-} as any;
+	async requestRide(params: {
+		productId: string;
+		startLat: number;
+		startLng: number;
+		endLat: number;
+		endLng: number;
+	}) {
+		return await requestJson<any>(`/uber/request`, {
+			method: "POST",
+			body: JSON.stringify(params),
+		});
+	},
+
+	async getRideStatus(rideId: string) {
+		return await requestJson<any>(`/uber/ride/${rideId}`);
+	},
+
+	async cancelRide(rideId: string) {
+		return await requestJson<any>(`/uber/ride/${rideId}`, {
+			method: "DELETE",
+		});
+	},
+
+	async getPriceEstimates(
+		startLat: number,
+		startLng: number,
+		endLat: number,
+		endLng: number,
+	) {
+		return await requestJson<any>(
+			`/uber/estimates?start_lat=${startLat}&start_lng=${startLng}&end_lat=${endLat}&end_lng=${endLng}`,
+		);
+	},
+};
 
 export const paymentService = {
 	addPaymentMethod: async (
