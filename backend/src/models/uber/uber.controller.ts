@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { uberService } from './uber.service';
 import { ok } from '../../utils/http';
+import { getPriceEstimatesSchema, requestRideSchema, rideIdParamSchema } from './uber.schemas';
 
 export const uberController = {
     getPriceEstimates: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { start_lat, start_lng, end_lat, end_lng } = req.query as Record<string, string>;
+            const { start_lat, start_lng, end_lat, end_lng } = getPriceEstimatesSchema.parse(req.query);
 
             const estimates = await uberService.getPriceEstimates(
-                { lat: parseFloat(start_lat), lng: parseFloat(start_lng) },
-                { lat: parseFloat(end_lat), lng: parseFloat(end_lng) }
+                { lat: start_lat, lng: start_lng },
+                { lat: end_lat, lng: end_lng }
             );
 
             res.json(ok(estimates));
@@ -20,7 +21,7 @@ export const uberController = {
 
     requestRide: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { productId, startLat, startLng, endLat, endLng } = req.body;
+            const { productId, startLat, startLng, endLat, endLng } = requestRideSchema.parse(req.body);
 
             const ride = await uberService.requestRide({
                 productId,
@@ -36,7 +37,7 @@ export const uberController = {
 
     getRideStatus: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { rideId } = req.params;
+            const { rideId } = rideIdParamSchema.parse(req.params);
             const ride = await uberService.getRideStatus(rideId);
             res.json(ok(ride));
         } catch (err) {
@@ -46,7 +47,7 @@ export const uberController = {
 
     cancelRide: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { rideId } = req.params;
+            const { rideId } = rideIdParamSchema.parse(req.params);
             const result = await uberService.cancelRide(rideId);
             res.json(ok(result));
         } catch (err) {

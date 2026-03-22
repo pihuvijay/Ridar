@@ -1,11 +1,5 @@
 import { Router } from 'express';
 import { uberController } from './uber.controller';
-import { validate } from '../../middleware/validate';
-import {
-    getPriceEstimatesSchema,
-    requestRideSchema,
-    rideIdParamSchema,
-} from './uber.schemas';
 import { protect } from '../../middleware/auth';
 
 export const uberRidesRouter = Router();
@@ -17,7 +11,6 @@ export const uberRidesRouter = Router();
 uberRidesRouter.get(
     '/estimates',
     /* protect, */
-    validate(getPriceEstimatesSchema),
     uberController.getPriceEstimates
 );
 
@@ -28,7 +21,6 @@ uberRidesRouter.get(
 uberRidesRouter.post(
     '/request',
     /* protect, */
-    validate(requestRideSchema),
     uberController.requestRide
 );
 
@@ -39,7 +31,6 @@ uberRidesRouter.post(
 uberRidesRouter.get(
     '/ride/:rideId',
     /* protect, */
-    validate(rideIdParamSchema),
     uberController.getRideStatus
 );
 
@@ -50,6 +41,5 @@ uberRidesRouter.get(
 uberRidesRouter.delete(
     '/ride/:rideId',
     /* protect, */
-    validate(rideIdParamSchema),
     uberController.cancelRide
 );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
 	View,
 	Text,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
+import { uberService } from "../services/api";
 
 interface Rider {
 	id: string;
@@ -98,7 +99,35 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 	const pickup =
 		rideGroup?.pickup?.label ?? rideGroup?.pickup ?? "Pickup not set";
 
-	const price = rideGroup?.price ?? 0;
+	const [estimatedPricePerPerson, setEstimatedPricePerPerson] = useState<number | null>(null);
+
+	useEffect(() => {
+		const fetchPrice = async () => {
+			const startLat = rideGroup?.pickup?.lat;
+			const startLng = rideGroup?.pickup?.lng;
+			const endLat = rideGroup?.destination?.lat;
+			const endLng = rideGroup?.destination?.lng;
+
+			if (startLat && startLng && endLat && endLng) {
+				try {
+					const res = await uberService.getPriceEstimates(startLat, startLng, endLat, endLng);
+					if (res.success && res.data?.length > 0) {
+						const uberX = res.data.find((p: any) => p.display_name === 'UberX') || res.data[0];
+						const totalEst = (uberX.low_estimate + uberX.high_estimate) / 2;
+						const membersCount = partyRiders.length || 1;
+						setEstimatedPricePerPerson(totalEst / membersCount);
+					}
+				} catch (err) {
+					console.warn('[RideInsightsScreen] price estimate error:', err);
+				}
+			}
+		};
+		fetchPrice();
+	}, [rideGroup?.pickup?.lat, partyRiders.length]);
+
+	const price = estimatedPricePerPerson 
+		? estimatedPricePerPerson.toFixed(2) 
+		: (rideGroup?.price ?? "...");
 
 	const etaMinutes = rideGroup?.etaMinutes ?? rideGroup?.leavingIn ?? 23;
 
