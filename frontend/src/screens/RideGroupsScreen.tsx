@@ -362,21 +362,21 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
         >
             <View style={styles.cardTopRow}>
                 <View style={styles.routeBlock}>
-                    <View style={styles.routeRow}>
-                        <View style={styles.routeDotPickup} />
+                        <View style={styles.routeRow}>
+                        <View style={[styles.routeDotPickup, { backgroundColor: colors.success }]} />
                         <View style={styles.routeTextWrap}>
-                            <Text style={styles.routeLabel}>Pickup</Text>
-                            <Text style={styles.routeValue}>{item.pickup}</Text>
+                            <Text style={[styles.routeLabel, { color: colors.textSecondary }]}>Pickup</Text>
+                            <Text style={[styles.routeValue, { color: colors.text }]}>{item.pickup}</Text>
                         </View>
                     </View>
 
-                    <View style={styles.routeLine} />
+                    <View style={[styles.routeLine, { backgroundColor: colors.border }]} />
 
                     <View style={styles.routeRow}>
-                        <View style={styles.routeDotDestination} />
+                        <View style={[styles.routeDotDestination, { backgroundColor: colors.textSecondary }]} />
                         <View style={styles.routeTextWrap}>
-                            <Text style={styles.routeLabel}>Destination</Text>
-                            <Text style={styles.routeValue}>{item.destination}</Text>
+                            <Text style={[styles.routeLabel, { color: colors.textSecondary }]}>Destination</Text>
+                            <Text style={[styles.routeValue, { color: colors.text }]}>{item.destination}</Text>
                         </View>
                     </View>
                 </View>
@@ -402,25 +402,25 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
             {item.tags.length > 0 && (
                 <View style={styles.tagsContainer}>
                     {item.tags.map((tag, index) => (
-                        <View key={index} style={styles.tag}>
-                            <Text style={styles.tagText}>{tag}</Text>
+                        <View key={index} style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+                            <Text style={[styles.tagText, { color: colors.primary }]}>{tag}</Text>
                         </View>
                     ))}
                 </View>
             )}
 
-            <View style={styles.cardBottomRow}>
-                <View style={styles.driverAvatar}>
-                    <Text style={styles.driverAvatarText}>{item.driverInitial}</Text>
+                <View style={styles.cardBottomRow}>
+                <View style={[styles.driverAvatar, { backgroundColor: colors.primary }]}> 
+                    <Text style={[styles.driverAvatarText, { color: colors.textLight }]}>{item.driverInitial}</Text>
                 </View>
 
                 <View style={styles.driverInfo}>
-                    <Text style={styles.driverName}>{item.driverName}</Text>
-                    <Text style={styles.driverTrips}>{item.driverTrips} trips completed</Text>
+                    <Text style={[styles.driverName, { color: colors.text }]}>{item.driverName}</Text>
+                    <Text style={[styles.driverTrips, { color: colors.textSecondary }]}>{item.driverTrips} trips completed</Text>
                 </View>
 
                 <View style={[styles.joinChip, { backgroundColor: colors.primaryLight, borderWidth: 1, borderColor: colors.primary }]}> 
-                    <Text style={[styles.joinChipText, { color: colors.background }]}>Join</Text>
+                    <Text style={[styles.joinChipText, { color: colors.primary }]}>Join</Text>
                 </View>
             </View>
         </Pressable>
@@ -498,7 +498,7 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                                     </View>
                                 )}
 
-                                <View style={styles.searchDivider} />
+                                <View style={[styles.searchDivider, { backgroundColor: colors.border }]} />
 
                                 <View style={styles.searchField}>
                                     <Ionicons name="location" size={16} color={colors.text} />
@@ -546,35 +546,35 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                 <View style={styles.filterRow}>
                                     <Pressable
-                                        style={[styles.filterChip, activeFilters.has("female-only") && styles.filterChipActive]}
+                                        style={[styles.filterChip, activeFilters.has("female-only") ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                                         onPress={() => toggleFilter("female-only")}
                                     >
-                                        <Text style={[styles.filterChipText, activeFilters.has("female-only") && styles.filterChipTextActive]}>
+                                        <Text style={[styles.filterChipText, activeFilters.has("female-only") ? { color: colors.background } : { color: colors.text }]}>
                                             Female Only
                                         </Text>
                                     </Pressable>
 
                                     <Pressable
-                                        style={[styles.filterChip, activeFilters.has("alcohol-free") && styles.filterChipActive]}
+                                        style={[styles.filterChip, activeFilters.has("alcohol-free") ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                                         onPress={() => toggleFilter("alcohol-free")}
                                     >
-                                        <Text style={[styles.filterChipText, activeFilters.has("alcohol-free") && styles.filterChipTextActive]}>
+                                        <Text style={[styles.filterChipText, activeFilters.has("alcohol-free") ? { color: colors.background } : { color: colors.text }]}>
                                             Alcohol Free
                                         </Text>
                                     </Pressable>
 
                                     <Pressable
-                                        style={[styles.filterChip, activeFilters.has("same-course") && styles.filterChipActive]}
+                                        style={[styles.filterChip, activeFilters.has("same-course") ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                                         onPress={() => toggleFilter("same-course")}
                                     >
-                                        <Text style={[styles.filterChipText, activeFilters.has("same-course") && styles.filterChipTextActive]}>
+                                        <Text style={[styles.filterChipText, activeFilters.has("same-course") ? { color: colors.background } : { color: colors.text }]}>
                                             Same Course
                                         </Text>
                                     </Pressable>
 
                                     {(currentLocation || destination || activeFilters.size > 0) && (
-                                        <Pressable style={styles.clearChip} onPress={handleClearSearch}>
-                                            <Text style={styles.clearChipText}>Clear</Text>
+                                        <Pressable style={[styles.clearChip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]} onPress={handleClearSearch}>
+                                            <Text style={[styles.clearChipText, { color: colors.textSecondary }]}>Clear</Text>
                                         </Pressable>
                                     )}
                                 </View>
@@ -582,22 +582,22 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                         </View>
 
                         <View style={styles.resultsHeader}>
-                            <Text style={styles.resultsTitle}>Available rides</Text>
-                            <Text style={styles.resultsCount}>{filteredRides.length} found</Text>
+                            <Text style={[styles.resultsTitle, { color: colors.text }]}>Available rides</Text>
+                            <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>{filteredRides.length} found</Text>
                         </View>
                     </View>
                 }
                 ListEmptyComponent={
                     isLoadingRides ? (
                         <View style={styles.emptyState}>
-                            <ActivityIndicator size="large" color="#1B5E20" />
-                            <Text style={styles.emptySubtitle}>Loading rides...</Text>
+                            <ActivityIndicator size="large" color={colors.primary} />
+                            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Loading rides...</Text>
                         </View>
                     ) : (
                         <View style={styles.emptyState}>
-                            <Ionicons name="car-outline" size={34} color="#9ca3af" />
-                            <Text style={styles.emptyTitle}>No ride groups found</Text>
-                            <Text style={styles.emptySubtitle}>Try a different pickup point, destination, or filter.</Text>
+                            <Ionicons name="car-outline" size={34} color={colors.textSecondary} />
+                            <Text style={[styles.emptyTitle, { color: colors.text }]}>No ride groups found</Text>
+                            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try a different pickup point, destination, or filter.</Text>
                         </View>
                     )
                 }
@@ -911,13 +911,11 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     joinChip: {
-        backgroundColor: "#111827",
         borderRadius: 999,
         paddingHorizontal: 14,
         paddingVertical: 9,
     },
     joinChipText: {
-        color: "#ffffff",
         fontSize: 12,
         fontWeight: "700",
     },

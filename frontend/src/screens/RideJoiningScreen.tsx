@@ -8,6 +8,7 @@ import {
 	FlatList,
 	TextInput,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface Rider {
@@ -138,7 +139,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 				<Text style={styles.riderAvatarText}>{item.initial}</Text>
 				{item.isVerified && (
 					<View style={styles.verifiedBadge}>
-						<Text style={styles.verifiedIcon}>⭐</Text>
+						<Ionicons name="star" size={12} color={COLORS.primary} style={styles.verifiedIcon} />
 					</View>
 				)}
 			</View>
@@ -152,13 +153,20 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						</View>
 					)}
 				</View>
-				<Text style={styles.riderStatus}>
-					{item.status === "joined" ? "✓ Joined" : "Waiting..."}
-				</Text>
+				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+					{item.status === 'joined' ? (
+						<>
+							<Ionicons name="checkmark" size={14} color={COLORS.success} />
+							<Text style={styles.riderStatus}>Joined</Text>
+						</>
+					) : (
+						<Text style={styles.riderStatus}>Waiting...</Text>
+					)}
+				</View>
 			</View>
 
-			{item.status === "joined" && (
-				<Text style={styles.confirmedIcon}>✓</Text>
+			{item.status === 'joined' && (
+				<Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.confirmedIcon} />
 			)}
 		</View>
 	);
@@ -176,7 +184,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					<View style={styles.messageHeader}>
 						<Text style={styles.messageSender}>{item.author}</Text>
 						{item.isVerified && (
-							<Text style={styles.verifiedCheck}>⭐</Text>
+							<Ionicons name="star" size={14} color={COLORS.primary} style={styles.verifiedCheck} />
 						)}
 					</View>
 				)}
@@ -211,7 +219,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
 				<Pressable style={styles.backButton} onPress={onBack}>
-					<Text style={styles.backIcon}>←</Text>
+					<Ionicons name="chevron-back" size={18} color={COLORS.text} />
 				</Pressable>
 				<View style={styles.headerContent}>
 					<Text style={styles.headerTitle}>
@@ -226,20 +234,20 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					style={styles.settingsButton}
 					onPress={onViewSettings}
 				>
-					<Text style={styles.settingsIcon}>⚙️</Text>
+					<Ionicons name="settings-outline" size={18} color={COLORS.text} />
 				</Pressable>
 			</View>
 
 			<View style={styles.rideDetailsCard}>
 				<View style={styles.detailRow}>
-					<Text style={styles.detailLabel}>
-						📍 {rideDetails.pickupLocation}
-					</Text>
+					<Ionicons name="location-outline" size={16} color={COLORS.text} style={{ marginRight: 8 }} />
+					<Text style={styles.detailLabel}>{rideDetails.pickupLocation}</Text>
 				</View>
 				<View style={styles.detailRow}>
-					<Text style={styles.detailLabel}>
-						⏱ {rideDetails.departureTime}
-					</Text>
+					<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+						<Ionicons name="time-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
+						<Text style={styles.detailLabel}>{rideDetails.departureTime}</Text>
+					</View>
 					<Text style={styles.priceText}>
 						{rideDetails.pricePerPerson}
 					</Text>
@@ -247,10 +255,10 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 			</View>
 
 			<View style={styles.section}>
-				<Text style={styles.sectionTitle}>
-					👥 Riders ({rideDetails.ridersJoined}/
-					{rideDetails.totalRiders})
-				</Text>
+				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+					<Ionicons name="people-outline" size={18} color={COLORS.text} />
+					<Text style={styles.sectionTitle}>Riders ({rideDetails.ridersJoined}/{rideDetails.totalRiders})</Text>
+				</View>
 				<FlatList
 					data={riders}
 					renderItem={renderRider}
@@ -285,14 +293,14 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						onPress={handleSendMessage}
 						disabled={!newMessage.trim()}
 					>
-						<Text style={styles.sendIcon}>➤</Text>
+						<Ionicons name="send" size={18} color={COLORS.primary} style={styles.sendIcon} />
 					</Pressable>
 				</View>
 			</View>
 
 			<View style={styles.footer}>
 				<Pressable style={styles.joinButton} onPress={handleJoinRide}>
-					<Text style={styles.joinButtonIcon}>👥</Text>
+					<Ionicons name="people-outline" size={18} color={COLORS.textLight} style={styles.joinButtonIcon} />
 					<Text style={styles.joinButtonText}>
 						Join This Ride - {rideDetails.pricePerPerson}
 					</Text>

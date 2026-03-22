@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useCallback } from "react";
+import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import { useRoute, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSearchContext } from "../contexts/SearchContexts";
 import { partiesService } from "../services/api";
@@ -15,8 +15,8 @@ import {
 	SafeAreaView,
 	Switch,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from "@react-native-picker/picker";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -77,6 +77,12 @@ export const CreateGroupPage = ({
 
 	const route = useRoute();
 	const navigation = useNavigation();
+
+	useEffect(() => {
+		if (navigation && typeof (navigation as any).setOptions === "function") {
+			(navigation as any).setOptions({ headerShown: false });
+		}
+	}, [navigation]);
 
 	const { startLocation: ctxStart, endLocation: ctxEnd, startCoords: ctxStartCoords, endCoords: ctxEndCoords } = useSearchContext();
 
@@ -349,19 +355,19 @@ export const CreateGroupPage = ({
 
 		return (
 			<View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-				{suggestions.map((item) => (
-					<TouchableOpacity
-						key={item.placeId}
-						style={styles.suggestionItem}
-						onPress={() => handlePlaceSelection(item, field)}
-						activeOpacity={0.8}
-					>
-						<View style={styles.suggestionIcon} />
-						<Text style={[styles.suggestionText, { color: colors.text }] }>
-							{item.description}
-						</Text>
-					</TouchableOpacity>
-				))}
+					{suggestions.map((item) => (
+						<TouchableOpacity
+							key={item.placeId}
+							style={[styles.suggestionItem, { borderTopColor: colors.border, backgroundColor: colors.cardBackground }]}
+							onPress={() => handlePlaceSelection(item, field)}
+							activeOpacity={0.8}
+						>
+							<View style={[styles.suggestionIcon, { backgroundColor: colors.primary }]} />
+							<Text style={[styles.suggestionText, { color: colors.text }] }>
+								{item.description}
+							</Text>
+						</TouchableOpacity>
+					))}
 			</View>
 		);
 	};
@@ -369,10 +375,7 @@ export const CreateGroupPage = ({
 	return (
 		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
 			<View style={[styles.header, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-				<TouchableOpacity style={[styles.backButton, { backgroundColor: colors.cardBackground }]} onPress={onBack}>
-					<Text style={[styles.backIcon, { color: colors.text }]}>←</Text>
-				</TouchableOpacity>
-				<Text style={[styles.headerTitle, { color: colors.text }]}>Create Ride Group</Text>
+				<Text style={[styles.headerTitle, { color: colors.text, textAlign: "center", flex: 1 }]}>Create Ride Group</Text>
 			</View>
 
 			<ScrollView
@@ -380,9 +383,9 @@ export const CreateGroupPage = ({
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
 			>
-				<View style={[styles.heroCard, { backgroundColor: colors.primary }]}> 
-						<Text style={styles.heroTitle}>Set up your route</Text>
-						<Text style={styles.heroSubtitle}>
+					<View style={[styles.heroCard, { backgroundColor: colors.cardBackground }]}> 
+						<Text style={[styles.heroTitle, { color: colors.textLight }]}>Set up your route</Text>
+						<Text style={[styles.heroSubtitle, { color: colors.textSecondary }] }>
 							Choose exact pickup and destination places so riders can
 							find your trip easily.
 						</Text>
@@ -397,7 +400,7 @@ export const CreateGroupPage = ({
 									<TextInput
 										style={[styles.searchInput, { color: colors.text }]}
 										placeholder="Start point"
-										placeholderTextColor={colors.textSecondary}
+											placeholderTextColor={colors.textSecondary}
 										value={pickupPoint}
 										onChangeText={(text) =>
 											handleInputChange(text, "pickup")
@@ -406,7 +409,7 @@ export const CreateGroupPage = ({
 									/>
 								</View>
 
-								<View style={styles.searchDivider} />
+								<View style={[styles.searchDivider, { backgroundColor: colors.border }]} />
 
 								<View style={styles.searchField}>
 									<View style={styles.dotOuter}>
@@ -428,32 +431,28 @@ export const CreateGroupPage = ({
 								{renderSuggestions("destination")}
 
 								{selectedPickup && (
-									<Text style={styles.selectedText}>
-										Selected: {selectedPickup.label}
-									</Text>
+									<Text style={[styles.selectedText, { color: colors.primary }]}>Selected: {selectedPickup.label}</Text>
 								)}
 
 								{selectedDestination && (
-									<Text style={styles.selectedText}>
-										Selected: {selectedDestination.label}
-									</Text>
+									<Text style={[styles.selectedText, { color: colors.primary } ]}>Selected: {selectedDestination.label}</Text>
 								)}
 							</View>
 						</View>
 				</View>
 
 				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
-					<Text style={styles.cardTitle}>Trip Settings</Text>
+					<Text style={[styles.cardTitle, { color: colors.primary }]}>Trip Settings</Text>
 
 					<View style={styles.rowContainer}>
 						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Max Riders *</Text>
-							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>👥</Text>
+							<Text style={[styles.label, { color: colors.primary }]}>Max Riders *</Text>
+							<View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+								<Ionicons name="people-outline" size={16} color={colors.primary} style={styles.inputIcon} />
 								<TextInput
-									style={styles.input}
+									style={[styles.input, { color: colors.text }]}
 									placeholder="4"
-									placeholderTextColor={COLORS.textSecondary}
+									placeholderTextColor={colors.textSecondary}
 									value={maxRiders}
 									onChangeText={setMaxRiders}
 									keyboardType="number-pad"
@@ -462,12 +461,12 @@ export const CreateGroupPage = ({
 						</View>
 
 						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={styles.label}>Max Wait Time</Text>
-							<View style={styles.pickerContainer}>
+							<Text style={[styles.label, { color: colors.primary }]}>Max Wait Time</Text>
+							<View style={[styles.pickerContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
 								<Picker
 									selectedValue={maxWaitTime}
 									onValueChange={setMaxWaitTime}
-									style={styles.picker}
+									style={[styles.picker, { color: colors.text }]}
 								>
 									<Picker.Item label="15 min" value="15" />
 									<Picker.Item label="30 min" value="30" />
@@ -479,12 +478,12 @@ export const CreateGroupPage = ({
 					</View>
 
 					<View style={styles.inputGroup}>
-						<Text style={styles.label}>Minimum Rider Rating</Text>
-						<View style={styles.pickerContainer}>
+						<Text style={[styles.label, { color: colors.primary }]}>Minimum Rider Rating</Text>
+						<View style={[styles.pickerContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
 							<Picker
 								selectedValue={minRating}
 								onValueChange={setMinRating}
-								style={styles.picker}
+								style={[styles.picker, { color: colors.text }]}
 							>
 								<Picker.Item label="No Rating" value="" />
 								<Picker.Item label="1 Star" value="1" />
@@ -494,21 +493,21 @@ export const CreateGroupPage = ({
 								<Picker.Item label="5 Stars" value="5" />
 							</Picker>
 						</View>
-						<Text style={styles.helpText}>
+						<Text style={[styles.helpText, { color: colors.textSecondary }]}> 
 							Only riders with this rating or higher can join
 						</Text>
 					</View>
 				</View>
 
 				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
-					<Text style={styles.cardTitle}>Ride Preferences</Text>
+					<Text style={[styles.cardTitle, { color: colors.primary }]}>Ride Preferences</Text>
 
-					<View style={styles.preferenceItem}>
+					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground }] }>
 						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
+							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
 								Allow custom stops
 							</Text>
-							<Text style={styles.preferenceDescriptionText}>
+							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
 								Let riders request different drop-off points
 							</Text>
 						</View>
@@ -518,16 +517,16 @@ export const CreateGroupPage = ({
 						/>
 					</View>
 
-					<View style={styles.preferenceItem}>
+					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
 						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
+							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
 								Female only
 							</Text>
-							<Text style={styles.preferenceDescriptionText}>
+							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
 								Only female riders can join
 							</Text>
 							{!isFemaleUser && (
-								<Text style={styles.restrictionText}>
+								<Text style={[styles.restrictionText, { color: colors.danger }]}>
 									Only female users can enable this option
 								</Text>
 							)}
@@ -538,22 +537,17 @@ export const CreateGroupPage = ({
 								if (isFemaleUser) setFemaleOnly(value);
 							}}
 							disabled={!isFemaleUser}
-							trackColor={{
-								false: COLORS.border,
-								true: COLORS.primary,
-							}}
-							thumbColor={
-								isFemaleUser ? COLORS.textLight : "#d1d5db"
-							}
+							trackColor={{ false: colors.border, true: colors.primary }}
+							thumbColor={isFemaleUser ? colors.textLight : colors.textSecondary}
 						/>
 					</View>
 
-					<View style={styles.preferenceItem}>
+					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground }]}> 
 						<View style={styles.preferenceContent}>
-							<Text style={styles.preferenceTitleText}>
+							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
 								Alcohol free
 							</Text>
-							<Text style={styles.preferenceDescriptionText}>
+							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
 								No alcohol consumption during ride
 							</Text>
 						</View>
@@ -565,30 +559,30 @@ export const CreateGroupPage = ({
 				</View>
 
 				<TouchableOpacity
-					style={styles.createButton}
+					style={[styles.createButton, { backgroundColor: colors.primary }]}
 					onPress={handleCreateGroup}
 					disabled={isCreating}
 					activeOpacity={0.85}
 				>
 					{isCreating ? (
-						<ActivityIndicator size="small" color="#fff" />
-					) : (
-						<Text style={styles.createButtonText}>
-							Create Ride Group
-						</Text>
-					)}
+							<ActivityIndicator size="small" color={colors.textLight} />
+						) : (
+							<Text style={[styles.createButtonText, { color: colors.background }] }>
+								Create Ride Group
+							</Text>
+						)}
 				</TouchableOpacity>
 			</ScrollView>
 
 					{/* Bottom tab replica so navigation remains available */}
-					<View style={styles.bottomNavBar}>
+					<View style={[styles.bottomNavBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}> 
 						<TouchableOpacity
 							style={styles.tabButton}
 							onPress={() => navigation.navigate("MainTabs", { screen: "Map" })}
 							activeOpacity={0.8}
 						>
-							<Ionicons name="map-outline" size={22} color="#1B5E20" />
-							<Text style={styles.tabButtonText}>Map</Text>
+							<Ionicons name="map-outline" size={22} color={colors.primary} />
+							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Map</Text>
 						</TouchableOpacity>
 
 						<TouchableOpacity
@@ -596,8 +590,8 @@ export const CreateGroupPage = ({
 							onPress={() => navigation.navigate("MainTabs", { screen: "RideGroups" })}
 							activeOpacity={0.8}
 						>
-							<Ionicons name="people-outline" size={22} color="#6b7280" />
-							<Text style={styles.tabButtonText}>Ride Groups</Text>
+							<Ionicons name="people-outline" size={22} color={colors.textSecondary} />
+							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Ride Groups</Text>
 						</TouchableOpacity>
 
 						<TouchableOpacity
@@ -605,8 +599,8 @@ export const CreateGroupPage = ({
 							onPress={() => navigation.navigate("MainTabs", { screen: "Profile" })}
 							activeOpacity={0.8}
 						>
-							<Ionicons name="person-outline" size={22} color="#6b7280" />
-							<Text style={styles.tabButtonText}>Profile</Text>
+							<Ionicons name="person-outline" size={22} color={colors.textSecondary} />
+							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Profile</Text>
 						</TouchableOpacity>
 					</View>
 		</SafeAreaView>
@@ -616,12 +610,12 @@ export const CreateGroupPage = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: "#f7f7f7",
+		backgroundColor: COLORS.background,
 	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
-		backgroundColor: "#f7f7f7",
+		backgroundColor: COLORS.cardBackground,
 		paddingHorizontal: 16,
 		paddingTop: 12,
 		paddingBottom: 8,
@@ -631,18 +625,18 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 20,
-		backgroundColor: "#ffffff",
+		backgroundColor: COLORS.cardBackground,
 		alignItems: "center",
 		justifyContent: "center",
 	},
 	backIcon: {
 		fontSize: 18,
-		color: "#111827",
+		color: COLORS.text,
 	},
 	headerTitle: {
 		fontSize: 16,
 		fontWeight: "700",
-		color: "#111827",
+		color: COLORS.text,
 	},
 	scrollView: {
 		flex: 1,
@@ -656,24 +650,24 @@ const styles = StyleSheet.create({
 	heroCard: {
 		marginHorizontal: 16,
 		marginTop: 8,
-		backgroundColor: "#111827",
+		backgroundColor: COLORS.primary,
 		borderRadius: 24,
 		padding: 18,
 	},
 	heroTitle: {
 		fontSize: 22,
 		fontWeight: "700",
-		color: "#ffffff",
+		color: COLORS.textLight,
 		marginBottom: 6,
 	},
 	heroSubtitle: {
 		fontSize: 13,
 		lineHeight: 18,
-		color: "#d1d5db",
+		color: COLORS.textSecondary,
 		marginBottom: 16,
 	},
 	card: {
-		backgroundColor: "#fff",
+		backgroundColor: COLORS.cardBackground,
 		borderRadius: 18,
 		padding: 20,
 		shadowColor: "#000",
@@ -705,7 +699,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		height: 52,
 		gap: 8,
-		backgroundColor: "#fff",
+		backgroundColor: COLORS.cardBackground,
 	},
 	inputIcon: {
 		fontSize: 16,
@@ -740,7 +734,7 @@ const styles = StyleSheet.create({
 		overflow: "hidden",
 		height: 52,
 		justifyContent: "center",
-		backgroundColor: "#fff",
+		backgroundColor: COLORS.cardBackground,
 	},
 	picker: {
 		height: 52,
@@ -750,7 +744,7 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-between",
 		alignItems: "center",
-		backgroundColor: "#f8fafc",
+		backgroundColor: COLORS.cardBackground,
 		borderRadius: 12,
 		paddingHorizontal: 14,
 		paddingVertical: 14,
@@ -771,7 +765,7 @@ const styles = StyleSheet.create({
 	},
 	restrictionText: {
 		fontSize: 12,
-		color: "#dc2626",
+		color: COLORS.danger,
 		marginTop: 6,
 		fontWeight: "500",
 	},
@@ -788,24 +782,24 @@ const styles = StyleSheet.create({
 		elevation: 3,
 	},
 	createButtonText: {
-		color: "#fff",
+		color: COLORS.textLight,
 		fontSize: 16,
 		fontWeight: "700",
 	},
 	suggestionsContainer: {
-		backgroundColor: "#fff",
+		backgroundColor: COLORS.cardBackground,
 		borderRadius: 12,
 		borderWidth: 1,
-		borderColor: "#e5e7eb",
+		borderColor: COLORS.borderLight,
 		overflow: "hidden",
 	},
 	suggestionsBox: {
-		backgroundColor: "#ffffff",
+		backgroundColor: COLORS.cardBackground,
 		borderTopWidth: 1,
-		borderTopColor: "#f0f0f0",
+		borderTopColor: COLORS.borderLight,
 	},
 	searchBox: {
-		backgroundColor: "#ffffff",
+		backgroundColor: COLORS.cardBackground,
 		borderRadius: 18,
 		overflow: "hidden",
 		marginTop: 8,
@@ -820,11 +814,11 @@ const styles = StyleSheet.create({
 	searchInput: {
 		flex: 1,
 		fontSize: 15,
-		color: "#111827",
+		color: COLORS.text,
 	},
 	searchDivider: {
 		height: 1,
-		backgroundColor: "#e5e7eb",
+		backgroundColor: COLORS.borderLight,
 		marginHorizontal: 0,
 	},
 	searchIcon: {
@@ -837,7 +831,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 14,
 		paddingVertical: 12,
 		borderTopWidth: 1,
-		borderTopColor: "#f3f4f6",
+		borderTopColor: COLORS.borderLight,
 	},
 	suggestionIcon: {
 		width: 10,
@@ -846,13 +840,7 @@ const styles = StyleSheet.create({
 		backgroundColor: COLORS.primary,
 		marginRight: 8,
 	},
-	innerBox: {
-		backgroundColor: "#fff",
-		borderRadius: 14,
-		marginTop: 12,
-		marginHorizontal: 8,
-		overflow: "hidden",
-	},
+
 	dotOuter: {
 		width: 22,
 		height: 22,
@@ -878,7 +866,7 @@ const styles = StyleSheet.create({
 	suggestionText: {
 		flex: 1,
 		fontSize: 14,
-		color: "#374151",
+		color: COLORS.text,
 	},
 	bottomNavBar: {
 		position: "absolute",
@@ -888,11 +876,11 @@ const styles = StyleSheet.create({
 		flexDirection: "row",
 		justifyContent: "space-around",
 		alignItems: "center",
-		backgroundColor: "#fff",
+		backgroundColor: COLORS.cardBackground,
 		paddingTop: 8,
 		paddingBottom: 18,
 		borderTopWidth: 1,
-		borderTopColor: "#e5e7eb",
+		borderTopColor: COLORS.borderLight,
 	},
 	tabButton: {
 		flex: 1,
@@ -902,7 +890,14 @@ const styles = StyleSheet.create({
 	},
 	tabButtonText: {
 		fontSize: 12,
-		color: "#374151",
+		color: COLORS.textSecondary,
 		marginTop: 4,
+	},
+	innerBox: {
+		backgroundColor: COLORS.cardBackground,
+		borderRadius: 14,
+		marginTop: 12,
+		marginHorizontal: 8,
+		overflow: "hidden",
 	},
 });

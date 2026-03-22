@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../theme/colors';
 
 interface ModeratorLoginScreenProps {
@@ -93,7 +94,7 @@ export const ModeratorLoginScreen: React.FC<ModeratorLoginScreenProps> = ({
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Username</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>👤</Text>
+              <Ionicons name="person-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter username"
@@ -109,7 +110,7 @@ export const ModeratorLoginScreen: React.FC<ModeratorLoginScreenProps> = ({
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.inputIcon}>🔒</Text>
+              <Ionicons name="lock-closed-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter password"
@@ -123,7 +124,7 @@ export const ModeratorLoginScreen: React.FC<ModeratorLoginScreenProps> = ({
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={18} color={COLORS.textLight} style={styles.eyeIcon} />
               </Pressable>
             </View>
           </View>
@@ -145,13 +146,14 @@ export const ModeratorLoginScreen: React.FC<ModeratorLoginScreenProps> = ({
             onPress={onBackToLogin}
             disabled={isLoading}
           >
-            <Text style={styles.backButtonText}>← Back to User Login</Text>
+            <Ionicons name="chevron-back" size={18} color={COLORS.textLight} />
+            <Text style={styles.backButtonText}> Back to User Login</Text>
           </Pressable>
         </View>
 
         {/* Security Notice */}
         <View style={styles.securityNotice}>
-          <Text style={styles.securityIcon}>⚠️</Text>
+          <Ionicons name="warning-outline" size={18} color={COLORS.textLight} style={styles.securityIcon} />
           <Text style={styles.securityText}>
             This is a restricted admin area. Unauthorized access is prohibited.
           </Text>

@@ -274,7 +274,7 @@ export const MapScreen = ({
                 <View style={[styles.searchHeader, { backgroundColor: colors.background }]}> 
                     <Text style={[styles.searchHeaderTitle, { color: colors.text }]}>Search Locations</Text>
                     <TouchableOpacity onPress={() => setShowSearchPanel(false)}>
-                        <Text style={[styles.searchCloseButton, { color: colors.textSecondary }]}>✕</Text>
+                        <Ionicons name="close" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                 </View>
 

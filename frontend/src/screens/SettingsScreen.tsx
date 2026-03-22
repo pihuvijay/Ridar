@@ -31,14 +31,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
 		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
 			<ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 				{/* Appearance Section */}
-					<View style={[styles.section, { borderColor: colors.border }]}> 
-					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight }]}> 
+					<View style={[styles.section, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}> 
+					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}> 
 						<Text style={[styles.sectionTitle, { color: colors.primary }]}>Appearance</Text>
 					</View>
 
 					<View style={styles.settingItem}>
 						<View style={[styles.settingIconContainer, { backgroundColor: colors.cardBackground }]}> 
-							<Text style={styles.settingIcon}>🌐</Text>
+							<Ionicons name="globe-outline" size={18} color={colors.primary} />
 						</View>
 						<View style={styles.settingContent}>
 							<Text style={[styles.settingName, { color: colors.primary }]}>Language</Text>
@@ -46,12 +46,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
 						</View>
 					</View>
 
-					<View style={styles.divider} />
+					<View style={[styles.divider, { backgroundColor: colors.border }]} />
 
 					<View style={styles.settingItemWithToggle}>
 						<View style={styles.settingLeft}>
 							<View style={[styles.settingIconContainer, { backgroundColor: colors.cardBackground }]}> 
-								<Text style={styles.settingIcon}>🌙</Text>
+								<Ionicons name="moon-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
 								<Text style={[styles.settingName, { color: colors.primary }]}>Dark Mode</Text>
@@ -71,9 +71,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
 				</View>
 
 				{/* Notifications Section */}
-				<View style={styles.section}>
-					<View style={styles.sectionHeader}>
-						<Text style={styles.sectionTitle}>Notifications</Text>
+				<View style={[styles.section, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}> 
+						<Text style={[styles.sectionTitle, { color: colors.primary }]}>Notifications</Text>
 					</View>
 
 					<View style={styles.settingItemWithToggle}>
@@ -81,172 +81,146 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
 							<View
 								style={[
 									styles.settingIconContainer,
-									{ backgroundColor: COLORS.accentYellow },
+									{ backgroundColor: colors.primaryLight },
 								]}
 							>
-								<Text style={styles.settingIcon}>🔔</Text>
+								<Ionicons name="notifications-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Push Notifications
-								</Text>
-								<Text style={styles.settingDescription}>
-									Enable all notifications
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Push Notifications</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Enable all notifications</Text>
 							</View>
 						</View>
 						<Switch
 							value={pushNotifications}
 							onValueChange={setPushNotifications}
 							trackColor={{
-								false: COLORS.border,
-								true: COLORS.primary,
+								false: colors.border,
+								true: colors.primary,
 							}}
-							thumbColor={COLORS.textLight}
+							thumbColor={colors.textLight}
 						/>
 					</View>
 
-					<View style={styles.divider} />
+					<View style={[styles.divider, { backgroundColor: colors.border }]} />
 
 					<View style={styles.settingItemWithToggle}>
 						<View style={styles.settingLeft}>
-							<View style={styles.settingIconContainer}>
-								<Text style={styles.settingIcon}>⏰</Text>
+							<View style={[styles.settingIconContainer, { backgroundColor: colors.primaryLight }]}> 
+								<Ionicons name="time-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Ride Reminders
-								</Text>
-								<Text style={styles.settingDescription}>
-									Get notified before rides
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Ride Reminders</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Get notified before rides</Text>
 							</View>
 						</View>
 						<Switch
 							value={rideReminders}
 							onValueChange={setRideReminders}
 							trackColor={{
-								false: COLORS.border,
-								true: COLORS.primary,
+								false: colors.border,
+								true: colors.primary,
 							}}
-							thumbColor={COLORS.textLight}
+							thumbColor={colors.textLight}
 						/>
 					</View>
 
-					<View style={styles.divider} />
+					<View style={[styles.divider, { backgroundColor: colors.border }]} />
 
 					<View style={styles.settingItemWithToggle}>
 						<View style={styles.settingLeft}>
-							<View style={styles.settingIconContainer}>
-								<Text style={styles.settingIcon}>💬</Text>
+							<View style={[styles.settingIconContainer, { backgroundColor: colors.primaryLight }]}> 
+								<Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Chat Messages
-								</Text>
-								<Text style={styles.settingDescription}>
-									New message alerts
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Chat Messages</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>New message alerts</Text>
 							</View>
 						</View>
 						<Switch
 							value={chatMessages}
 							onValueChange={setChatMessages}
 							trackColor={{
-								false: COLORS.border,
-								true: COLORS.primary,
+								false: colors.border,
+								true: colors.primary,
 							}}
-							thumbColor={COLORS.textLight}
+							thumbColor={colors.textLight}
 						/>
 					</View>
 				</View>
 
 				{/* Privacy & Security Section */}
-				<View style={styles.section}>
-					<View style={styles.sectionHeader}>
-						<Text style={styles.sectionTitle}>
-							Privacy & Security
-						</Text>
+				<View style={[styles.section, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}> 
+					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}> 
+						<Text style={[styles.sectionTitle, { color: colors.primary }]}>Privacy & Security</Text>
 					</View>
 
-					<Pressable style={styles.settingItem} onPress={() => {}}>
+					<Pressable style={[styles.settingItem, { backgroundColor: colors.cardBackground }]} onPress={() => {}}>
 						<View style={styles.settingLeft}>
 							<View
 								style={[
 									styles.settingIconContainer,
-									{ backgroundColor: "#E9D5FF" },
+									{ backgroundColor: colors.primaryLight },
 								]}
 							>
-								<Text style={styles.settingIcon}>🔒</Text>
+								<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Privacy Settings
-								</Text>
-								<Text style={styles.settingDescription}>
-									Manage your data
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Privacy Settings</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Manage your data</Text>
 							</View>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Text style={[styles.chevron, { color: colors.primary }]}>›</Text>
 					</Pressable>
 				</View>
 
 				{/* Support Section */}
-				<View style={styles.section}>
-					<View style={styles.sectionHeader}>
-						<Text style={styles.sectionTitle}>Support</Text>
+				<View style={[styles.section, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}> 
+					<View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}> 
+						<Text style={[styles.sectionTitle, { color: colors.primary }]}>Support</Text>
 					</View>
 
-					<Pressable style={styles.settingItem} onPress={() => {}}>
+					<Pressable style={[styles.settingItem, { backgroundColor: colors.cardBackground }]} onPress={() => {}}>
 						<View style={styles.settingLeft}>
 							<View
 								style={[
 									styles.settingIconContainer,
-									{ backgroundColor: "#DCFCE7" },
+									{ backgroundColor: colors.primaryLight },
 								]}
 							>
-								<Text style={styles.settingIcon}>❓</Text>
+								<Ionicons name="help-circle-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									Help Center
-								</Text>
-								<Text style={styles.settingDescription}>
-									FAQs and guides
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>Help Center</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>FAQs and guides</Text>
 							</View>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Text style={[styles.chevron, { color: colors.primary }]}>›</Text>
 					</Pressable>
 
-					<View style={styles.divider} />
+					<View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-					<Pressable style={styles.settingItem} onPress={() => {}}>
+					<Pressable style={[styles.settingItem, { backgroundColor: colors.cardBackground }]} onPress={() => {}}>
 						<View style={styles.settingLeft}>
 							<View
 								style={[
 									styles.settingIconContainer,
-									{ backgroundColor: "#DBEAFE" },
+									{ backgroundColor: colors.primaryLight },
 								]}
 							>
-								<Text style={styles.settingIcon}>ℹ️</Text>
+								<Ionicons name="information-circle-outline" size={18} color={colors.primary} />
 							</View>
 							<View style={styles.settingContent}>
-								<Text style={styles.settingName}>
-									About Ridar
-								</Text>
-								<Text style={styles.settingDescription}>
-									Version 1.0.0
-								</Text>
+								<Text style={[styles.settingName, { color: colors.primary }]}>About Ridar</Text>
+								<Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Version 1.0.0</Text>
 							</View>
 						</View>
-						<Text style={styles.chevron}>›</Text>
+						<Ionicons name="chevron-forward" size={20} color={colors.primary} />
 					</Pressable>
 				</View>
 
 				<TouchableOpacity
-					style={styles.logoutButton}
+					style={[styles.logoutButton, { backgroundColor: '#ef4444' }]}
 					onPress={onLogout}
 				>
 					<Text style={styles.logoutText}>Log Out</Text>

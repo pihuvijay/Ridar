@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from "expo-linear-gradient";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import { useAddPaymentMethod, useUberConnection } from "../hooks";
@@ -50,7 +51,7 @@ const AccountCard = ({
             disabled={isConnected}
             activeOpacity={0.8}
           >
-            <Text style={styles.connectButtonIcon}>✓</Text>
+            <Ionicons name={isConnected ? 'checkmark' : 'link-outline'} size={16} color="#fff" style={styles.connectButtonIcon} />
             <Text style={styles.connectButtonText}>{buttonText}</Text>
           </TouchableOpacity>
         </View>
@@ -176,7 +177,7 @@ export const ConnectAccountsPage = ({
             </View>
 
             <Text style={styles.securityNote}>
-              🔒 Your card data is securely processed by Stripe
+              <Ionicons name="lock-closed-outline" size={14} color="#000" />  Your card data is securely processed by Stripe
             </Text>
           </View>
 

@@ -8,7 +8,9 @@ import {
   SafeAreaView,
   FlatList,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../theme/colors';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface RideHistory {
   id: string;
@@ -66,6 +68,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onUpdateProfile,
   onViewSettings,
 }) => {
+  const { colors } = useTheme();
   const [totalRides] = useState(12);
   const [averageRating] = useState(4.8);
   const [totalSavings] = useState(47.5);
@@ -75,89 +78,82 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   const renderRideCard = ({ item }: { item: RideHistory }) => (
-    <View style={styles.rideCard}>
+    <View style={[styles.rideCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
       <View style={styles.rideCardHeader}>
         <View style={styles.rideCardLeft}>
-          <Text style={styles.rideDate}>{item.date}</Text>
-          <View style={styles.rideTypeBadge}>
-            <Text style={styles.rideTypeText}>{item.type}</Text>
+          <Text style={[styles.rideDate, { color: colors.primary }]}>{item.date}</Text>
+          <View style={[styles.rideTypeBadge, { backgroundColor: colors.primaryLight }]}>
+            <Text style={[styles.rideTypeText, { color: colors.primary }]}>{item.type}</Text>
           </View>
-          <Text style={styles.rideDuration}>⏱ {item.duration}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.rideDuration, { color: colors.textSecondary }]}>{item.duration}</Text>
+          </View>
         </View>
-        <Text style={styles.rideAmount}>{item.amount}</Text>
+        <Text style={[styles.rideAmount, { color: colors.success }]}>{item.amount}</Text>
       </View>
 
       <View style={styles.rideLocations}>
         <View style={styles.locationRow}>
-          <Text style={styles.locationDot}>🔵</Text>
-          <Text style={styles.locationText}>{item.origin}</Text>
+          <Ionicons name="ellipse" size={12} color={colors.primary} style={styles.locationDot} />
+          <Text style={[styles.locationText, { color: colors.text }]}>{item.origin}</Text>
         </View>
-        <View style={styles.routeLine} />
+        <View style={[styles.routeLine, { backgroundColor: colors.border }]} />
         <View style={styles.locationRow}>
-          <Text style={styles.locationDot}>📍</Text>
-          <Text style={styles.locationText}>{item.destination}</Text>
+          <Ionicons name="location-outline" size={14} color={colors.primary} style={styles.locationDot} />
+          <Text style={[styles.locationText, { color: colors.text }]}>{item.destination}</Text>
         </View>
       </View>
 
       <View style={styles.rideCardFooter}>
         <View style={styles.rideCardFooterLeft}>
-          <Text style={styles.rideFooterText}>Driver: {item.driver}</Text>
-          <Text style={styles.rideFooterText}>{item.groupSize}</Text>
+          <Text style={[styles.rideFooterText, { color: colors.textSecondary }]}>Driver: {item.driver}</Text>
+          <Text style={[styles.rideFooterText, { color: colors.textSecondary }]}>{item.groupSize}</Text>
         </View>
         <View style={styles.rideCardFooterRight}>
-          <Text style={styles.rideFareText}>Taxi: {item.taxiFare}</Text>
-          <Text style={styles.ridePaidText}>Paid: {item.amountPaid}</Text>
+          <Text style={[styles.rideFareText, { color: colors.textSecondary }]}>Taxi: {item.taxiFare}</Text>
+          <Text style={[styles.ridePaidText, { color: colors.primary }]}>Paid: {item.amountPaid}</Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backIcon}>←</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <Pressable style={styles.settingsButton} onPress={onViewSettings}>
-          <Text style={styles.settingsIcon}>⚙️</Text>
-        </Pressable>
-      </View>
-
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Profile Overview */}
         <View style={styles.profileOverview}>
-          <View style={styles.profileAvatar}>
-            <Text style={styles.profileAvatarText}>{userName.charAt(0).toUpperCase()}</Text>
+          <View style={[styles.profileAvatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.profileAvatarText, { color: colors.background }]}>{userName.charAt(0).toUpperCase()}</Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{userName}</Text>
-            <Text style={styles.profileStatus}>Active Member</Text>
+            <Text style={[styles.profileName, { color: colors.primary }]}>{userName}</Text>
+            <Text style={[styles.profileStatus, { color: colors.textSecondary }]}>Active Member</Text>
           </View>
         </View>
 
         {/* User Stats Summary */}
         <View style={styles.statsSummary}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{totalRides}</Text>
-            <Text style={styles.statLabel}>Total Rides</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{totalRides}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Rides</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{averageRating}</Text>
-            <Text style={styles.statLabel}>Rating</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{averageRating}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Rating</Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>£{totalSavings}</Text>
-            <Text style={styles.statLabel}>Savings</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Text style={[styles.statValue, { color: colors.primary }]}>£{totalSavings}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Savings</Text>
           </View>
         </View>
 
         {/* Ride History Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Rides</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+          <View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Recent Rides</Text>
             <Pressable>
-              <Text style={styles.viewAllLink}>View All →</Text>
+              <Text style={[styles.viewAllLink, { color: colors.primary }]}>View All →</Text>
             </Pressable>
           </View>
           <FlatList
@@ -170,50 +166,50 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {/* Membership Info */}
-        <View style={styles.membershipCard}>
-          <Text style={styles.membershipTitle}>Membership Benefits</Text>
+        <View style={[styles.membershipCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+          <Text style={[styles.membershipTitle, { color: colors.primary }]}>Membership Benefits</Text>
           <View style={styles.benefitItem}>
-            <Text style={styles.benefitIcon}>✓</Text>
-            <Text style={styles.benefitText}>Verified driver status</Text>
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} style={styles.benefitIcon} />
+            <Text style={[styles.benefitText, { color: colors.primary }]}>Verified driver status</Text>
           </View>
           <View style={styles.benefitItem}>
-            <Text style={styles.benefitIcon}>✓</Text>
-            <Text style={styles.benefitText}>Priority ride matching</Text>
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} style={styles.benefitIcon} />
+            <Text style={[styles.benefitText, { color: colors.primary }]}>Priority ride matching</Text>
           </View>
           <View style={styles.benefitItem}>
-            <Text style={styles.benefitIcon}>✓</Text>
-            <Text style={styles.benefitText}>Early access to new features</Text>
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} style={styles.benefitIcon} />
+            <Text style={[styles.benefitText, { color: colors.primary }]}>Early access to new features</Text>
           </View>
         </View>
 
         {/* Privacy & Safety */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Privacy & Safety</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+          <View style={[styles.sectionHeader, { backgroundColor: colors.primaryLight, borderBottomColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.primary }]}>Privacy & Safety</Text>
           </View>
 
           <Pressable
-            style={styles.privacyOptionButton}
+            style={[styles.privacyOptionButton, { borderBottomColor: colors.border, backgroundColor: colors.cardBackground }]}
             onPress={() => handlePrivacyOption('change-password')}
           >
-            <Text style={styles.privacyOptionText}>Change Password</Text>
-            <Text style={styles.privacyOptionArrow}>→</Text>
+            <Text style={[styles.privacyOptionText, { color: colors.primary }]}>Change Password</Text>
+            <Text style={[styles.privacyOptionArrow, { color: colors.primary }]}>→</Text>
           </Pressable>
 
           <Pressable
-            style={styles.privacyOptionButton}
+            style={[styles.privacyOptionButton, { borderBottomColor: colors.border, backgroundColor: colors.cardBackground }]}
             onPress={() => handlePrivacyOption('block-list')}
           >
-            <Text style={styles.privacyOptionText}>Block List</Text>
-            <Text style={styles.privacyOptionArrow}>→</Text>
+            <Text style={[styles.privacyOptionText, { color: colors.primary }]}>Block List</Text>
+            <Text style={[styles.privacyOptionArrow, { color: colors.primary }]}>→</Text>
           </Pressable>
 
           <Pressable
-            style={styles.privacyOptionButton}
+            style={[styles.privacyOptionButton, { borderBottomColor: colors.border, backgroundColor: colors.cardBackground }]}
             onPress={() => handlePrivacyOption('privacy-settings')}
           >
-            <Text style={styles.privacyOptionText}>Privacy Settings</Text>
-            <Text style={styles.privacyOptionArrow}>→</Text>
+            <Text style={[styles.privacyOptionText, { color: colors.primary }]}>Privacy Settings</Text>
+            <Text style={[styles.privacyOptionArrow, { color: colors.primary }]}>→</Text>
           </Pressable>
         </View>
 

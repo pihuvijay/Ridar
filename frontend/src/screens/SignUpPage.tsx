@@ -16,6 +16,7 @@ import {
 	ActivityIndicator,
 	Alert,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "../theme/colors";
@@ -243,7 +244,7 @@ export const SignUpPage = ({
 										Full Name *
 									</Text>
 									<View style={styles.inputContainer}>
-										<Text style={styles.inputIcon}>👤</Text>
+										<Ionicons name="person-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
 										<TextInput
 											style={styles.input}
 											placeholder="John Smith"
@@ -268,7 +269,7 @@ export const SignUpPage = ({
 										Course/Major *
 									</Text>
 									<View style={styles.inputContainer}>
-										<Text style={styles.inputIcon}>📚</Text>
+										<Ionicons name="book-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
 										<TextInput
 											style={styles.input}
 											placeholder="Computer Science"
@@ -294,7 +295,7 @@ export const SignUpPage = ({
 								<View style={styles.formColumn}>
 									<Text style={styles.label}>Age *</Text>
 									<View style={styles.inputContainer}>
-										<Text style={styles.inputIcon}>🎂</Text>
+										<Ionicons name="cake-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
 										<TextInput
 											style={styles.input}
 											placeholder="21"
@@ -324,9 +325,7 @@ export const SignUpPage = ({
 										<Text style={styles.genderInputText}>
 											{formData.gender || "Select Gender"}
 										</Text>
-										<Text style={styles.genderDropdownIcon}>
-											▼
-										</Text>
+										<Ionicons name="chevron-down" size={14} color={COLORS.textSecondary} style={styles.genderDropdownIcon} />
 									</TouchableOpacity>
 
 									{/* Gender Dropdown Modal */}
@@ -376,9 +375,12 @@ export const SignUpPage = ({
 																	styles.genderOptionSelected,
 															]}
 														>
-															{option}
-															{formData.gender ===
-																option && " ✓"}
+															<View style={{ flexDirection: "row", alignItems: "center" }}>
+																<Text style={styles.genderOptionText}>{option}</Text>
+																{formData.gender === option && (
+																	<Ionicons name="checkmark" size={14} color={COLORS.primary} style={{ marginLeft: 6 }} />
+																)}
+															</View>
 														</Text>
 													</TouchableOpacity>
 												))}
@@ -441,25 +443,20 @@ export const SignUpPage = ({
 										activeOpacity={0.8}
 									>
 										{isSendingCode ? (
-											<ActivityIndicator
-												size="small"
-												color="#ffffff"
-											/>
-										) : (
-											<Text
-												style={[
-													styles.verifyButtonText,
-													emailVerified &&
-														styles.verifyButtonTextVerified,
-												]}
-											>
-												{emailVerified
-													? "✓ Verified"
-													: codeSent
-														? "Resend"
-														: "Send Code"}
-											</Text>
-										)}
+												<ActivityIndicator
+													size="small"
+													color="#ffffff"
+												/>
+											) : emailVerified ? (
+												<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+													<Ionicons name="checkmark-circle" size={16} color={COLORS.primary} />
+													<Text style={[styles.verifyButtonText, styles.verifyButtonTextVerified]}>Verified</Text>
+												</View>
+											) : (
+												<Text style={[styles.verifyButtonText]}>
+													{codeSent ? "Resend" : "Send Code"}
+												</Text>
+											)}
 									</TouchableOpacity>
 								</View>
 
@@ -531,7 +528,7 @@ export const SignUpPage = ({
 									Password * (min 8 characters)
 								</Text>
 								<View style={styles.inputContainer}>
-									<Text style={styles.inputIcon}>🔒</Text>
+									<Ionicons name="lock-closed-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
 									<TextInput
 										style={styles.input}
 										placeholder="••••••••"
@@ -552,7 +549,7 @@ export const SignUpPage = ({
 									Confirm Password *
 								</Text>
 								<View style={styles.inputContainer}>
-									<Text style={styles.inputIcon}>🔒</Text>
+									<Ionicons name="lock-closed-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
 									<TextInput
 										style={styles.input}
 										placeholder="••••••••"
@@ -590,9 +587,11 @@ export const SignUpPage = ({
 										)
 									}
 								>
-									<Text style={styles.checkboxText}>
-										{formData.agreedToTerms ? "☑️" : "☐"}
-									</Text>
+									<Ionicons
+										name={formData.agreedToTerms ? "checkbox" : "square-outline"}
+										size={18}
+										color={COLORS.primary}
+									/>
 								</TouchableOpacity>
 								<Text style={styles.termsText}>
 									I agree to the Terms of Service and Privacy

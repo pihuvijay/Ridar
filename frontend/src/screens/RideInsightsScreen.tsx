@@ -9,6 +9,7 @@ import {
 	Modal,
 	TextInput,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface Rider {
@@ -154,19 +155,19 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 			>
 				<View style={styles.statsRow}>
 					<View style={[styles.statCard, styles.statCardEta]}>
-						<Text style={styles.statIcon}>🕐</Text>
+						<Ionicons name="time-outline" size={20} color={COLORS.primary} style={styles.statIcon} />
 						<Text style={styles.statValue}>{etaMinutes} min</Text>
 						<Text style={styles.statLabel}>Est. Arrival</Text>
 					</View>
 					<View style={[styles.statCard, styles.statCardCo2]}>
-						<Text style={styles.statIcon}>🌿</Text>
+						<Ionicons name="leaf-outline" size={20} color={COLORS.success} style={styles.statIcon} />
 						<Text style={styles.statValue}>{co2SavedKg} kg</Text>
 						<Text style={styles.statLabel}>CO2 Saved</Text>
 					</View>
 				</View>
 
 				<View style={styles.co2ContextCard}>
-					<Text style={styles.co2ContextIcon}>♻️</Text>
+					<Ionicons name="recycle" size={20} color={COLORS.primary} style={styles.co2ContextIcon} />
 					<View style={styles.co2ContextContent}>
 						<Text style={styles.co2ContextTitle}>
 							Great choice sharing this ride!
@@ -196,11 +197,11 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 					</View>
 					<View style={styles.divider} />
 					<View style={styles.detailRow}>
-						<Text style={styles.detailIcon}>💷</Text>
+						<Ionicons name="cash-outline" size={18} color={COLORS.text} style={styles.detailIcon} />
 						<Text style={styles.detailText}>£{price}/person</Text>
 					</View>
 					<View style={styles.detailRow}>
-						<Text style={styles.detailIcon}>👥</Text>
+						<Ionicons name="people-outline" size={18} color={COLORS.text} style={styles.detailIcon} />
 						<Text style={styles.detailText}>
 							{partyRiders.length} riders sharing
 						</Text>
@@ -263,23 +264,23 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 					<View style={styles.modalSheet}>
 						{reportSubmitted ? (
 							<View style={styles.reportSuccess}>
-								<Text style={styles.reportSuccessIcon}>✓</Text>
-								<Text style={styles.reportSuccessTitle}>
-									Report Submitted
-								</Text>
-								<Text style={styles.reportSuccessText}>
-									Thank you. Our moderation team will review
-									your report.
-								</Text>
-								<Pressable
-									style={styles.closeButton}
-									onPress={handleCloseReport}
-								>
-									<Text style={styles.closeButtonText}>
-										Close
+									<Ionicons name="checkmark-circle" size={20} color={COLORS.success} style={styles.reportSuccessIcon} />
+									<Text style={styles.reportSuccessTitle}>
+										Report Submitted
 									</Text>
-								</Pressable>
-							</View>
+									<Text style={styles.reportSuccessText}>
+										Thank you. Our moderation team will review
+										your report.
+									</Text>
+									<Pressable
+										style={styles.closeButton}
+										onPress={handleCloseReport}
+									>
+										<Text style={styles.closeButtonText}>
+											Close
+										</Text>
+									</Pressable>
+								</View>
 						) : (
 							<>
 								<View style={styles.modalHeader}>
@@ -287,9 +288,7 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 										Report User
 									</Text>
 									<Pressable onPress={handleCloseReport}>
-										<Text style={styles.modalCloseIcon}>
-											✕
-										</Text>
+										<Ionicons name="close" size={20} color={COLORS.text} style={styles.modalCloseIcon} />
 									</Pressable>
 								</View>
 

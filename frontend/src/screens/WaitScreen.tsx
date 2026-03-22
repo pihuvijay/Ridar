@@ -7,6 +7,7 @@ import {
 	Pressable,
 	ScrollView,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface PartyMember {
@@ -94,7 +95,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		<SafeAreaView style={styles.container}>
 			<View style={styles.topSection}>
 				<View style={styles.pickupMarker}>
-					<Text style={styles.pickupMarkerIcon}>📍</Text>
+					<Ionicons name="location-outline" size={FONT_SIZES.xxl} color={COLORS.primary} />
 				</View>
 
 				<View style={styles.arrivalCard}>
@@ -103,7 +104,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				</View>
 
 				<View style={styles.vehicleIcon}>
-					<Text style={styles.vehicleEmoji}>🚗</Text>
+					<Ionicons name="car-outline" size={FONT_SIZES.xxl} color={COLORS.text} />
 				</View>
 			</View>
 
@@ -131,7 +132,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 							</View>
 
 							<View style={styles.distanceRow}>
-								<Text style={styles.distanceIcon}>📍</Text>
+								<Ionicons name="location-outline" size={14} color={COLORS.textSecondary} style={styles.distanceIcon} />
 								<Text style={styles.distanceText}>
 									{distance}
 								</Text>
@@ -139,7 +140,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						</View>
 
 						<Pressable style={styles.contactButton}>
-							<Text style={styles.contactIcon}>📞</Text>
+							<Ionicons name="call-outline" size={18} color={COLORS.primary} style={styles.contactIcon} />
 						</Pressable>
 					</View>
 
@@ -147,7 +148,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 					<View style={styles.pickupSection}>
 						<View style={styles.locationRow}>
-							<Text style={styles.locationIcon}>📍</Text>
+							<Ionicons name="location-outline" size={18} color={COLORS.primary} style={styles.locationIcon} />
 							<View style={styles.locationContent}>
 								<Text style={styles.locationLabel}>
 									Pickup Location
@@ -161,7 +162,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						<View style={{ height: SPACING.md }} />
 
 						<View style={styles.locationRow}>
-							<Text style={styles.locationIcon}>🎯</Text>
+							<Ionicons name="navigate-outline" size={18} color={COLORS.primary} style={styles.locationIcon} />
 							<View style={styles.locationContent}>
 								<Text style={styles.locationLabel}>
 									Destination
@@ -177,7 +178,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 					<View style={styles.partySection}>
 						<View style={styles.partyHeader}>
-							<Text style={styles.partyIcon}>👥</Text>
+							<Ionicons name="people-outline" size={18} color={COLORS.text} style={styles.partyIcon} />
 							<Text style={styles.partyTitle}>
 								Your Party ({members.length})
 							</Text>
@@ -192,13 +193,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 										</Text>
 										{member.isLeader && (
 											<View style={styles.leaderBadge}>
-												<Text
-													style={
-														styles.leaderBadgeText
-													}
-												>
-													👑
-												</Text>
+												<Ionicons name="star" size={12} color={COLORS.primary} />
 											</View>
 										)}
 									</View>
@@ -227,7 +222,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 										</Text>
 									</View>
 
-									<Text style={styles.checkmark}>✓</Text>
+									<Ionicons name="checkmark" size={16} color={COLORS.primary} style={styles.checkmark} />
 								</View>
 							))}
 						</View>
@@ -235,7 +230,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						<View style={styles.statusMessages}>
 							{allMembersPresent && (
 								<View style={styles.successMessage}>
-									<Text style={styles.successIcon}>✓</Text>
+									<Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.successIcon} />
 									<Text style={styles.successText}>
 										Party details loaded
 									</Text>
@@ -244,7 +239,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 							{waitingForLeader && (
 								<View style={styles.infoMessage}>
-									<Text style={styles.infoIcon}>⏳</Text>
+									<Ionicons name="hourglass-outline" size={16} color={COLORS.textSecondary} style={styles.infoIcon} />
 									<Text style={styles.infoText}>
 										Waiting for ride confirmation...
 									</Text>

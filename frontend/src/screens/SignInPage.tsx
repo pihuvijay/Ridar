@@ -14,6 +14,7 @@ import {
 	ActivityIndicator,
 	Alert,
 } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS } from "../theme/colors";
 
 interface SignInPageProps {
@@ -179,7 +180,7 @@ export const SignInPage = ({
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Email</Text>
 							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>✉️</Text>
+								<Ionicons name="mail-outline" size={18} color={COLORS.primary} style={styles.inputIcon} />
 								<TextInput
 									style={styles.input}
 									placeholder="you@example.com"
@@ -196,7 +197,7 @@ export const SignInPage = ({
 						<View style={styles.inputGroup}>
 							<Text style={styles.label}>Password</Text>
 							<View style={styles.inputContainer}>
-								<Text style={styles.inputIcon}>🔒</Text>
+								<Ionicons name="lock-closed-outline" size={18} color={COLORS.primary} style={styles.inputIcon} />
 								<TextInput
 									style={styles.input}
 									placeholder="••••••••"
@@ -216,9 +217,7 @@ export const SignInPage = ({
 									style={styles.checkbox}
 									accessibilityLabel="Remember me"
 								>
-									<Text style={styles.checkboxInner}>
-										{rememberMe ? "✓" : ""}
-									</Text>
+										<Ionicons name={rememberMe ? 'checkbox' : 'square-outline'} size={16} color={COLORS.primary} style={{ alignSelf: 'center' }} />
 								</TouchableOpacity>
 								<Text style={styles.rememberMeText}>
 									Remember me
@@ -267,7 +266,7 @@ export const SignInPage = ({
 								style={styles.moderatorButton}
 								onPress={handleModeratorLogin}
 							>
-								<Text style={styles.moderatorIcon}>👮</Text>
+								<Ionicons name="shield-checkmark-outline" size={18} color={COLORS.primary} style={styles.moderatorIcon} />
 								<Text style={styles.moderatorText}>
 									Moderator Login
 								</Text>
@@ -383,14 +382,14 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	checkbox: {
-		width: 20,
-		height: 20,
-		borderWidth: 2,
+		width: 22,
+		height: 22,
+		borderWidth: 1.5,
 		borderColor: COLORS.border,
-		borderRadius: 4,
+		borderRadius: 6,
 		justifyContent: "center",
 		alignItems: "center",
-		marginRight: 8,
+		marginRight: 10,
 	},
 	checkboxInner: {
 		fontSize: 14,
@@ -401,6 +400,8 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		color: COLORS.textSecondary,
 		marginLeft: 0,
+		lineHeight: 20,
+		alignSelf: 'center',
 	},
 	forgotPasswordText: {
 		fontSize: 13,

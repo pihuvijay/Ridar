@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   FlatList,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../theme/colors';
 
 interface Report {
@@ -124,11 +125,11 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={() => setSelectedReport(null)}>
-            <Text style={styles.backIcon}>←</Text>
+            <Ionicons name="chevron-back" size={18} color={COLORS.text} />
           </Pressable>
           <Text style={styles.headerTitle}>Report Details</Text>
           <Pressable style={styles.logoutButton} onPress={onLogout}>
-            <Text style={styles.logoutIcon}>🚪</Text>
+            <Ionicons name="log-out-outline" size={18} color={COLORS.text} />
           </Pressable>
         </View>
 
@@ -206,21 +207,30 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 style={styles.investigateButton}
                 onPress={() => handleInvestigate(selectedReport.id)}
               >
-                <Text style={styles.buttonText}>🔍 Investigate Further</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="search-outline" size={16} color="#fff" />
+                  <Text style={styles.buttonText}>Investigate Further</Text>
+                </View>
               </Pressable>
 
               <Pressable
                 style={styles.approveButton}
                 onPress={() => handleApproveReport(selectedReport.id)}
               >
-                <Text style={styles.buttonText}>✓ Approve Report</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                  <Text style={styles.buttonText}>Approve Report</Text>
+                </View>
               </Pressable>
 
               <Pressable
                 style={styles.rejectButton}
                 onPress={() => handleRejectReport(selectedReport.id)}
               >
-                <Text style={styles.buttonText}>✕ Reject Report</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="close" size={16} color="#fff" />
+                  <Text style={styles.buttonText}>Reject Report</Text>
+                </View>
               </Pressable>
             </View>
           )}
@@ -231,14 +241,20 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
                 style={styles.approveButton}
                 onPress={() => handleApproveReport(selectedReport.id)}
               >
-                <Text style={styles.buttonText}>✓ Confirm & Close</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                  <Text style={styles.buttonText}>Confirm & Close</Text>
+                </View>
               </Pressable>
 
               <Pressable
                 style={styles.rejectButton}
                 onPress={() => handleRejectReport(selectedReport.id)}
               >
-                <Text style={styles.buttonText}>✕ Dismiss Report</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="close" size={16} color="#fff" />
+                  <Text style={styles.buttonText}>Dismiss Report</Text>
+                </View>
               </Pressable>
             </View>
           )}
@@ -251,10 +267,10 @@ export const ModeratorDashboard: React.FC<ModeratorDashboardProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+        <View style={styles.header}>
         <Text style={styles.headerTitle}>Moderator Dashboard</Text>
         <Pressable style={styles.logoutButton} onPress={onLogout}>
-          <Text style={styles.logoutIcon}>🚪</Text>
+          <Ionicons name="log-out-outline" size={18} color={COLORS.text} />
         </Pressable>
       </View>
 
