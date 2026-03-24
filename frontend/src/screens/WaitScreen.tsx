@@ -7,10 +7,11 @@ import {
 	Pressable,
 	ScrollView,
 	ActivityIndicator,
+	Alert,
 } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
-import { uberService } from "../services/api";
+import { uberService, userService } from "../services/api";
 
 interface PartyMember {
 	id: string;
@@ -20,9 +21,10 @@ interface PartyMember {
 	isLeader: boolean;
 }
 
-type UberRideStatus = 'processing' | 'accepted' | 'arriving' | 'in_progress' | 'cancelled';
+type UberRideStatus = 'idle' | 'processing' | 'accepted' | 'arriving' | 'in_progress' | 'cancelled';
 
 const STATUS_LABELS: Record<UberRideStatus, string> = {
+	idle: 'Waiting for party to fill',
 	processing: 'Finding your driver...',
 	accepted: 'Driver on the way',
 	arriving: 'Almost here!',
@@ -44,8 +46,60 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 	const [uberRide, setUberRide] = useState<any>(initialUberRide ?? null);
 	const [pricePerPerson, setPricePerPerson] = useState<number | null>(null);
 	const pollRef = useRef<NodeJS.Timeout | null>(null);
+	const [membersState, setMembersState] = useState<any[] | null>(
+		rideGroup?.members ? [...rideGroup.members] : null,
+	);
+	const [isSimulating, setIsSimulating] = useState<boolean>(false);
+	const [isRequestingDriver, setIsRequestingDriver] = useState<boolean>(false);
+	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+	const [currentUserDisplayName, setCurrentUserDisplayName] = useState<string | null>(null);
+	const simRef = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
+		// ensure the signed-in user is present as leader in the members list
+		(async () => {
+			try {
+				const res = await userService.me();
+				if (res && (res as any).success) {
+					const me = (res as any).data;
+					const meId = me?.id ?? me?.user?.id ?? me?.profile?.id ?? me?.user_id ?? null;
+					const displayName = me?.full_name ?? me?.fullName ?? me?.email ?? "You";
+
+					setCurrentUserId(meId ? meId.toString() : null);
+					setCurrentUserDisplayName(displayName);
+
+					setMembersState((prev) => {
+						const existing = prev ?? (rideGroup?.members ?? []);
+
+						// if this ride already has a creator and it's NOT the current user, don't inject 'You'
+						if (rideGroup?.creator_user_id && meId && rideGroup.creator_user_id.toString() !== meId.toString()) {
+							return existing;
+						}
+						const hasLeader = existing.some((m: any) => {
+							if (!m) return false;
+							if (meId && m.id && m.id.toString() === meId.toString()) return true;
+							if (m.is_creator === true || m.role === "leader") return true;
+							return false;
+						});
+
+						if (hasLeader) return existing;
+
+						// add current user as leader at start
+						const leader = {
+							id: meId ? meId.toString() : `me`,
+							name: displayName,
+							is_creator: true,
+							status: "At pickup point",
+						};
+
+						return [leader, ...existing];
+					});
+				}
+			} catch (err) {
+				// ignore errors — not critical
+			}
+		})();
+
 		const fetchPrice = async () => {
 			const startLat = uberRide?.pickup?.lat ?? rideGroup?.pickup?.lat;
 			const startLng = uberRide?.pickup?.lng ?? rideGroup?.pickup?.lng;
@@ -67,7 +121,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			}
 		};
 		fetchPrice();
-	}, [uberRide?.pickup?.lat, rideGroup?.pickup?.lat]);
+	}, [uberRide?.pickup?.lat, rideGroup?.pickup?.lat, membersState?.length]);
 
 	useEffect(() => {
 		const rideId = uberRide?.rideId;
@@ -95,7 +149,63 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			if (pollRef.current) clearInterval(pollRef.current);
 		};
 	}, [uberRide?.rideId]);
-	const members: PartyMember[] = rideGroup?.members?.map(
+
+	// Simulate other users joining until party is full
+	useEffect(() => {
+
+		const NAMES = [
+			"Alex Johnson",
+			"Samantha Patel",
+			"Jordan Smith",
+			"Taylor Brown",
+			"Casey Williams",
+			"Morgan Davis",
+			"Riley Thompson",
+			"Jamie Clark",
+			"Cameron Lewis",
+			"Avery Martin",
+		];
+
+		const maxMembers = rideGroup?.maxMembers ?? (rideGroup?.members?.length ?? 1);
+		const current = membersState ?? (rideGroup?.members ?? []);
+
+		// Only allow up to 3 simulated guests (regardless of maxMembers)
+		const SIMULATED_GUESTS_MAX = 3;
+
+		// If party is already full or no room for simulated guests, do nothing
+		const availableSlots = Math.max(0, maxMembers - (current?.length ?? 0));
+		const targetAdds = Math.min(availableSlots, SIMULATED_GUESTS_MAX);
+		if (targetAdds <= 0) return;
+
+		// start simulation
+		setIsSimulating(true);
+
+		// prepare a small shuffled list of unique names
+		const shuffled = NAMES.sort(() => Math.random() - 0.5).slice(0, targetAdds);
+		let added = 0;
+
+		simRef.current = setInterval(() => {
+			setMembersState((prev) => {
+				const now = prev ? [...prev] : [];
+				if (added >= shuffled.length || now.length >= maxMembers) {
+					if (simRef.current) clearInterval(simRef.current);
+					setIsSimulating(false);
+					return now;
+				}
+				const id = `sim-${Date.now()}`;
+				const name = shuffled[added++] ?? `Guest ${now.length + 1}`;
+				now.push({ id, name, is_creator: false, status: 'At pickup point' });
+				return now;
+			});
+		}, 1500 + Math.random() * 2000);
+
+		// cleanup
+		return () => {
+			if (simRef.current) clearInterval(simRef.current);
+		};
+	}, [rideGroup, membersState]);
+	const membersSource = membersState ?? rideGroup?.members ?? [];
+	const members: PartyMember[] = membersSource.map(
 		(member: any, index: number) => ({
 			id: member.id?.toString() ?? `${index}`,
 			name: member.name ?? member.full_name ?? "Unknown Rider",
@@ -108,16 +218,13 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				member.is_creator === true ||
 				member.role === "leader" ||
 				index === 0,
+			isSelf:
+				member.isSelf === true ||
+				member.is_self === true ||
+				(currentUserId && member.id && member.id.toString() === currentUserId) ||
+				false,
 		}),
-	) ?? [
-		{
-			id: "1",
-			name: rideGroup?.name ?? "Ride Group",
-			initial: (rideGroup?.name ?? "R").charAt(0).toUpperCase(),
-			status: "Waiting at pickup point",
-			isLeader: true,
-		},
-	];
+	);
 
 	const leader = members.find((member) => member.isLeader) ??
 		members[0] ?? {
@@ -147,18 +254,53 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 	const distance =
 		uberRide?.eta != null ? `${uberRide.eta} min away` : "On the way";
 
-	const uberStatus: UberRideStatus = uberRide?.status ?? 'processing';
+	const uberStatus: UberRideStatus = uberRide?.status ?? 'idle';
 	const arrivalTime = STATUS_LABELS[uberStatus] ?? "Soon";
 
 	const driverName =
 		uberRide?.driver?.name ??
 		rideGroup?.driver?.name ??
+		rideGroup?.leaderName ??
 		rideGroup?.driverName ??
 		leader.name ??
 		"Awaiting driver";
 
-	const allMembersPresent = members.length > 0;
-	const isProcessing = uberStatus === 'processing';
+	const maxMembers = rideGroup?.maxMembers ?? (rideGroup?.members?.length ?? members.length);
+	const allMembersPresent = members.length >= maxMembers;
+	const isProcessing = uberRide != null && uberStatus === 'processing';
+
+	const handleSearchForDriver = async () => {
+		if (!allMembersPresent || isRequestingDriver) return;
+		setIsRequestingDriver(true);
+		const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
+
+		try {
+			const startLat = rideGroup?.pickup?.lat;
+			const startLng = rideGroup?.pickup?.lng;
+			const endLat = rideGroup?.destination?.lat;
+			const endLng = rideGroup?.destination?.lng;
+
+			const rideResponse = await uberService.requestRide({
+				productId: UBERX_PRODUCT_ID,
+				startLat,
+				startLng,
+				endLat,
+				endLng,
+			});
+
+			if (rideResponse.success) {
+				setUberRide(rideResponse.data);
+			} else {
+				console.warn('[WaitScreen] requestRide failed', rideResponse);
+				Alert.alert('Driver Search Failed', rideResponse.message || 'Could not start driver search');
+			}
+		} catch (err) {
+			console.warn('[WaitScreen] requestRide error', err);
+			Alert.alert('Error', 'Failed to start driver search');
+		} finally {
+			setIsRequestingDriver(false);
+		}
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -289,9 +431,13 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 									<View style={styles.memberInfo}>
 										<View style={styles.memberNameRow}>
-											<Text style={styles.memberName}>
-												{member.name}
-											</Text>
+												<Text style={styles.memberName}>
+													{member.isSelf
+														? member.isLeader
+															? `You (Leader)`
+															: `You`
+														: member.name}
+												</Text>
 											{member.isLeader && (
 												<View
 													style={styles.leaderLabel}
@@ -338,7 +484,42 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 					</View>
 				</ScrollView>
 
-				<Pressable style={styles.continueButton} onPress={onContinue}>
+				{/* If party is full and no uberRide yet, allow user to start searching for a driver */}
+				{!uberRide && (
+					<View style={{ padding: 12 }}>
+						{!allMembersPresent ? (
+							<View style={styles.waitingInfo}>
+								<Text style={styles.waitingText}>
+									Waiting for people to join ({members.length}/{maxMembers})
+								</Text>
+							</View>
+						) : (
+							<Pressable
+								style={[styles.searchButton, isRequestingDriver && styles.searchButtonDisabled]}
+								onPress={handleSearchForDriver}
+								disabled={isRequestingDriver}
+							>
+								{isRequestingDriver ? (
+									<ActivityIndicator color="#fff" />
+								) : (
+									<Text style={styles.searchButtonText}>Search for driver</Text>
+								)}
+							</Pressable>
+						)}
+					</View>
+				)}
+
+				<Pressable
+					style={styles.continueButton}
+					onPress={() => {
+						// Pass updated rideGroup including current members to next screen
+						const updated = {
+							...rideGroup,
+							members: membersSource,
+						};
+						onContinue && onContinue(updated);
+					}}
+				>
 					<Text style={styles.continueButtonText}>Continue</Text>
 				</Pressable>
 			</View>
@@ -655,6 +836,31 @@ const styles = StyleSheet.create({
 	status_arriving:   { backgroundColor: '#dbeafe' },
 	status_in_progress: { backgroundColor: '#ede9fe' },
 	status_cancelled:  { backgroundColor: '#fee2e2' },
+	status_idle: { backgroundColor: '#eef2ff' },
+	searchButton: {
+		paddingVertical: SPACING.md,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.primary,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	searchButtonDisabled: {
+		opacity: 0.6,
+	},
+	searchButtonText: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.base,
+		fontWeight: '600' as const,
+	},
+	waitingInfo: {
+		padding: SPACING.md,
+		backgroundColor: COLORS.background,
+		borderRadius: BORDER_RADIUS.md,
+		alignItems: 'center',
+	},
+	waitingText: {
+		color: COLORS.textSecondary,
+	},
 	continueButton: {
 		paddingVertical: SPACING.lg,
 		borderRadius: BORDER_RADIUS.lg,

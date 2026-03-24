@@ -1,6 +1,8 @@
 import { getToken } from "../../utils/authStorage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://172.26.196.21:3000";
+// Default API host. Use `EXPO_PUBLIC_API_URL` from .env for overrides.
+// For development on a LAN device, use the machine IP (e.g. 192.168.1.111:3000).
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.111:3000";
 
 export type ApiError = {
 	success: false;
@@ -223,9 +225,25 @@ export const userService = {
 	async me() {
 		return await requestJson(`/users/me`);
 	},
+	async rateUser(userId: string, rating: number) {
+		return await requestJson(`/users/${userId}/rating`, {
+			method: 'POST',
+			body: JSON.stringify({ rating }),
+		});
+	},
 };
 
 export const uberService = {
+	async initiateUberAuth() {
+		return await requestJson<{ authUrl: string }>(`/uber/auth-url`);
+	},
+
+	async connectUber(authCode: string, _token?: string) {
+		return await requestJson<any>(`/uber/connect`, {
+			method: "POST",
+			body: JSON.stringify({ authCode }),
+		});
+	},
 	async requestRide(params: {
 		productId: string;
 		startLat: number;

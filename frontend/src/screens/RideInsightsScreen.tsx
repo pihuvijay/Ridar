@@ -8,6 +8,7 @@ import {
 	SafeAreaView,
 	Modal,
 	TextInput,
+	Alert,
 } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
@@ -40,6 +41,7 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 	onAddReport,
 	onDone,
 }) => {
+	const [ratings, setRatings] = useState<Record<string, number>>({});
 	const [reportModalVisible, setReportModalVisible] = useState(false);
 	const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
 	const [selectedReason, setSelectedReason] = useState("");
@@ -75,10 +77,10 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 		return [
 			{
 				id: rideGroup?.id?.toString() ?? "1",
-				name:
-					rideGroup?.driverName ?? rideGroup?.name ?? "Ride Creator",
+				name: rideGroup?.leaderName ?? rideGroup?.driverName ?? rideGroup?.name ?? "Ride Creator",
 				initial: (
 					rideGroup?.driverInitial ??
+					rideGroup?.leaderName ??
 					rideGroup?.driverName ??
 					rideGroup?.name ??
 					"R"
@@ -139,6 +141,38 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 		setReportDescription("");
 		setReportSubmitted(false);
 		setReportModalVisible(true);
+	};
+
+	const setRatingFor = (riderId: string, value: number) => {
+		setRatings((prev) => ({ ...prev, [riderId]: value }));
+	};
+
+	const handleSubmitRatings = async () => {
+		const entries = Object.entries(ratings).map(([id, rating]) => ({ id, rating }));
+		if (entries.length === 0) {
+			Alert.alert('No ratings', 'Please rate at least one rider before submitting.');
+			return;
+		}
+
+		try {
+			for (const [userId, rating] of Object.entries(ratings)) {
+				try {
+					// call API to submit rating
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					const { userService } = require('../services/api');
+					const res = await userService.rateUser(userId, rating as number);
+					console.log('[RideInsights] rateUser', userId, res);
+				} catch (err) {
+					console.warn('[RideInsights] failed to rate', userId, err);
+				}
+			}
+
+			Alert.alert('Ratings submitted', `Submitted ${entries.length} ratings.`);
+			setRatings({});
+		} catch (err) {
+			console.error('[RideInsights] submit ratings error', err);
+			Alert.alert('Error', 'Failed to submit ratings');
+		}
 	};
 
 	const handleSubmitReport = () => {
@@ -262,25 +296,44 @@ export const RideInsightsScreen: React.FC<RideInsightsScreenProps> = ({
 								)}
 							</View>
 
-							{!rider.isSelf && (
-								<Pressable
-									style={styles.reportButton}
-									onPress={() => openReportModal(rider)}
-								>
-									<Text style={styles.reportButtonText}>
-										Report
-									</Text>
-								</Pressable>
-							)}
+							<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+								{/* Rating stars */}
+								{!rider.isSelf && (
+									<View style={styles.starsRow}>
+										{[1,2,3,4,5].map((n) => (
+											<Pressable key={n} onPress={() => setRatingFor(rider.id, n)}>
+												<Ionicons name={ratings[rider.id] >= n ? 'star' : 'star-outline'} size={18} color={COLORS.primary} />
+											</Pressable>
+										))}
+									</View>
+								)}
+								{/* Report button */}
+								{!rider.isSelf && (
+									<Pressable
+										style={styles.reportButton}
+										onPress={() => openReportModal(rider)}
+									>
+										<Text style={styles.reportButtonText}>
+											Report
+										</Text>
+									</Pressable>
+								)}
+							</View>
 						</View>
 					))}
 				</View>
+
 			</ScrollView>
 
 			<View style={styles.footer}>
-				<Pressable style={styles.doneButton} onPress={onDone}>
-					<Text style={styles.doneButtonText}>Back to Map</Text>
-				</Pressable>
+				<View style={{ flexDirection: 'row', gap: 12 }}>
+					<Pressable style={styles.doneButton} onPress={onDone}>
+						<Text style={styles.doneButtonText}>Back to Map</Text>
+					</Pressable>
+					<Pressable style={styles.submitRatingsButton} onPress={handleSubmitRatings}>
+						<Text style={styles.doneButtonText}>Submit Ratings</Text>
+					</Pressable>
+				</View>
 			</View>
 
 			<Modal
@@ -666,11 +719,26 @@ const styles = StyleSheet.create({
 		borderRadius: BORDER_RADIUS.lg,
 		backgroundColor: COLORS.primary,
 		alignItems: "center",
+		minWidth: 160,
+		paddingHorizontal: SPACING.lg,
+	},
+	submitRatingsButton: {
+		paddingVertical: SPACING.lg,
+		borderRadius: BORDER_RADIUS.lg,
+		backgroundColor: COLORS.success,
+		alignItems: "center",
+		minWidth: 160,
+		paddingHorizontal: SPACING.lg,
 	},
 	doneButtonText: {
 		fontSize: FONT_SIZES.base,
 		fontWeight: "600",
 		color: COLORS.textLight,
+	},
+	starsRow: {
+		flexDirection: 'row',
+		gap: SPACING.xs,
+		marginRight: SPACING.sm,
 	},
 	modalOverlay: {
 		flex: 1,

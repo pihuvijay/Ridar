@@ -82,10 +82,10 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		return [
 			{
 				id: rideGroup?.id?.toString() ?? "1",
-				name:
-					rideGroup?.driverName ?? rideGroup?.name ?? "Ride Creator",
+				name: rideGroup?.leaderName ?? rideGroup?.driverName ?? rideGroup?.name ?? "Ride Creator",
 				initial: (
 					rideGroup?.driverInitial ??
+					rideGroup?.leaderName ??
 					rideGroup?.driverName ??
 					rideGroup?.name ??
 					"R"

@@ -166,6 +166,8 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                         if (preferences.femaleOnly) tags.push("Female Only");
                         if (preferences.alcoholFree) tags.push("Alcohol Free");
 
+                        const displayName = party.leaderName ?? party.name ?? "Ride Group";
+
                         return {
                             id: String(party.id),
                             destination: destinationLabel,
@@ -174,8 +176,8 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
                             leavingIn,
                             currentPassengers: Number(party.currentMembers ?? 1),
                             maxPassengers: Number(party.maxMembers ?? 4),
-                            driverName: party.name ?? "Ride Group",
-                            driverInitial: (party.name?.charAt(0) ?? "R").toUpperCase(),
+                            driverName: displayName,
+                            driverInitial: (displayName?.charAt(0) ?? "R").toUpperCase(),
                             driverTrips: Number(party.driverTrips ?? 0),
                             tags,
                             pickupLat: party.pickup?.lat,

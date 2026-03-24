@@ -334,25 +334,9 @@ export const CreateGroupPage = ({
 				return;
 			}
 
-			// Request an Uber ride immediately after party creation
-			const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
-			let uberRide: any = null;
-			try {
-				const rideResponse = await uberService.requestRide({
-					productId: UBERX_PRODUCT_ID,
-					startLat: selectedPickup!.lat,
-					startLng: selectedPickup!.lng,
-					endLat: selectedDestination!.lat,
-					endLng: selectedDestination!.lng,
-				});
-				if (rideResponse.success) {
-					uberRide = rideResponse.data;
-				}
-			} catch (rideErr) {
-				console.warn("[uber] ride request failed, continuing without ride:", rideErr);
-			}
-
-			onCreateGroup({ ...response.data, uberRide });
+			// Do NOT request an Uber ride yet. We'll let the user gather their party
+			// and explicitly start driver search from the Wait screen.
+			onCreateGroup({ ...response.data });
 		} catch (error) {
 			Alert.alert(
 				"Error",

@@ -295,7 +295,7 @@ export const SignUpPage = ({
 								<View style={styles.formColumn}>
 									<Text style={styles.label}>Age *</Text>
 									<View style={styles.inputContainer}>
-										<Ionicons name="cake-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
+										<Ionicons name={"cake-outline" as any} size={16} color={COLORS.primary} style={styles.inputIcon} />
 										<TextInput
 											style={styles.input}
 											placeholder="21"

@@ -168,7 +168,7 @@ export const SignInPage = ({
 								style={styles.logoImage}
 							/>
 						</View>
-						<Text style={styles.appTitle}>RideShare</Text>
+						<Text style={styles.appTitle}>Ridar</Text>
 						<Text style={styles.appSubtitle}>
 							Connect. Share. Arrive.
 						</Text>

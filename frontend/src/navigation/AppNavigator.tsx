@@ -133,9 +133,9 @@ export default function AppNavigator({
 						<WaitScreen
 							rideGroup={route.params?.rideGroup}
 							uberRide={route.params?.uberRide}
-							onContinue={() =>
+							onContinue={(updatedRideGroup?: any) =>
 								navigation.navigate("RideInsights", {
-									rideGroup: route.params?.rideGroup,
+									rideGroup: updatedRideGroup ?? route.params?.rideGroup,
 								})
 							}
 						/>
