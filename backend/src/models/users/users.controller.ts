@@ -25,3 +25,21 @@ export async function patchMe(req: any, res: Response) {
     profile,
   });
 }
+
+export async function rateUser(req: any, res: Response) {
+  const targetUserId = req.params.id as string;
+  const { rating } = req.body ?? {};
+  const rater = req.user as { id: string };
+
+  if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, message: 'Invalid rating' });
+  }
+
+  try {
+    const profile = await require("./users.service").then((m: any) => m.rateUser(targetUserId, rater.id, rating));
+    res.json({ success: true, profile });
+  } catch (err: any) {
+    console.error('[users.rateUser] error', err);
+    res.status(500).json({ success: false, message: 'Failed to save rating' });
+  }
+}

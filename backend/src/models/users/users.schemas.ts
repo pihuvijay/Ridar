@@ -6,3 +6,10 @@ export const patchMeSchema = z
     avatar_url: z.string().url().optional().nullable(),
   })
   .strict();
+
+export const rateUserSchema = z
+  .object({
+    rating: z.number().min(1).max(5),
+  })
+  .strict()
+  .required(["rating"]);

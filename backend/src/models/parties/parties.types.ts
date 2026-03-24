@@ -19,6 +19,7 @@ export type UserRide = {
 export type Party = {
   id: string;
   leaderUserId: string;
+  leaderName?: string | null;
   name: string;
   maxMembers: number;
   currentMembers: number;

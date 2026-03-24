@@ -41,13 +41,37 @@ export const partiesService = {
 			throw new Error(`Failed to list parties: ${error.message}`);
 		}
 
-		return (data ?? []).map((row: any) => {
+		const rows = (data ?? []);
+
+		// gather unique creator ids to fetch display names
+		const creatorIds = Array.from(new Set(rows.map((r: any) => r.creator_user_id).filter(Boolean)));
+
+		let profilesMap: Record<string, any> = {};
+		if (creatorIds.length > 0) {
+			const { data: profiles } = await supabaseAdmin
+				.from('profiles')
+				.select('id,full_name,email')
+				.in('id', creatorIds as string[]);
+
+			if (profiles && Array.isArray(profiles)) {
+				profilesMap = profiles.reduce((acc: any, p: any) => {
+					acc[p.id] = p;
+					return acc;
+				}, {} as Record<string, any>);
+			}
+		}
+
+		return rows.map((row: any) => {
 			const pickupCoords = parseWktPoint(row.pickup_geog);
 			const destCoords = parseWktPoint(row.destination_geog);
+
+			const leaderProfile = profilesMap[row.creator_user_id];
+			const leaderName = leaderProfile?.full_name || leaderProfile?.email || null;
 
 			return {
 				id: row.ride_id,
 				leaderUserId: row.creator_user_id,
+				leaderName,
 				name: row.course ?? "Ride Group",
 				maxMembers: row.max_riders,
 				currentMembers: row.current_riders ?? 1,
@@ -127,9 +151,22 @@ export const partiesService = {
 			);
 		}
 
+		// try to fetch leader display name from profiles
+		let leaderName: string | null = null;
+		try {
+			const { data: profile } = await supabaseAdmin
+				.from("profiles")
+				.select("full_name,email")
+				.eq("id", leaderUserId)
+				.single();
+
+			if (profile) leaderName = profile.full_name || profile.email || null;
+		} catch {}
+
 		return {
 			id: data.ride_id,
 			leaderUserId: data.creator_user_id,
+			leaderName,
 			name: data.course,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders ?? 1,
@@ -166,10 +203,23 @@ export const partiesService = {
 		const pickupCoords = parseWktPoint(data.pickup_geog);
 		const destCoords = parseWktPoint(data.destination_geog);
 
+		// try to fetch leader display name
+		let leaderName: string | null = null;
+		try {
+			const { data: profile } = await supabaseAdmin
+				.from("profiles")
+				.select("full_name,email")
+				.eq("id", data.creator_user_id)
+				.single();
+
+			if (profile) leaderName = profile.full_name || profile.email || null;
+		} catch {}
+
 		return {
 			id: data.ride_id,
 			leaderUserId: data.creator_user_id,
 			name: data.course,
+			leaderName,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders,
 			pickup: {
@@ -233,9 +283,23 @@ export const partiesService = {
 		const updatedPickupCoords = parseWktPoint(data.pickup_geog);
 		const updatedDestCoords = parseWktPoint(data.destination_geog);
 
+
+		// try to fetch leader display name
+		let leaderName: string | null = null;
+		try {
+			const { data: profile } = await supabaseAdmin
+				.from("profiles")
+				.select("full_name,email")
+				.eq("id", data.creator_user_id)
+				.single();
+
+			if (profile) leaderName = profile.full_name || profile.email || null;
+		} catch {}
+
 		return {
 			id: data.ride_id,
 			leaderUserId: data.creator_user_id,
+			leaderName,
 			name: data.course,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders,
