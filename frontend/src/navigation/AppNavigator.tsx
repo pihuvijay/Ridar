@@ -101,10 +101,8 @@ export default function AppNavigator({
 							onBack={() => navigation.goBack()}
 							userGender={"male"} // replace with real user gender from your profile/session
 							onCreateGroup={(rideData: any) => {
-								const { uberRide, ...rideGroup } = rideData;
 								navigation.navigate("Wait", {
-									rideGroup,
-									uberRide,
+									rideGroup: rideData,
 								});
 							}}
 						/>
@@ -138,7 +136,9 @@ export default function AppNavigator({
 							uberRide={route.params?.uberRide}
 							onContinue={(updatedRideGroup?: any) =>
 								navigation.navigate("RideInsights", {
-									rideGroup: updatedRideGroup ?? route.params?.rideGroup,
+									rideGroup:
+										updatedRideGroup ??
+										route.params?.rideGroup,
 								})
 							}
 						/>

@@ -9,7 +9,7 @@ import {
 	ActivityIndicator,
 	Alert,
 } from "react-native";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 import { uberService, userService } from "../services/api";
 
@@ -21,20 +21,26 @@ interface PartyMember {
 	isLeader: boolean;
 }
 
-type UberRideStatus = 'idle' | 'processing' | 'accepted' | 'arriving' | 'in_progress' | 'cancelled';
+type UberRideStatus =
+	| "idle"
+	| "processing"
+	| "accepted"
+	| "arriving"
+	| "in_progress"
+	| "cancelled";
 
 const STATUS_LABELS: Record<UberRideStatus, string> = {
-	idle: 'Waiting for party to fill',
-	processing: 'Finding your driver...',
-	accepted: 'Driver on the way',
-	arriving: 'Almost here!',
-	in_progress: 'Ride in progress',
-	cancelled: 'Ride cancelled',
+	idle: "Waiting for party to fill",
+	processing: "Finding your driver...",
+	accepted: "Driver on the way",
+	arriving: "Almost here!",
+	in_progress: "Ride in progress",
+	cancelled: "Ride cancelled",
 };
 
 interface WaitScreenProps {
 	rideGroup?: any;
-	uberRide?: any;  // initial ride data from POST /uber/request
+	uberRide?: any; // initial ride data from POST /uber/request
 	onContinue: () => void;
 }
 
@@ -50,9 +56,17 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		rideGroup?.members ? [...rideGroup.members] : null,
 	);
 	const [isSimulating, setIsSimulating] = useState<boolean>(false);
-	const [isRequestingDriver, setIsRequestingDriver] = useState<boolean>(false);
+	const [isRequestingDriver, setIsRequestingDriver] =
+		useState<boolean>(false);
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-	const [currentUserDisplayName, setCurrentUserDisplayName] = useState<string | null>(null);
+	const [timeLeft, setTimeLeft] = useState<number>(300); // 5 mins
+	const isLeader =
+		!!currentUserId &&
+		!!rideGroup?.leaderUserId &&
+		currentUserId.toString() === rideGroup.leaderUserId.toString();
+	const [currentUserDisplayName, setCurrentUserDisplayName] = useState<
+		string | null
+	>(null);
 	const simRef = useRef<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
@@ -62,23 +76,43 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				const res = await userService.me();
 				if (res && (res as any).success) {
 					const me = (res as any).data;
-					const meId = me?.id ?? me?.user?.id ?? me?.profile?.id ?? me?.user_id ?? null;
-					const displayName = me?.full_name ?? me?.fullName ?? me?.email ?? "You";
+					const meId =
+						me?.id ??
+						me?.user?.id ??
+						me?.profile?.id ??
+						me?.user_id ??
+						null;
+					const displayName =
+						me?.name ??
+						me?.full_name ??
+						me?.fullName ??
+						"Test User";
 
 					setCurrentUserId(meId ? meId.toString() : null);
 					setCurrentUserDisplayName(displayName);
 
 					setMembersState((prev) => {
-						const existing = prev ?? (rideGroup?.members ?? []);
+						const existing = prev ?? rideGroup?.members ?? [];
 
 						// if this ride already has a creator and it's NOT the current user, don't inject 'You'
-						if (rideGroup?.creator_user_id && meId && rideGroup.creator_user_id.toString() !== meId.toString()) {
+						if (
+							rideGroup?.creator_user_id &&
+							meId &&
+							rideGroup.creator_user_id.toString() !==
+								meId.toString()
+						) {
 							return existing;
 						}
 						const hasLeader = existing.some((m: any) => {
 							if (!m) return false;
-							if (meId && m.id && m.id.toString() === meId.toString()) return true;
-							if (m.is_creator === true || m.role === "leader") return true;
+							if (
+								meId &&
+								m.id &&
+								m.id.toString() === meId.toString()
+							)
+								return true;
+							if (m.is_creator === true || m.role === "leader")
+								return true;
 							return false;
 						});
 
@@ -101,27 +135,98 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		})();
 
 		const fetchPrice = async () => {
+			if (
+				typeof rideGroup?.pricePerPerson === "number" &&
+				rideGroup.pricePerPerson > 0
+			) {
+				setPricePerPerson(rideGroup.pricePerPerson);
+				return;
+			}
+
+			if (typeof rideGroup?.price === "number" && rideGroup.price > 0) {
+				setPricePerPerson(rideGroup.price);
+				return;
+			}
+
 			const startLat = uberRide?.pickup?.lat ?? rideGroup?.pickup?.lat;
 			const startLng = uberRide?.pickup?.lng ?? rideGroup?.pickup?.lng;
-			const endLat = uberRide?.dropoff?.lat ?? rideGroup?.destination?.lat;
-			const endLng = uberRide?.dropoff?.lng ?? rideGroup?.destination?.lng;
+			const endLat =
+				uberRide?.dropoff?.lat ?? rideGroup?.destination?.lat;
+			const endLng =
+				uberRide?.dropoff?.lng ?? rideGroup?.destination?.lng;
 
 			if (startLat && startLng && endLat && endLng) {
 				try {
-					const res = await uberService.getPriceEstimates(startLat, startLng, endLat, endLng);
+					const res = await uberService.getPriceEstimates(
+						startLat,
+						startLng,
+						endLat,
+						endLng,
+					);
 					if (res.success && res.data?.length > 0) {
-						const uberX = res.data.find((p: any) => p.display_name === 'UberX') || res.data[0];
-						const totalEst = (uberX.low_estimate + uberX.high_estimate) / 2;
-						const membersCount = rideGroup?.members?.length || 1;
+						const uberX =
+							res.data.find(
+								(p: any) => p.display_name === "UberX",
+							) || res.data[0];
+						const totalEst =
+							(uberX.low_estimate + uberX.high_estimate) / 2;
+						const membersCount =
+							membersState?.length ||
+							rideGroup?.members?.length ||
+							1;
 						setPricePerPerson(totalEst / membersCount);
 					}
 				} catch (err) {
-					console.warn('[WaitScreen] price estimate error:', err);
+					console.warn("[WaitScreen] price estimate error:", err);
 				}
 			}
 		};
 		fetchPrice();
-	}, [uberRide?.pickup?.lat, rideGroup?.pickup?.lat, membersState?.length]);
+	}, [
+		rideGroup?.pricePerPerson,
+		rideGroup?.price,
+		uberRide?.pickup?.lat,
+		rideGroup?.pickup?.lat,
+		membersState?.length,
+	]);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setTimeLeft((prev) => {
+				if (prev <= 1) {
+					clearInterval(interval);
+					Alert.alert(
+						"Ride expired",
+						"No driver was requested in time.",
+					);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, []);
+
+	useEffect(() => {
+		if (uberRide) return;
+
+		const interval = setInterval(() => {
+			setTimeLeft((prev) => {
+				if (prev <= 1) {
+					clearInterval(interval);
+					Alert.alert(
+						"Ride expired",
+						"No driver was requested in time.",
+					);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+
+		return () => clearInterval(interval);
+	}, [uberRide]);
 
 	useEffect(() => {
 		const rideId = uberRide?.rideId;
@@ -133,12 +238,15 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				if (res.success) {
 					setUberRide(res.data);
 					// Stop polling once ride is terminal
-					if (res.data?.status === 'in_progress' || res.data?.status === 'cancelled') {
+					if (
+						res.data?.status === "in_progress" ||
+						res.data?.status === "cancelled"
+					) {
 						if (pollRef.current) clearInterval(pollRef.current);
 					}
 				}
 			} catch (err) {
-				console.warn('[WaitScreen] poll error:', err);
+				console.warn("[WaitScreen] poll error:", err);
 			}
 		};
 
@@ -152,7 +260,6 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 	// Simulate other users joining until party is full
 	useEffect(() => {
-
 		const NAMES = [
 			"Alex Johnson",
 			"Samantha Patel",
@@ -166,8 +273,9 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			"Avery Martin",
 		];
 
-		const maxMembers = rideGroup?.maxMembers ?? (rideGroup?.members?.length ?? 1);
-		const current = membersState ?? (rideGroup?.members ?? []);
+		const maxMembers =
+			rideGroup?.maxMembers ?? rideGroup?.members?.length ?? 1;
+		const current = membersState ?? rideGroup?.members ?? [];
 
 		// Only allow up to 3 simulated guests (regardless of maxMembers)
 		const SIMULATED_GUESTS_MAX = 3;
@@ -181,23 +289,34 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		setIsSimulating(true);
 
 		// prepare a small shuffled list of unique names
-		const shuffled = NAMES.sort(() => Math.random() - 0.5).slice(0, targetAdds);
+		const shuffled = NAMES.sort(() => Math.random() - 0.5).slice(
+			0,
+			targetAdds,
+		);
 		let added = 0;
 
-		simRef.current = setInterval(() => {
-			setMembersState((prev) => {
-				const now = prev ? [...prev] : [];
-				if (added >= shuffled.length || now.length >= maxMembers) {
-					if (simRef.current) clearInterval(simRef.current);
-					setIsSimulating(false);
+		simRef.current = setInterval(
+			() => {
+				setMembersState((prev) => {
+					const now = prev ? [...prev] : [];
+					if (added >= shuffled.length || now.length >= maxMembers) {
+						if (simRef.current) clearInterval(simRef.current);
+						setIsSimulating(false);
+						return now;
+					}
+					const id = `sim-${Date.now()}`;
+					const name = shuffled[added++] ?? `Guest ${now.length + 1}`;
+					now.push({
+						id,
+						name,
+						is_creator: false,
+						status: "At pickup point",
+					});
 					return now;
-				}
-				const id = `sim-${Date.now()}`;
-				const name = shuffled[added++] ?? `Guest ${now.length + 1}`;
-				now.push({ id, name, is_creator: false, status: 'At pickup point' });
-				return now;
-			});
-		}, 1500 + Math.random() * 2000);
+				});
+			},
+			1500 + Math.random() * 2000,
+		);
 
 		// cleanup
 		return () => {
@@ -221,7 +340,9 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			isSelf:
 				member.isSelf === true ||
 				member.is_self === true ||
-				(currentUserId && member.id && member.id.toString() === currentUserId) ||
+				(currentUserId &&
+					member.id &&
+					member.id.toString() === currentUserId) ||
 				false,
 		}),
 	);
@@ -246,28 +367,30 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 	const vehicleName = uberRide?.vehicle
 		? `${uberRide.vehicle.make} ${uberRide.vehicle.model}`
-		: rideGroup?.vehicle ?? "Vehicle details pending";
+		: (rideGroup?.vehicle ?? "Vehicle details pending");
 
 	const licensePlate =
-		uberRide?.vehicle?.license_plate ?? rideGroup?.licensePlate ?? "Pending";
+		uberRide?.vehicle?.license_plate ??
+		rideGroup?.licensePlate ??
+		"Pending";
 
 	const distance =
 		uberRide?.eta != null ? `${uberRide.eta} min away` : "On the way";
 
-	const uberStatus: UberRideStatus = uberRide?.status ?? 'idle';
+	const uberStatus: UberRideStatus = uberRide?.status ?? "idle";
 	const arrivalTime = STATUS_LABELS[uberStatus] ?? "Soon";
 
 	const driverName =
 		uberRide?.driver?.name ??
-		rideGroup?.driver?.name ??
 		rideGroup?.leaderName ??
 		rideGroup?.driverName ??
 		leader.name ??
-		"Awaiting driver";
+		"Ride Leader";
 
-	const maxMembers = rideGroup?.maxMembers ?? (rideGroup?.members?.length ?? members.length);
+	const maxMembers =
+		rideGroup?.maxMembers ?? rideGroup?.members?.length ?? members.length;
 	const allMembersPresent = members.length >= maxMembers;
-	const isProcessing = uberRide != null && uberStatus === 'processing';
+	const isProcessing = uberRide != null && uberStatus === "processing";
 
 	const handleSearchForDriver = async () => {
 		if (!allMembersPresent || isRequestingDriver) return;
@@ -291,12 +414,15 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			if (rideResponse.success) {
 				setUberRide(rideResponse.data);
 			} else {
-				console.warn('[WaitScreen] requestRide failed', rideResponse);
-				Alert.alert('Driver Search Failed', rideResponse.message || 'Could not start driver search');
+				console.warn("[WaitScreen] requestRide failed", rideResponse);
+				Alert.alert(
+					"Driver Search Failed",
+					rideResponse.message || "Could not start driver search",
+				);
 			}
 		} catch (err) {
-			console.warn('[WaitScreen] requestRide error', err);
-			Alert.alert('Error', 'Failed to start driver search');
+			console.warn("[WaitScreen] requestRide error", err);
+			Alert.alert("Error", "Failed to start driver search");
 		} finally {
 			setIsRequestingDriver(false);
 		}
@@ -306,66 +432,115 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		<SafeAreaView style={styles.container}>
 			<View style={styles.topSection}>
 				<View style={styles.pickupMarker}>
-					<Ionicons name="location-outline" size={FONT_SIZES.xxl} color={COLORS.primary} />
+					<Ionicons
+						name="location-outline"
+						size={FONT_SIZES.xxl}
+						color={COLORS.primary}
+					/>
 				</View>
 
+				<Text style={styles.timer}>
+					{Math.floor(timeLeft / 60)}:
+					{(timeLeft % 60).toString().padStart(2, "0")}
+				</Text>
+
 				<View style={styles.arrivalCard}>
-					{isProcessing
-						? <ActivityIndicator size="small" color={COLORS.primary} />
-						: <Text style={styles.arrivalLabel}>ETA</Text>
-					}
-					<Text style={styles.arrivalTime}>{arrivalTime}</Text>
-					<View style={[styles.statusBadge, styles[`status_${uberStatus}` as keyof typeof styles] as any]}>
-						<Text style={styles.statusBadgeText}>{uberStatus.replace('_', ' ').toUpperCase()}</Text>
+					{isProcessing ? (
+						<ActivityIndicator
+							size="small"
+							color={COLORS.primary}
+						/>
+					) : (
+						<Text style={styles.arrivalLabel}>
+							{uberRide ? "Driver status" : "Party status"}
+						</Text>
+					)}
+					<Text style={styles.arrivalTime}>
+						{uberRide ? arrivalTime : "Waiting for your group"}
+					</Text>
+					<View
+						style={[
+							styles.statusBadge,
+							styles[
+								`status_${uberStatus}` as keyof typeof styles
+							] as any,
+						]}
+					>
+						<Text style={styles.statusBadgeText}>
+							{uberStatus.replace("_", " ").toUpperCase()}
+						</Text>
 					</View>
 				</View>
 
 				<View style={styles.vehicleIcon}>
-					<Ionicons name="car-outline" size={FONT_SIZES.xxl} color={COLORS.text} />
+					<Ionicons
+						name="car-outline"
+						size={FONT_SIZES.xxl}
+						color={COLORS.text}
+					/>
 				</View>
 			</View>
 
 			<View style={styles.bottomSection}>
 				<ScrollView showsVerticalScrollIndicator={false}>
-					<View style={styles.driverSection}>
-						<View style={styles.driverAvatar}>
-							<Text style={styles.driverAvatarText}>
-								{driverName.charAt(0).toUpperCase()}
-							</Text>
-						</View>
-
-						<View style={styles.driverInfo}>
-							<Text style={styles.driverName}>{driverName}</Text>
-
-							<View style={styles.vehicleDetails}>
-								<Text style={styles.vehicleModel}>
-									{vehicleName}
+					{uberRide && (
+						<View style={styles.driverSection}>
+							<View style={styles.driverAvatar}>
+								<Text style={styles.driverAvatarText}>
+									{driverName.charAt(0).toUpperCase()}
 								</Text>
-								<View style={styles.licensePlate}>
-									<Text style={styles.licensePlateText}>
-										{licensePlate}
+							</View>
+
+							<View style={styles.driverInfo}>
+								<Text style={styles.driverName}>
+									{driverName}
+								</Text>
+
+								<View style={styles.vehicleDetails}>
+									<Text style={styles.vehicleModel}>
+										{vehicleName}
+									</Text>
+									<View style={styles.licensePlate}>
+										<Text style={styles.licensePlateText}>
+											{licensePlate}
+										</Text>
+									</View>
+								</View>
+
+								<View style={styles.distanceRow}>
+									<Ionicons
+										name="location-outline"
+										size={14}
+										color={COLORS.textSecondary}
+										style={styles.distanceIcon}
+									/>
+									<Text style={styles.distanceText}>
+										{distance}
 									</Text>
 								</View>
 							</View>
 
-							<View style={styles.distanceRow}>
-								<Ionicons name="location-outline" size={14} color={COLORS.textSecondary} style={styles.distanceIcon} />
-								<Text style={styles.distanceText}>
-									{distance}
-								</Text>
-							</View>
+							<Pressable style={styles.contactButton}>
+								<Ionicons
+									name="call-outline"
+									size={18}
+									color={COLORS.primary}
+									style={styles.contactIcon}
+								/>
+							</Pressable>
 						</View>
-
-						<Pressable style={styles.contactButton}>
-							<Ionicons name="call-outline" size={18} color={COLORS.primary} style={styles.contactIcon} />
-						</Pressable>
-					</View>
+					)}
 
 					<View style={styles.divider} />
 
 					<View style={styles.pickupSection}>
 						<View style={styles.locationRow}>
-							<Ionicons name="location-outline" size={18} color={COLORS.primary} style={styles.locationIcon} />
+							<Ionicons
+								name="location-outline"
+								size={18}
+								color={COLORS.primary}
+								style={styles.locationIcon}
+							/>
 							<View style={styles.locationContent}>
 								<Text style={styles.locationLabel}>
 									Pickup Location
@@ -379,7 +554,12 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						<View style={{ height: SPACING.md }} />
 
 						<View style={styles.locationRow}>
-							<Ionicons name="navigate-outline" size={18} color={COLORS.primary} style={styles.locationIcon} />
+							<Ionicons
+								name="navigate-outline"
+								size={18}
+								color={COLORS.primary}
+								style={styles.locationIcon}
+							/>
 							<View style={styles.locationContent}>
 								<Text style={styles.locationLabel}>
 									Destination
@@ -392,14 +572,22 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 					</View>
 
 					{pricePerPerson !== null && (
-						<View style={[styles.locationRow, { marginTop: SPACING.md }]}>
+						<View
+							style={[
+								styles.locationRow,
+								{ marginTop: SPACING.md },
+							]}
+						>
 							<Text style={styles.locationIcon}>💷</Text>
 							<View style={styles.locationContent}>
 								<Text style={styles.locationLabel}>
 									Estimated Price
 								</Text>
-								<Text style={styles.locationName}>
-									£{pricePerPerson.toFixed(2)} / person
+								<Text style={styles.priceBig}>
+									£{pricePerPerson.toFixed(2)}
+								</Text>
+								<Text style={styles.priceSmall}>
+									per person
 								</Text>
 							</View>
 						</View>
@@ -409,7 +597,12 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 					<View style={styles.partySection}>
 						<View style={styles.partyHeader}>
-							<Ionicons name="people-outline" size={18} color={COLORS.text} style={styles.partyIcon} />
+							<Ionicons
+								name="people-outline"
+								size={18}
+								color={COLORS.text}
+								style={styles.partyIcon}
+							/>
 							<Text style={styles.partyTitle}>
 								Your Party ({members.length})
 							</Text>
@@ -424,20 +617,24 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 										</Text>
 										{member.isLeader && (
 											<View style={styles.leaderBadge}>
-												<Ionicons name="star" size={12} color={COLORS.primary} />
+												<Ionicons
+													name="star"
+													size={12}
+													color={COLORS.primary}
+												/>
 											</View>
 										)}
 									</View>
 
 									<View style={styles.memberInfo}>
 										<View style={styles.memberNameRow}>
-												<Text style={styles.memberName}>
-													{member.isSelf
-														? member.isLeader
-															? `You (Leader)`
-															: `You`
-														: member.name}
-												</Text>
+											<Text style={styles.memberName}>
+												{member.isSelf
+													? member.isLeader
+														? `You (Leader)`
+														: `You`
+													: member.name}
+											</Text>
 											{member.isLeader && (
 												<View
 													style={styles.leaderLabel}
@@ -457,7 +654,12 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 										</Text>
 									</View>
 
-									<Ionicons name="checkmark" size={16} color={COLORS.primary} style={styles.checkmark} />
+									<Ionicons
+										name="checkmark"
+										size={16}
+										color={COLORS.primary}
+										style={styles.checkmark}
+									/>
 								</View>
 							))}
 						</View>
@@ -465,7 +667,12 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						<View style={styles.statusMessages}>
 							{allMembersPresent && (
 								<View style={styles.successMessage}>
-									<Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.successIcon} />
+									<Ionicons
+										name="checkmark-circle"
+										size={16}
+										color={COLORS.success}
+										style={styles.successIcon}
+									/>
 									<Text style={styles.successText}>
 										Party details loaded
 									</Text>
@@ -474,7 +681,12 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 							{isProcessing && (
 								<View style={styles.infoMessage}>
-									<Ionicons name="hourglass-outline" size={16} color={COLORS.textSecondary} style={styles.infoIcon} />
+									<Ionicons
+										name="hourglass-outline"
+										size={16}
+										color={COLORS.textSecondary}
+										style={styles.infoIcon}
+									/>
 									<Text style={styles.infoText}>
 										Finding your driver...
 									</Text>
@@ -486,25 +698,43 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 				{/* If party is full and no uberRide yet, allow user to start searching for a driver */}
 				{!uberRide && (
-					<View style={{ padding: 12 }}>
+					<View style={{ padding: 16 }}>
 						{!allMembersPresent ? (
 							<View style={styles.waitingInfo}>
 								<Text style={styles.waitingText}>
-									Waiting for people to join ({members.length}/{maxMembers})
+									Waiting for riders ({members.length}/
+									{maxMembers})
 								</Text>
 							</View>
-						) : (
+						) : isLeader ? (
 							<Pressable
-								style={[styles.searchButton, isRequestingDriver && styles.searchButtonDisabled]}
+								style={[
+									styles.confirmButton,
+									isRequestingDriver &&
+										styles.searchButtonDisabled,
+								]}
 								onPress={handleSearchForDriver}
 								disabled={isRequestingDriver}
 							>
 								{isRequestingDriver ? (
 									<ActivityIndicator color="#fff" />
 								) : (
-									<Text style={styles.searchButtonText}>Search for driver</Text>
+									<>
+										<Text style={styles.confirmTitle}>
+											Confirm Ride
+										</Text>
+										<Text style={styles.confirmSub}>
+											This will request a driver
+										</Text>
+									</>
 								)}
 							</Pressable>
+						) : (
+							<View style={styles.waitingInfo}>
+								<Text style={styles.waitingText}>
+									Waiting for party leader to confirm
+								</Text>
+							</View>
 						)}
 					</View>
 				)}
@@ -831,18 +1061,18 @@ const styles = StyleSheet.create({
 		fontWeight: "700" as const,
 		color: COLORS.primary,
 	},
-	status_processing: { backgroundColor: '#fef3c7' },
-	status_accepted:   { backgroundColor: '#d1fae5' },
-	status_arriving:   { backgroundColor: '#dbeafe' },
-	status_in_progress: { backgroundColor: '#ede9fe' },
-	status_cancelled:  { backgroundColor: '#fee2e2' },
-	status_idle: { backgroundColor: '#eef2ff' },
+	status_processing: { backgroundColor: "#fef3c7" },
+	status_accepted: { backgroundColor: "#d1fae5" },
+	status_arriving: { backgroundColor: "#dbeafe" },
+	status_in_progress: { backgroundColor: "#ede9fe" },
+	status_cancelled: { backgroundColor: "#fee2e2" },
+	status_idle: { backgroundColor: "#eef2ff" },
 	searchButton: {
 		paddingVertical: SPACING.md,
 		borderRadius: BORDER_RADIUS.lg,
 		backgroundColor: COLORS.primary,
-		alignItems: 'center',
-		justifyContent: 'center',
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	searchButtonDisabled: {
 		opacity: 0.6,
@@ -850,13 +1080,13 @@ const styles = StyleSheet.create({
 	searchButtonText: {
 		color: COLORS.textLight,
 		fontSize: FONT_SIZES.base,
-		fontWeight: '600' as const,
+		fontWeight: "600" as const,
 	},
 	waitingInfo: {
 		padding: SPACING.md,
 		backgroundColor: COLORS.background,
 		borderRadius: BORDER_RADIUS.md,
-		alignItems: 'center',
+		alignItems: "center",
 	},
 	waitingText: {
 		color: COLORS.textSecondary,
@@ -872,5 +1102,43 @@ const styles = StyleSheet.create({
 		fontSize: FONT_SIZES.base,
 		fontWeight: "600",
 		color: COLORS.textLight,
+	},
+	priceBig: {
+		fontSize: 22,
+		fontWeight: "700",
+		color: COLORS.primary,
+	},
+	priceSmall: {
+		fontSize: 12,
+		color: COLORS.textSecondary,
+	},
+
+	timer: {
+		fontSize: 18,
+		fontWeight: "600",
+		color: "#ff3b30", // Uber red
+		marginTop: 6,
+	},
+
+	confirmButton: {
+		backgroundColor: COLORS.primary,
+		borderRadius: BORDER_RADIUS.lg,
+		paddingVertical: SPACING.md,
+		paddingHorizontal: SPACING.md,
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 4,
+	},
+
+	confirmTitle: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+	},
+
+	confirmSub: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.xs,
+		opacity: 0.85,
 	},
 });

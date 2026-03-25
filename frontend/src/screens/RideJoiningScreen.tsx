@@ -79,11 +79,17 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 			}));
 		}
 
+		const leaderDisplayName =
+			rideGroup?.leaderName ||
+			rideGroup?.driverName ||
+			userName ||
+			"Ride Leader";
+
 		return [
 			{
 				id: rideGroup?.id?.toString() ?? "leader",
-				name: userName,
-				initial: (userName ?? "U").charAt(0).toUpperCase(),
+				name: leaderDisplayName,
+				initial: leaderDisplayName.charAt(0).toUpperCase(),
 				status: "joined",
 				isCreator: true,
 				isVerified: true,
@@ -91,17 +97,32 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		];
 	}, [rideGroup]);
 
+	const leaveByTime = rideGroup?.leaveBy
+		? new Date(rideGroup.leaveBy).getTime()
+		: null;
+
+	const computedLeavingIn = leaveByTime
+		? Math.max(1, Math.round((leaveByTime - Date.now()) / 60000))
+		: 5;
+
 	const rideDetails = {
 		destination:
 			rideGroup?.destination?.label ||
 			rideGroup?.destination ||
 			"Destination not set",
-		ridersJoined: rideGroup?.currentMembers ?? riders.length,
-		totalRiders: rideGroup?.maxMembers ?? 4,
+		ridersJoined:
+			rideGroup?.currentMembers ??
+			rideGroup?.currentPassengers ??
+			riders.length,
+		totalRiders: rideGroup?.maxMembers ?? rideGroup?.maxPassengers ?? 4,
 		pickupLocation:
 			rideGroup?.pickup?.label || rideGroup?.pickup || "Pickup not set",
-		departureTime: `Leaving in ${rideGroup?.leavingIn ?? rideGroup?.leaveBy ?? 5} min`,
-		pricePerPerson: `£${rideGroup?.pricePerPerson ?? 0}/person`,
+		departureTime: `Leaving in ${
+			rideGroup?.leavingIn ?? computedLeavingIn
+		} min`,
+		pricePerPerson: `£${
+			rideGroup?.pricePerPerson ?? rideGroup?.price ?? 0
+		}/person`,
 	};
 
 	const handleSendMessage = () => {

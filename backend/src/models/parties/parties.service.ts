@@ -78,17 +78,17 @@ export const partiesService = {
 			),
 		);
 
-		let profilesMap: Record<string, any> = {};
+		let usersMap: Record<string, any> = {};
 		if (creatorIds.length > 0) {
-			const { data: profiles } = await supabaseAdmin
-				.from("profiles")
-				.select("id,full_name,email")
-				.in("id", creatorIds as string[]);
+			const { data: users } = await supabaseAdmin
+				.from("users")
+				.select("user_id,name,email")
+				.in("user_id", creatorIds as string[]);
 
-			if (profiles && Array.isArray(profiles)) {
-				profilesMap = profiles.reduce(
-					(acc: any, p: any) => {
-						acc[p.id] = p;
+			if (users && Array.isArray(users)) {
+				usersMap = users.reduce(
+					(acc: any, u: any) => {
+						acc[u.user_id] = u;
 						return acc;
 					},
 					{} as Record<string, any>,
@@ -100,9 +100,9 @@ export const partiesService = {
 			const pickupCoords = parseWktPoint(row.pickup_geog);
 			const destCoords = parseWktPoint(row.destination_geog);
 
-			const leaderProfile = profilesMap[row.creator_user_id];
+			const leaderUser = usersMap[row.creator_user_id];
 			const leaderName =
-				leaderProfile?.full_name || leaderProfile?.email || null;
+				leaderUser?.name?.trim() || leaderUser?.email?.trim() || null;
 
 			return {
 				id: row.ride_id,

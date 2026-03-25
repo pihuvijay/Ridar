@@ -168,6 +168,11 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 			try {
 				const response = await partiesService.list();
 
+				console.log(
+					"PARTIES LIST DATA:",
+					JSON.stringify(response.data?.[0], null, 2),
+				);
+
 				if (!response.success) {
 					setRides([]);
 					return;
@@ -206,7 +211,11 @@ export const RideGroupsScreen: React.FC<RideGroupsScreenProps> = ({
 								party.currentMembers ?? 1,
 							),
 							maxPassengers: Number(party.maxMembers ?? 4),
-							driverName: party.leaderName ?? "Party Leader",
+							driverName:
+								party.leaderName &&
+								!party.leaderName.includes("@")
+									? party.leaderName
+									: "Ride Leader",
 							driverInitial: (
 								party.leaderName?.charAt(0) ?? "P"
 							).toUpperCase(),
