@@ -120,9 +120,9 @@ export default function AppNavigator({
 							onViewSettings={() =>
 								navigation.navigate("Settings")
 							}
-							onPartyFull={() =>
+							onPartyFull={(fakeJoinedRideGroup) =>
 								navigation.navigate("Wait", {
-									rideGroup: route.params.rideGroup,
+									rideGroup: fakeJoinedRideGroup,
 								})
 							}
 						/>
@@ -140,6 +140,11 @@ export default function AppNavigator({
 										updatedRideGroup ??
 										route.params?.rideGroup,
 								})
+							}
+							onExitGroup={() =>
+								navigation.navigate("MainTabs", {
+									screen: "Map",
+								} as any)
 							}
 						/>
 					)}

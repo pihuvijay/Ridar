@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
+import { partiesService } from "../services/api";
 
 interface Rider {
 	id: string;
@@ -95,7 +96,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 				isVerified: true,
 			},
 		];
-	}, [rideGroup]);
+	}, [rideGroup, userName]);
 
 	const leaveByTime = rideGroup?.leaveBy
 		? new Date(rideGroup.leaveBy).getTime()
@@ -117,7 +118,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		totalRiders: rideGroup?.maxMembers ?? rideGroup?.maxPassengers ?? 4,
 		pickupLocation:
 			rideGroup?.pickup?.label || rideGroup?.pickup || "Pickup not set",
-		departureTime: `Leaving in ${
+		departureTime: `Ending in ${
 			rideGroup?.leavingIn ?? computedLeavingIn
 		} min`,
 		pricePerPerson: `£${
@@ -132,8 +133,83 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		}
 	};
 
-	const handleJoinRide = () => {
-		onPartyFull(rideGroup);
+	const handleJoinRide = async () => {
+		try {
+			if (rideGroup?.id) {
+				const joinRes = await partiesService.join(rideGroup.id, {
+					status: "pending",
+				});
+
+				console.log("[demo join] backend response:", joinRes);
+			}
+		} catch (err) {
+			console.log(
+				"[demo join] backend call failed, continuing with fake flow:",
+				err,
+			);
+		}
+
+		const fakeJoinedRideGroup = {
+			...rideGroup,
+			leaderUserId: rideGroup?.leaderUserId ?? "leader-demo-1",
+			leaderName:
+				rideGroup?.leaderName ?? rideGroup?.driverName ?? "Test Leader",
+			currentMembers: 4,
+			maxMembers: rideGroup?.maxMembers ?? 4,
+			demoAutoStartRide: true,
+			pickup: {
+				lat: Number(rideGroup?.pickup?.lat ?? 51.3813),
+				lng: Number(rideGroup?.pickup?.lng ?? -2.359),
+				label:
+					rideGroup?.pickup?.label ??
+					rideGroup?.pickup ??
+					"Bath City Centre",
+			},
+			destination: {
+				lat: Number(rideGroup?.destination?.lat ?? 51.3777),
+				lng: Number(rideGroup?.destination?.lng ?? -2.3569),
+				label:
+					rideGroup?.destination?.label ??
+					rideGroup?.destination ??
+					"Bath Spa Station",
+			},
+			members: [
+				{
+					id: rideGroup?.leaderUserId ?? "leader-demo-1",
+					name:
+						rideGroup?.leaderName ??
+						rideGroup?.driverName ??
+						"Test Leader",
+					is_creator: true,
+					role: "leader",
+					status: "At pickup point",
+				},
+				{
+					id: "member-demo-1",
+					name: "Alex Johnson",
+					is_creator: false,
+					role: "member",
+					status: "At pickup point",
+				},
+				{
+					id: "member-demo-2",
+					name: "Samantha Patel",
+					is_creator: false,
+					role: "member",
+					status: "At pickup point",
+				},
+				{
+					id: "real-rider-demo",
+					name: userName,
+					is_creator: false,
+					role: "member",
+					is_self: true,
+					status: "At pickup point",
+				},
+			],
+		};
+
+		onPartyFull(fakeJoinedRideGroup);
 	};
 
 	const renderRider = ({ item }: { item: Rider }) => (
@@ -141,8 +217,8 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 			style={[
 				styles.riderCard,
 				item.status === "joined"
-					? { backgroundColor: COLORS.success + "15" }
-					: { backgroundColor: COLORS.primaryLight },
+					? styles.riderCardJoined
+					: styles.riderCardWaiting,
 			]}
 		>
 			<View style={styles.riderAvatar}>
@@ -151,9 +227,8 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					<View style={styles.verifiedBadge}>
 						<Ionicons
 							name="star"
-							size={12}
+							size={10}
 							color={COLORS.primary}
-							style={styles.verifiedIcon}
 						/>
 					</View>
 				)}
@@ -164,38 +239,36 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					<Text style={styles.riderName}>{item.name}</Text>
 					{item.isCreator && (
 						<View style={styles.creatorBadge}>
-							<Text style={styles.creatorText}>Creator</Text>
+							<Text style={styles.creatorText}>Leader</Text>
 						</View>
 					)}
 				</View>
-				<View
-					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						gap: 8,
-					}}
-				>
-					{item.status === "joined" ? (
-						<>
-							<Ionicons
-								name="checkmark"
-								size={14}
-								color={COLORS.success}
-							/>
-							<Text style={styles.riderStatus}>Joined</Text>
-						</>
-					) : (
-						<Text style={styles.riderStatus}>Waiting...</Text>
-					)}
+
+				<View style={styles.riderMetaRow}>
+					<Ionicons
+						name={
+							item.status === "joined"
+								? "checkmark-circle"
+								: "time-outline"
+						}
+						size={14}
+						color={
+							item.status === "joined"
+								? COLORS.success
+								: COLORS.textSecondary
+						}
+					/>
+					<Text style={styles.riderStatus}>
+						{item.status === "joined" ? "Joined" : "Waiting"}
+					</Text>
 				</View>
 			</View>
 
 			{item.status === "joined" && (
 				<Ionicons
-					name="checkmark-circle"
+					name="chevron-forward"
 					size={16}
-					color={COLORS.success}
-					style={styles.confirmedIcon}
+					color={COLORS.textSecondary}
 				/>
 			)}
 		</View>
@@ -203,6 +276,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 
 	const renderMessage = ({ item }: { item: Message }) => {
 		const isMine = item.author === userName || item.author === "You";
+
 		return (
 			<View
 				style={[
@@ -216,13 +290,13 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						{item.isVerified && (
 							<Ionicons
 								name="star"
-								size={14}
+								size={12}
 								color={COLORS.primary}
-								style={styles.verifiedCheck}
 							/>
 						)}
 					</View>
 				)}
+
 				<View
 					style={[
 						styles.messageBubble,
@@ -238,6 +312,7 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						{item.content}
 					</Text>
 				</View>
+
 				<Text
 					style={[
 						styles.messageTime,
@@ -252,140 +327,194 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<View style={styles.header}>
-				<Pressable style={styles.backButton} onPress={onBack}>
-					<Ionicons
-						name="chevron-back"
-						size={18}
-						color={COLORS.text}
-					/>
-				</Pressable>
-				<View style={styles.headerContent}>
-					<Text style={styles.headerTitle}>
-						{rideDetails.destination}
-					</Text>
-					<Text style={styles.headerSubtitle}>
-						{rideDetails.ridersJoined}/{rideDetails.totalRiders}{" "}
-						riders joined
-					</Text>
-				</View>
-				<Pressable
-					style={styles.settingsButton}
-					onPress={onViewSettings}
-				>
-					<Ionicons
-						name="settings-outline"
-						size={18}
-						color={COLORS.text}
-					/>
-				</Pressable>
-			</View>
-
-			<View style={styles.rideDetailsCard}>
-				<View style={styles.detailRow}>
-					<Ionicons
-						name="location-outline"
-						size={16}
-						color={COLORS.text}
-						style={{ marginRight: 8 }}
-					/>
-					<Text style={styles.detailLabel}>
-						{rideDetails.pickupLocation}
-					</Text>
-				</View>
-				<View style={styles.detailRow}>
-					<View
-						style={{ flexDirection: "row", alignItems: "center" }}
-					>
+			<View style={styles.hero}>
+				<View style={styles.header}>
+					<Pressable style={styles.iconButton} onPress={onBack}>
 						<Ionicons
-							name="time-outline"
-							size={16}
-							color={COLORS.textSecondary}
-							style={{ marginRight: 8 }}
-						/>
-						<Text style={styles.detailLabel}>
-							{rideDetails.departureTime}
-						</Text>
-					</View>
-					<Text style={styles.priceText}>
-						{rideDetails.pricePerPerson}
-					</Text>
-				</View>
-			</View>
-
-			<View style={styles.section}>
-				<View
-					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						gap: 8,
-					}}
-				>
-					<Ionicons
-						name="people-outline"
-						size={18}
-						color={COLORS.text}
-					/>
-					<Text style={styles.sectionTitle}>
-						Riders ({rideDetails.ridersJoined}/
-						{rideDetails.totalRiders})
-					</Text>
-				</View>
-				<FlatList
-					data={riders}
-					renderItem={renderRider}
-					keyExtractor={(item) => item.id}
-					scrollEnabled={false}
-					contentContainerStyle={styles.ridersList}
-				/>
-			</View>
-
-			<View style={styles.messagesSection}>
-				<FlatList
-					data={messages}
-					renderItem={renderMessage}
-					keyExtractor={(item) => item.id}
-					scrollEnabled={false}
-					contentContainerStyle={styles.messagesList}
-				/>
-			</View>
-
-			<View style={styles.inputSection}>
-				<View style={styles.inputContainer}>
-					<TextInput
-						style={styles.input}
-						placeholder="Send a message..."
-						placeholderTextColor={COLORS.textSecondary}
-						value={newMessage}
-						onChangeText={setNewMessage}
-						multiline
-					/>
-					<Pressable
-						style={styles.sendButton}
-						onPress={handleSendMessage}
-						disabled={!newMessage.trim()}
-					>
-						<Ionicons
-							name="send"
-							size={18}
-							color={COLORS.primary}
-							style={styles.sendIcon}
+							name="chevron-back"
+							size={20}
+							color={COLORS.textLight}
 						/>
 					</Pressable>
+
+					<View style={styles.headerContent}>
+						<Text style={styles.headerTitle}>
+							Join ride to {rideDetails.destination}
+						</Text>
+						<Text style={styles.headerSubtitle}>
+							{rideDetails.ridersJoined}/{rideDetails.totalRiders}{" "}
+							riders
+						</Text>
+					</View>
+
+					<Pressable
+						style={styles.iconButton}
+						onPress={onViewSettings}
+					>
+						<Ionicons
+							name="ellipsis-horizontal"
+							size={20}
+							color={COLORS.textLight}
+						/>
+					</Pressable>
+				</View>
+
+				<View style={styles.routeCard}>
+					<View style={styles.routeRow}>
+						<View style={styles.routeIconWrap}>
+							<View style={styles.pickupDot} />
+						</View>
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Pickup</Text>
+							<Text style={styles.routeValue}>
+								{rideDetails.pickupLocation}
+							</Text>
+						</View>
+					</View>
+
+					<View style={styles.routeDivider} />
+
+					<View style={styles.routeRow}>
+						<View style={styles.routeIconWrap}>
+							<Ionicons
+								name="flag-outline"
+								size={16}
+								color={COLORS.textLight}
+							/>
+						</View>
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Destination</Text>
+							<Text style={styles.routeValue}>
+								{rideDetails.destination}
+							</Text>
+						</View>
+					</View>
+
+					<View style={styles.heroMetaRow}>
+						<View style={styles.metaPill}>
+							<Ionicons
+								name="time-outline"
+								size={14}
+								color={COLORS.textLight}
+							/>
+							<Text style={styles.metaPillText}>
+								{rideDetails.departureTime}
+							</Text>
+						</View>
+
+						<View style={styles.metaPill}>
+							<Ionicons
+								name="cash-outline"
+								size={14}
+								color={COLORS.textLight}
+							/>
+							<Text style={styles.metaPillText}>
+								{rideDetails.pricePerPerson}
+							</Text>
+						</View>
+					</View>
+				</View>
+			</View>
+
+			<View style={styles.sheet}>
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<Text style={styles.sectionTitle}>Riders</Text>
+						<Text style={styles.sectionCount}>
+							{rideDetails.ridersJoined}/{rideDetails.totalRiders}
+						</Text>
+					</View>
+
+					<FlatList
+						data={riders}
+						renderItem={renderRider}
+						keyExtractor={(item) => item.id}
+						scrollEnabled={false}
+						contentContainerStyle={styles.ridersList}
+					/>
+				</View>
+
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<Text style={styles.sectionTitle}>Ride chat</Text>
+						<Text style={styles.sectionCount}>
+							{messages.length > 0
+								? `${messages.length} messages`
+								: "Demo"}
+						</Text>
+					</View>
+
+					<View style={styles.chatCard}>
+						{messages.length > 0 ? (
+							<FlatList
+								data={messages}
+								renderItem={renderMessage}
+								keyExtractor={(item) => item.id}
+								scrollEnabled={false}
+								contentContainerStyle={styles.messagesList}
+							/>
+						) : (
+							<View style={styles.emptyChatState}>
+								<Ionicons
+									name="chatbubble-ellipses-outline"
+									size={22}
+									color={COLORS.textSecondary}
+								/>
+								<Text style={styles.emptyChatTitle}>
+									No messages yet
+								</Text>
+								<Text style={styles.emptyChatText}>
+									Send a quick message before joining.
+								</Text>
+							</View>
+						)}
+					</View>
+				</View>
+
+				<View style={styles.inputSection}>
+					<View style={styles.inputContainer}>
+						<TextInput
+							style={styles.input}
+							placeholder="Send a message..."
+							placeholderTextColor={COLORS.textSecondary}
+							value={newMessage}
+							onChangeText={setNewMessage}
+							multiline
+						/>
+						<Pressable
+							style={[
+								styles.sendButton,
+								!newMessage.trim() && styles.sendButtonDisabled,
+							]}
+							onPress={handleSendMessage}
+							disabled={!newMessage.trim()}
+						>
+							<Ionicons
+								name="send"
+								size={18}
+								color={COLORS.textLight}
+							/>
+						</Pressable>
+					</View>
 				</View>
 			</View>
 
 			<View style={styles.footer}>
 				<Pressable style={styles.joinButton} onPress={handleJoinRide}>
+					<View>
+						<Text style={styles.joinButtonTitle}>
+							Join this ride
+						</Text>
+						<Text style={styles.joinButtonSubtitle}>
+							{rideDetails.pricePerPerson}
+						</Text>
+					</View>
+
 					<Ionicons
-						name="people-outline"
-						size={18}
+						name="arrow-forward"
+						size={20}
 						color={COLORS.textLight}
-						style={styles.joinButtonIcon}
 					/>
-					<Text style={styles.joinButtonText}>
-						Join This Ride - {rideDetails.pricePerPerson}
-					</Text>
 				</Pressable>
 			</View>
 		</SafeAreaView>
@@ -395,86 +524,126 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: COLORS.background,
+		backgroundColor: "#0F172A",
+	},
+	hero: {
+		paddingHorizontal: SPACING.lg,
+		paddingTop: SPACING.lg,
+		paddingBottom: SPACING.xl,
+		backgroundColor: "#0F172A",
 	},
 	header: {
 		flexDirection: "row",
 		alignItems: "center",
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderBottomWidth: 1,
-		borderBottomColor: COLORS.border,
-		backgroundColor: COLORS.background,
+		marginBottom: SPACING.lg,
 		gap: SPACING.md,
 	},
-	backButton: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.lg,
-		justifyContent: "center",
+	iconButton: {
+		width: 42,
+		height: 42,
+		borderRadius: 999,
 		alignItems: "center",
-		backgroundColor: COLORS.primaryLight,
-	},
-	backIcon: {
-		fontSize: FONT_SIZES.xl,
-		color: COLORS.primary,
+		justifyContent: "center",
+		backgroundColor: "rgba(255,255,255,0.10)",
 	},
 	headerContent: {
 		flex: 1,
-		gap: SPACING.xs,
+		gap: 4,
 	},
 	headerTitle: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.primary,
+		fontSize: 20,
+		fontWeight: "700",
+		color: COLORS.textLight,
 	},
 	headerSubtitle: {
 		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
+		color: "rgba(255,255,255,0.72)",
 	},
-	settingsButton: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.lg,
-		justifyContent: "center",
-		alignItems: "center",
-		backgroundColor: COLORS.primaryLight,
-	},
-	settingsIcon: {
-		fontSize: FONT_SIZES.lg,
-	},
-	rideDetailsCard: {
-		marginHorizontal: SPACING.md,
-		marginVertical: SPACING.md,
-		backgroundColor: COLORS.primaryLight,
-		borderRadius: BORDER_RADIUS.lg,
+	routeCard: {
+		backgroundColor: "rgba(255,255,255,0.08)",
+		borderRadius: 22,
 		padding: SPACING.md,
+	},
+	routeRow: {
+		flexDirection: "row",
+		alignItems: "flex-start",
 		gap: SPACING.md,
 	},
-	detailRow: {
-		flexDirection: "row",
-		justifyContent: "space-between",
+	routeIconWrap: {
+		width: 20,
 		alignItems: "center",
+		marginTop: 2,
 	},
-	detailLabel: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.primary,
-		fontWeight: "500",
+	pickupDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 999,
+		backgroundColor: COLORS.success,
+		marginTop: 4,
 	},
-	priceText: {
+	routeTextWrap: {
+		flex: 1,
+	},
+	routeLabel: {
+		fontSize: FONT_SIZES.xs,
+		color: "rgba(255,255,255,0.6)",
+		marginBottom: 4,
+	},
+	routeValue: {
 		fontSize: FONT_SIZES.sm,
-		color: COLORS.primary,
 		fontWeight: "600",
+		color: COLORS.textLight,
+		lineHeight: 20,
+	},
+	routeDivider: {
+		height: 1,
+		backgroundColor: "rgba(255,255,255,0.12)",
+		marginVertical: SPACING.md,
+	},
+	heroMetaRow: {
+		flexDirection: "row",
+		gap: SPACING.sm,
+		marginTop: SPACING.md,
+	},
+	metaPill: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 999,
+		backgroundColor: "rgba(255,255,255,0.10)",
+	},
+	metaPillText: {
+		fontSize: FONT_SIZES.xs,
+		fontWeight: "700",
+		color: COLORS.textLight,
+	},
+	sheet: {
+		flex: 1,
+		backgroundColor: COLORS.background,
+		borderTopLeftRadius: 28,
+		borderTopRightRadius: 28,
+		paddingTop: SPACING.lg,
 	},
 	section: {
-		marginHorizontal: SPACING.md,
-		marginVertical: SPACING.md,
-		gap: SPACING.md,
+		paddingHorizontal: SPACING.lg,
+		marginBottom: SPACING.lg,
+	},
+	sectionHeader: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		marginBottom: SPACING.md,
 	},
 	sectionTitle: {
 		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
+		fontWeight: "700",
 		color: COLORS.primary,
+	},
+	sectionCount: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
 	},
 	ridersList: {
 		gap: SPACING.sm,
@@ -484,15 +653,22 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		paddingHorizontal: SPACING.md,
 		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
+		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: COLORS.border,
 		gap: SPACING.md,
 	},
+	riderCardJoined: {
+		backgroundColor: "#F8FAFC",
+		borderColor: "#E5E7EB",
+	},
+	riderCardWaiting: {
+		backgroundColor: COLORS.primaryLight,
+		borderColor: COLORS.border,
+	},
 	riderAvatar: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.full,
+		width: 44,
+		height: 44,
+		borderRadius: 999,
 		backgroundColor: COLORS.primary,
 		justifyContent: "center",
 		alignItems: "center",
@@ -504,21 +680,20 @@ const styles = StyleSheet.create({
 	},
 	verifiedBadge: {
 		position: "absolute",
-		top: -8,
-		right: -8,
-		width: 28,
-		height: 28,
-		borderRadius: BORDER_RADIUS.full,
+		top: -5,
+		right: -5,
+		width: 20,
+		height: 20,
+		borderRadius: 999,
 		backgroundColor: COLORS.accentYellow,
 		justifyContent: "center",
 		alignItems: "center",
-	},
-	verifiedIcon: {
-		fontSize: FONT_SIZES.sm,
+		borderWidth: 1,
+		borderColor: "#fff",
 	},
 	riderInfo: {
 		flex: 1,
-		gap: SPACING.xs,
+		gap: 4,
 	},
 	riderNameRow: {
 		flexDirection: "row",
@@ -532,31 +707,52 @@ const styles = StyleSheet.create({
 		color: COLORS.primary,
 	},
 	creatorBadge: {
-		backgroundColor: COLORS.accentYellow,
-		paddingHorizontal: SPACING.sm,
-		paddingVertical: SPACING.xs,
-		borderRadius: BORDER_RADIUS.full,
+		backgroundColor: "#FEF3C7",
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
 	},
 	creatorText: {
-		fontSize: FONT_SIZES.xs,
-		color: "#a65f00",
-		fontWeight: "500",
+		fontSize: 10,
+		color: "#92400E",
+		fontWeight: "700",
+	},
+	riderMetaRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
 	},
 	riderStatus: {
 		fontSize: FONT_SIZES.xs,
 		color: COLORS.textSecondary,
 	},
-	confirmedIcon: {
-		fontSize: FONT_SIZES.base,
-		color: COLORS.success,
-	},
-	messagesSection: {
-		flex: 1,
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
+	chatCard: {
+		backgroundColor: "#FFFFFF",
+		borderWidth: 1,
+		borderColor: "#E5E7EB",
+		borderRadius: 20,
+		padding: SPACING.md,
+		minHeight: 140,
 	},
 	messagesList: {
 		gap: SPACING.md,
+	},
+	emptyChatState: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+		paddingVertical: SPACING.xl,
+		gap: 6,
+	},
+	emptyChatTitle: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "700",
+		color: COLORS.primary,
+	},
+	emptyChatText: {
+		fontSize: FONT_SIZES.xs,
+		color: COLORS.textSecondary,
+		textAlign: "center",
 	},
 	messageContainer: {
 		gap: SPACING.xs,
@@ -567,49 +763,44 @@ const styles = StyleSheet.create({
 	messageHeader: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: SPACING.sm,
+		gap: 6,
 	},
 	messageSender: {
-		fontSize: FONT_SIZES.sm,
-		fontWeight: "600",
+		fontSize: FONT_SIZES.xs,
+		fontWeight: "700",
 		color: COLORS.primary,
 	},
-	verifiedCheck: {
-		fontSize: FONT_SIZES.sm,
-	},
 	messageBubble: {
-		backgroundColor: COLORS.background,
-		borderRadius: BORDER_RADIUS.xl,
+		maxWidth: "86%",
+		backgroundColor: "#F8FAFC",
+		borderRadius: 18,
 		borderWidth: 1,
-		borderColor: COLORS.border,
+		borderColor: "#E5E7EB",
 		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
+		paddingVertical: 10,
 	},
 	messageBubbleMine: {
 		backgroundColor: COLORS.primary,
 		borderColor: COLORS.primary,
 	},
 	messageContent: {
-		fontSize: FONT_SIZES.base,
+		fontSize: FONT_SIZES.sm,
 		color: COLORS.primary,
-		lineHeight: 24,
+		lineHeight: 20,
 	},
 	messageContentMine: {
 		color: COLORS.textLight,
 	},
 	messageTime: {
-		fontSize: FONT_SIZES.xs,
+		fontSize: 11,
 		color: COLORS.textSecondary,
 	},
 	messageTimeMine: {
 		textAlign: "right",
 	},
 	inputSection: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		backgroundColor: COLORS.background,
-		borderTopWidth: 1,
-		borderTopColor: COLORS.border,
+		paddingHorizontal: SPACING.lg,
+		paddingBottom: SPACING.md,
 	},
 	inputContainer: {
 		flexDirection: "row",
@@ -619,47 +810,51 @@ const styles = StyleSheet.create({
 	input: {
 		flex: 1,
 		borderWidth: 1,
-		borderColor: COLORS.border,
-		borderRadius: BORDER_RADIUS.lg,
+		borderColor: "#E5E7EB",
+		borderRadius: 18,
 		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.sm,
+		paddingVertical: 12,
 		fontSize: FONT_SIZES.sm,
 		color: COLORS.text,
+		backgroundColor: "#fff",
 		maxHeight: 100,
 	},
 	sendButton: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.lg,
+		width: 46,
+		height: 46,
+		borderRadius: 999,
 		backgroundColor: COLORS.primary,
 		justifyContent: "center",
 		alignItems: "center",
 	},
-	sendIcon: {
-		fontSize: FONT_SIZES.lg,
+	sendButtonDisabled: {
+		opacity: 0.45,
 	},
 	footer: {
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
+		paddingHorizontal: SPACING.lg,
+		paddingTop: SPACING.sm,
+		paddingBottom: SPACING.lg,
 		backgroundColor: COLORS.background,
 		borderTopWidth: 1,
-		borderTopColor: COLORS.border,
+		borderTopColor: "#E5E7EB",
 	},
 	joinButton: {
 		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
+		justifyContent: "space-between",
+		paddingHorizontal: SPACING.lg,
 		paddingVertical: SPACING.lg,
-		borderRadius: BORDER_RADIUS.lg,
+		borderRadius: 20,
 		backgroundColor: COLORS.primary,
-		gap: SPACING.md,
 	},
-	joinButtonIcon: {
-		fontSize: FONT_SIZES.lg,
-	},
-	joinButtonText: {
+	joinButtonTitle: {
 		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
+		fontWeight: "700",
 		color: COLORS.textLight,
+	},
+	joinButtonSubtitle: {
+		fontSize: FONT_SIZES.xs,
+		color: "rgba(255,255,255,0.82)",
+		marginTop: 2,
 	},
 });

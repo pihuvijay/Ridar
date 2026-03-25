@@ -174,6 +174,34 @@ export const partiesService = {
 			data: r.data,
 		};
 	},
+
+	async leave(partyId: string) {
+		const r = await requestJson<any>(`/parties/${partyId}/leave`, {
+			method: "POST",
+			body: JSON.stringify({}),
+		});
+
+		if (isApiError(r)) return r;
+
+		return {
+			success: true as const,
+			data: r.data,
+		};
+	},
+
+	async cancel(partyId: string) {
+		const r = await requestJson<any>(`/parties/${partyId}/cancel`, {
+			method: "POST",
+			body: JSON.stringify({}),
+		});
+
+		if (isApiError(r)) return r;
+
+		return {
+			success: true as const,
+			data: r.data,
+		};
+	},
 };
 
 export const authService = {
@@ -234,7 +262,7 @@ export const userService = {
 	},
 	async rateUser(userId: string, rating: number) {
 		return await requestJson(`/users/${userId}/rating`, {
-			method: 'POST',
+			method: "POST",
 			body: JSON.stringify({ rating }),
 		});
 	},
@@ -300,3 +328,19 @@ export const rideService = {
 	getRideGroups: async (_token: string) => ({ success: true, data: [] }),
 	joinRideGroup: async (_id: string, _token: string) => ({ success: false }),
 } as any;
+
+export const stripeService = {
+	async demoPay(payload: {
+		rideId: string;
+		userId: string;
+		amount: number;
+		method: "apple_pay" | "card";
+	}) {
+		return await requestJson<any>(`/stripe/demo-pay`, {
+			method: "POST",
+			body: JSON.stringify(payload),
+		});
+	},
+};
+
+

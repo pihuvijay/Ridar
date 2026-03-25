@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
 	View,
 	Text,
@@ -7,18 +7,24 @@ import {
 	Pressable,
 	ScrollView,
 	ActivityIndicator,
+	Modal,
 	Alert,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
-import { uberService, userService } from "../services/api";
-
+import {
+	partiesService,
+	stripeService,
+	uberService,
+	userService,
+} from "../services/api";
 interface PartyMember {
 	id: string;
 	name: string;
 	initial: string;
 	status: string;
 	isLeader: boolean;
+	isSelf?: boolean;
 }
 
 type UberRideStatus =
@@ -27,113 +33,104 @@ type UberRideStatus =
 	| "accepted"
 	| "arriving"
 	| "in_progress"
-	| "cancelled";
+	| "completed";
 
 const STATUS_LABELS: Record<UberRideStatus, string> = {
-	idle: "Waiting for party to fill",
+	idle: "Waiting for your group",
 	processing: "Finding your driver...",
 	accepted: "Driver on the way",
-	arriving: "Almost here!",
+	arriving: "Driver arriving soon",
 	in_progress: "Ride in progress",
-	cancelled: "Ride cancelled",
+	completed: "Ride completed",
 };
 
 interface WaitScreenProps {
 	rideGroup?: any;
-	uberRide?: any; // initial ride data from POST /uber/request
-	onContinue: () => void;
+	uberRide?: any;
+	onContinue: (updatedRideGroup?: any) => void;
+	onExitGroup: () => void;
 }
 
 export const WaitScreen: React.FC<WaitScreenProps> = ({
 	rideGroup,
 	uberRide: initialUberRide,
 	onContinue,
+	onExitGroup,
 }) => {
 	const [uberRide, setUberRide] = useState<any>(initialUberRide ?? null);
 	const [pricePerPerson, setPricePerPerson] = useState<number | null>(null);
-	const pollRef = useRef<NodeJS.Timeout | null>(null);
 	const [membersState, setMembersState] = useState<any[] | null>(
 		rideGroup?.members ? [...rideGroup.members] : null,
 	);
-	const [isSimulating, setIsSimulating] = useState<boolean>(false);
-	const [isRequestingDriver, setIsRequestingDriver] =
-		useState<boolean>(false);
+	const [isRequestingDriver, setIsRequestingDriver] = useState(false);
 	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-	const [timeLeft, setTimeLeft] = useState<number>(300); // 5 mins
-	const isLeader =
-		!!currentUserId &&
-		!!rideGroup?.leaderUserId &&
-		currentUserId.toString() === rideGroup.leaderUserId.toString();
-	const [currentUserDisplayName, setCurrentUserDisplayName] = useState<
-		string | null
-	>(null);
+	const [timeLeft, setTimeLeft] = useState(300);
+	const [isPaying, setIsPaying] = useState(false);
+	const [paidMemberIds, setPaidMemberIds] = useState<string[]>([]);
+	const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+
+	const pollRef = useRef<NodeJS.Timeout | null>(null);
 	const simRef = useRef<NodeJS.Timeout | null>(null);
 
+	const leaderId =
+		rideGroup?.leaderUserId ??
+		rideGroup?.creator_user_id ??
+		rideGroup?.creatorUserId;
+
+	const isLeader =
+		!!currentUserId &&
+		!!leaderId &&
+		currentUserId.toString() === leaderId.toString();
+
 	useEffect(() => {
-		// ensure the signed-in user is present as leader in the members list
 		(async () => {
 			try {
 				const res = await userService.me();
-				if (res && (res as any).success) {
-					const me = (res as any).data;
-					const meId =
-						me?.id ??
-						me?.user?.id ??
-						me?.profile?.id ??
-						me?.user_id ??
-						null;
-					const displayName =
-						me?.name ??
-						me?.full_name ??
-						me?.fullName ??
-						"Test User";
+				if (!(res as any)?.success) return;
 
-					setCurrentUserId(meId ? meId.toString() : null);
-					setCurrentUserDisplayName(displayName);
+				const me = (res as any).data;
+				const meId =
+					me?.id ??
+					me?.user?.id ??
+					me?.profile?.id ??
+					me?.user_id ??
+					null;
 
-					setMembersState((prev) => {
-						const existing = prev ?? rideGroup?.members ?? [];
+				const displayName =
+					me?.name ?? me?.full_name ?? me?.fullName ?? "Test User";
 
-						// if this ride already has a creator and it's NOT the current user, don't inject 'You'
-						if (
-							rideGroup?.creator_user_id &&
-							meId &&
-							rideGroup.creator_user_id.toString() !==
-								meId.toString()
-						) {
-							return existing;
-						}
-						const hasLeader = existing.some((m: any) => {
-							if (!m) return false;
-							if (
-								meId &&
-								m.id &&
-								m.id.toString() === meId.toString()
-							)
-								return true;
-							if (m.is_creator === true || m.role === "leader")
-								return true;
-							return false;
-						});
+				setCurrentUserId(meId ? meId.toString() : null);
 
-						if (hasLeader) return existing;
+				setMembersState((prev) => {
+					const existing = prev ?? rideGroup?.members ?? [];
 
-						// add current user as leader at start
-						const leader = {
-							id: meId ? meId.toString() : `me`,
-							name: displayName,
-							is_creator: true,
-							status: "At pickup point",
-						};
+					if (existing.length > 0) {
+						return existing;
+					}
 
-						return [leader, ...existing];
+					const hasLeader = existing.some((m: any) => {
+						if (!m) return false;
+						return m.is_creator === true || m.role === "leader";
 					});
-				}
-			} catch (err) {
-				// ignore errors — not critical
+
+					if (hasLeader) return existing;
+
+					const leader = {
+						id: meId ? meId.toString() : "me",
+						name: displayName,
+						is_creator: true,
+						status: "At pickup point",
+					};
+
+					return [leader, ...existing];
+				});
+			} catch {
+				// ignore
 			}
 		})();
+	}, [rideGroup?.members]);
 
+	useEffect(() => {
 		const fetchPrice = async () => {
 			if (
 				typeof rideGroup?.pricePerPerson === "number" &&
@@ -163,17 +160,20 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 						endLat,
 						endLng,
 					);
+
 					if (res.success && res.data?.length > 0) {
 						const uberX =
 							res.data.find(
 								(p: any) => p.display_name === "UberX",
 							) || res.data[0];
+
 						const totalEst =
 							(uberX.low_estimate + uberX.high_estimate) / 2;
 						const membersCount =
 							membersState?.length ||
 							rideGroup?.members?.length ||
 							1;
+
 						setPricePerPerson(totalEst / membersCount);
 					}
 				} catch (err) {
@@ -181,46 +181,23 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 				}
 			}
 		};
+
 		fetchPrice();
 	}, [
 		rideGroup?.pricePerPerson,
 		rideGroup?.price,
-		uberRide?.pickup?.lat,
 		rideGroup?.pickup?.lat,
+		rideGroup?.destination?.lat,
+		uberRide?.pickup?.lat,
+		uberRide?.dropoff?.lat,
 		membersState?.length,
 	]);
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setTimeLeft((prev) => {
-				if (prev <= 1) {
-					clearInterval(interval);
-					Alert.alert(
-						"Ride expired",
-						"No driver was requested in time.",
-					);
-					return 0;
-				}
-				return prev - 1;
-			});
-		}, 1000);
-
-		return () => clearInterval(interval);
-	}, []);
 
 	useEffect(() => {
 		if (uberRide) return;
 
 		const interval = setInterval(() => {
 			setTimeLeft((prev) => {
-				if (prev <= 1) {
-					clearInterval(interval);
-					Alert.alert(
-						"Ride expired",
-						"No driver was requested in time.",
-					);
-					return 0;
-				}
 				return prev - 1;
 			});
 		}, 1000);
@@ -236,12 +213,14 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			try {
 				const res = await uberService.getRideStatus(rideId);
 				if (res.success) {
-					setUberRide(res.data);
-					// Stop polling once ride is terminal
-					if (
-						res.data?.status === "in_progress" ||
-						res.data?.status === "cancelled"
-					) {
+					setUberRide((prev: any) => {
+						if (prev?.status === "completed") {
+							return prev;
+						}
+						return res.data;
+					});
+
+					if (res.data?.status === "cancelled") {
 						if (pollRef.current) clearInterval(pollRef.current);
 					}
 				}
@@ -250,7 +229,7 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			}
 		};
 
-		poll(); // immediate first fetch
+		poll();
 		pollRef.current = setInterval(poll, 5000);
 
 		return () => {
@@ -258,8 +237,27 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		};
 	}, [uberRide?.rideId]);
 
-	// Simulate other users joining until party is full
 	useEffect(() => {
+		if (!uberRide || uberRide.status !== "accepted") return;
+
+		const timer = setTimeout(() => {
+			setUberRide((prev: any) =>
+				prev
+					? {
+							...prev,
+							status: "completed",
+						}
+					: prev,
+			);
+		}, 5000);
+
+		return () => clearTimeout(timer);
+	}, [uberRide?.status]);
+
+	// Demo-only fake joins
+	useEffect(() => {
+		if (uberRide) return;
+
 		const NAMES = [
 			"Alex Johnson",
 			"Samantha Patel",
@@ -276,23 +274,15 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		const maxMembers =
 			rideGroup?.maxMembers ?? rideGroup?.members?.length ?? 1;
 		const current = membersState ?? rideGroup?.members ?? [];
+		const availableSlots = Math.max(0, maxMembers - current.length);
+		const targetAdds = Math.min(availableSlots, 3);
 
-		// Only allow up to 3 simulated guests (regardless of maxMembers)
-		const SIMULATED_GUESTS_MAX = 3;
-
-		// If party is already full or no room for simulated guests, do nothing
-		const availableSlots = Math.max(0, maxMembers - (current?.length ?? 0));
-		const targetAdds = Math.min(availableSlots, SIMULATED_GUESTS_MAX);
 		if (targetAdds <= 0) return;
 
-		// start simulation
-		setIsSimulating(true);
+		const shuffled = [...NAMES]
+			.sort(() => Math.random() - 0.5)
+			.slice(0, targetAdds);
 
-		// prepare a small shuffled list of unique names
-		const shuffled = NAMES.sort(() => Math.random() - 0.5).slice(
-			0,
-			targetAdds,
-		);
 		let added = 0;
 
 		simRef.current = setInterval(
@@ -301,29 +291,29 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 					const now = prev ? [...prev] : [];
 					if (added >= shuffled.length || now.length >= maxMembers) {
 						if (simRef.current) clearInterval(simRef.current);
-						setIsSimulating(false);
 						return now;
 					}
-					const id = `sim-${Date.now()}`;
-					const name = shuffled[added++] ?? `Guest ${now.length + 1}`;
+
 					now.push({
-						id,
-						name,
+						id: `sim-${Date.now()}`,
+						name: shuffled[added++] ?? `Guest ${now.length + 1}`,
 						is_creator: false,
 						status: "At pickup point",
 					});
+
 					return now;
 				});
 			},
-			1500 + Math.random() * 2000,
+			1500 + Math.random() * 1500,
 		);
 
-		// cleanup
 		return () => {
 			if (simRef.current) clearInterval(simRef.current);
 		};
-	}, [rideGroup, membersState]);
+	}, [rideGroup?.maxMembers, membersState?.length, uberRide]);
+
 	const membersSource = membersState ?? rideGroup?.members ?? [];
+
 	const members: PartyMember[] = membersSource.map(
 		(member: any, index: number) => ({
 			id: member.id?.toString() ?? `${index}`,
@@ -340,39 +330,73 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			isSelf:
 				member.isSelf === true ||
 				member.is_self === true ||
-				(currentUserId &&
-					member.id &&
-					member.id.toString() === currentUserId) ||
-				false,
+				(!!currentUserId &&
+					!!member.id &&
+					member.id.toString() === currentUserId),
 		}),
 	);
 
+	useEffect(() => {
+		if (!uberRide) return;
+
+		const fakeOtherPaidIds = membersSource
+			.filter((member: any) => {
+				const isLeaderMember =
+					member.isLeader === true ||
+					member.is_creator === true ||
+					member.role === "leader";
+
+				const isSelfMember =
+					member.isSelf === true ||
+					member.is_self === true ||
+					(!!currentUserId &&
+						!!member.id &&
+						member.id.toString() === currentUserId);
+
+				return !isLeaderMember && !isSelfMember;
+			})
+			.map((member: any) => member.id?.toString())
+			.filter(Boolean);
+
+		if (fakeOtherPaidIds.length === 0) return;
+
+		setPaidMemberIds((prev) => {
+			const alreadyHasAll = fakeOtherPaidIds.every((id) =>
+				prev.includes(id),
+			);
+			if (alreadyHasAll) return prev;
+
+			return [...new Set([...prev, ...fakeOtherPaidIds])];
+		});
+	}, [uberRide?.rideId, currentUserId]);
+
+	const payableMembers = members.filter((member) => !member.isLeader);
+	const currentUserMember = members.find((member) => member.isSelf);
+	const currentUserHasPaid = currentUserMember
+		? paidMemberIds.includes(currentUserMember.id)
+		: false;
+	const allPayingMembersPaid =
+		payableMembers.length === 0 ||
+		payableMembers.every((member) => paidMemberIds.includes(member.id));
+
 	const leader = members.find((member) => member.isLeader) ??
-		members[0] ?? {
-			name: "Ride Leader",
-			initial: "R",
-		};
+		members[0] ?? { name: "Ride Leader", initial: "R" };
 
 	const pickupLocation =
-		uberRide?.pickup?.label ??
 		rideGroup?.pickup?.label ??
 		rideGroup?.pickupLocation ??
 		"Pickup location not set";
 
 	const destination =
-		uberRide?.dropoff?.label ??
 		rideGroup?.destination?.label ??
 		rideGroup?.destination ??
 		"Destination not set";
 
 	const vehicleName = uberRide?.vehicle
 		? `${uberRide.vehicle.make} ${uberRide.vehicle.model}`
-		: (rideGroup?.vehicle ?? "Vehicle details pending");
+		: "Vehicle assigned after confirmation";
 
-	const licensePlate =
-		uberRide?.vehicle?.license_plate ??
-		rideGroup?.licensePlate ??
-		"Pending";
+	const licensePlate = uberRide?.vehicle?.license_plate ?? "Pending";
 
 	const distance =
 		uberRide?.eta != null ? `${uberRide.eta} min away` : "On the way";
@@ -389,22 +413,37 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 
 	const maxMembers =
 		rideGroup?.maxMembers ?? rideGroup?.members?.length ?? members.length;
-	const allMembersPresent = members.length >= maxMembers;
+
+	const canLeaderConfirm = members.length >= 1;
 	const isProcessing = uberRide != null && uberStatus === "processing";
+	const canContinueToInsights = uberRide?.status === "completed";
 
 	const handleSearchForDriver = async () => {
-		if (!allMembersPresent || isRequestingDriver) return;
+		if (!canLeaderConfirm || isRequestingDriver) return;
+
+		const startLat = Number(rideGroup?.pickup?.lat);
+		const startLng = Number(rideGroup?.pickup?.lng);
+		const endLat = Number(rideGroup?.destination?.lat);
+		const endLng = Number(rideGroup?.destination?.lng);
+
+		if (
+			Number.isNaN(startLat) ||
+			Number.isNaN(startLng) ||
+			Number.isNaN(endLat) ||
+			Number.isNaN(endLng)
+		) {
+			Alert.alert(
+				"Route error",
+				"Pickup or destination coordinates are missing.",
+			);
+			return;
+		}
+
 		setIsRequestingDriver(true);
-		const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
 
 		try {
-			const startLat = rideGroup?.pickup?.lat;
-			const startLng = rideGroup?.pickup?.lng;
-			const endLat = rideGroup?.destination?.lat;
-			const endLng = rideGroup?.destination?.lng;
-
 			const rideResponse = await uberService.requestRide({
-				productId: UBERX_PRODUCT_ID,
+				productId: "a1111c8c-c720-46c3-8534-2fcdd730040d",
 				startLat,
 				startLng,
 				endLat,
@@ -414,7 +453,6 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 			if (rideResponse.success) {
 				setUberRide(rideResponse.data);
 			} else {
-				console.warn("[WaitScreen] requestRide failed", rideResponse);
 				Alert.alert(
 					"Driver Search Failed",
 					rideResponse.message || "Could not start driver search",
@@ -428,63 +466,207 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 		}
 	};
 
+	useEffect(() => {
+		if (uberRide) return;
+		if (!rideGroup?.demoAutoStartRide) return;
+		if (isLeader) return;
+
+		const timer = setTimeout(() => {
+			handleSearchForDriver();
+		}, 1800);
+
+		return () => clearTimeout(timer);
+	}, [uberRide, rideGroup?.demoAutoStartRide, isLeader]);
+
+	const handleSecondaryAction = async () => {
+		if (!rideGroup?.id) return;
+
+		try {
+			if (isLeader) {
+				const res = await partiesService.cancel(rideGroup.id);
+				if (!res.success) {
+					Alert.alert(
+						"Error",
+						res.message || "Could not cancel group",
+					);
+					return;
+				}
+
+				Alert.alert(
+					"Group Cancelled",
+					"Your ride group has been cancelled.",
+				);
+				onExitGroup();
+				return;
+			}
+
+			const res = await partiesService.leave(rideGroup.id);
+			if (!res.success) {
+				Alert.alert("Error", res.message || "Could not leave group");
+				return;
+			}
+
+			Alert.alert("Left Group", "You have left the ride group.");
+			onExitGroup();
+		} catch (err) {
+			Alert.alert("Error", "Something went wrong.");
+		}
+	};
+
+	const handleFakePayment = async (method: "apple_pay" | "card") => {
+		if (isPaying) return;
+
+		setIsPaying(true);
+
+		try {
+			const amountInPence = Math.round((pricePerPerson ?? 0) * 100);
+			const payingUserId =
+				currentUserId ?? currentUserMember?.id ?? "demo-user";
+
+			const res = await stripeService.demoPay({
+				rideId: rideGroup?.id,
+				userId: payingUserId,
+				amount: amountInPence,
+				method,
+			});
+
+			if (!res.success) {
+				Alert.alert("Payment Failed", "Could not process payment.");
+				return;
+			}
+
+			if (isLeader) {
+				const allIds = members.map((member) => member.id);
+				setPaidMemberIds(allIds);
+			} else if (currentUserMember && !currentUserHasPaid) {
+				setPaidMemberIds((prev) =>
+					prev.includes(currentUserMember.id)
+						? prev
+						: [...prev, currentUserMember.id],
+				);
+			}
+
+			Alert.alert("Payment Successful", "Stripe payment completed.");
+		} catch {
+			Alert.alert("Payment Failed", "Could not process payment.");
+		} finally {
+			setIsPaying(false);
+		}
+	};
+
+	const updatedRideGroup = useMemo(
+		() => ({
+			...rideGroup,
+			members: membersSource,
+		}),
+		[rideGroup, membersSource],
+	);
+
+	const minutes = Math.floor(timeLeft / 60);
+	const seconds = String(timeLeft % 60).padStart(2, "0");
+
 	return (
 		<SafeAreaView style={styles.container}>
-			<View style={styles.topSection}>
-				<View style={styles.pickupMarker}>
-					<Ionicons
-						name="location-outline"
-						size={FONT_SIZES.xxl}
-						color={COLORS.primary}
-					/>
-				</View>
-
-				<Text style={styles.timer}>
-					{Math.floor(timeLeft / 60)}:
-					{(timeLeft % 60).toString().padStart(2, "0")}
-				</Text>
-
-				<View style={styles.arrivalCard}>
-					{isProcessing ? (
-						<ActivityIndicator
-							size="small"
-							color={COLORS.primary}
+			<View style={styles.hero}>
+				<View style={styles.heroTopRow}>
+					<View style={styles.topPill}>
+						<Ionicons
+							name="people-outline"
+							size={14}
+							color={COLORS.textLight}
 						/>
-					) : (
-						<Text style={styles.arrivalLabel}>
-							{uberRide ? "Driver status" : "Party status"}
-						</Text>
-					)}
-					<Text style={styles.arrivalTime}>
-						{uberRide ? arrivalTime : "Waiting for your group"}
-					</Text>
-					<View
-						style={[
-							styles.statusBadge,
-							styles[
-								`status_${uberStatus}` as keyof typeof styles
-							] as any,
-						]}
-					>
-						<Text style={styles.statusBadgeText}>
-							{uberStatus.replace("_", " ").toUpperCase()}
+						<Text style={styles.topPillText}>
+							{members.length}/{maxMembers} riders
 						</Text>
 					</View>
+
+					{!uberRide && (
+						<View style={styles.timerPill}>
+							<Ionicons
+								name="time-outline"
+								size={14}
+								color={COLORS.textLight}
+							/>
+							<Text style={styles.topPillText}>
+								{minutes}:{seconds}
+							</Text>
+						</View>
+					)}
 				</View>
 
-				<View style={styles.vehicleIcon}>
-					<Ionicons
-						name="car-outline"
-						size={FONT_SIZES.xxl}
-						color={COLORS.text}
-					/>
+				<Text style={styles.heroTitle}>
+					{uberRide
+						? arrivalTime
+						: isLeader
+							? "Ready when you are"
+							: "Waiting for leader"}
+				</Text>
+
+				<Text style={styles.heroSubtitle}>
+					{uberRide
+						? "Your driver request is in progress."
+						: isLeader
+							? "Confirm when you want to start searching for a driver."
+							: "The party leader will confirm when ready."}
+				</Text>
+
+				<View style={styles.routeCard}>
+					<View style={styles.routeRow}>
+						<View style={styles.routeIconWrap}>
+							<View style={styles.pickupDot} />
+						</View>
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Pickup</Text>
+							<Text style={styles.routeValue}>
+								{pickupLocation}
+							</Text>
+						</View>
+					</View>
+
+					<View style={styles.routeDivider} />
+
+					<View style={styles.routeRow}>
+						<View style={styles.routeIconWrap}>
+							<Ionicons
+								name="flag-outline"
+								size={16}
+								color={COLORS.text}
+							/>
+						</View>
+						<View style={styles.routeTextWrap}>
+							<Text style={styles.routeLabel}>Destination</Text>
+							<Text style={styles.routeValue}>{destination}</Text>
+						</View>
+					</View>
 				</View>
 			</View>
 
-			<View style={styles.bottomSection}>
-				<ScrollView showsVerticalScrollIndicator={false}>
+			<View style={styles.sheet}>
+				<ScrollView
+					showsVerticalScrollIndicator={false}
+					contentContainerStyle={styles.sheetContent}
+				>
+					{pricePerPerson !== null && (
+						<View style={styles.priceCard}>
+							<View>
+								<Text style={styles.cardLabel}>
+									Estimated price
+								</Text>
+								<Text style={styles.priceValue}>
+									£{pricePerPerson.toFixed(2)}
+								</Text>
+								<Text style={styles.priceSub}>per person</Text>
+							</View>
+							<View style={styles.priceBadge}>
+								<Text style={styles.priceBadgeText}>
+									Split fare
+								</Text>
+							</View>
+						</View>
+					)}
+
 					{uberRide && (
-						<View style={styles.driverSection}>
+						<View style={styles.driverCard}>
 							<View style={styles.driverAvatar}>
 								<Text style={styles.driverAvatarText}>
 									{driverName.charAt(0).toUpperCase()}
@@ -495,135 +677,37 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 								<Text style={styles.driverName}>
 									{driverName}
 								</Text>
-
-								<View style={styles.vehicleDetails}>
-									<Text style={styles.vehicleModel}>
-										{vehicleName}
-									</Text>
-									<View style={styles.licensePlate}>
-										<Text style={styles.licensePlateText}>
-											{licensePlate}
-										</Text>
-									</View>
-								</View>
-
-								<View style={styles.distanceRow}>
-									<Ionicons
-										name="location-outline"
-										size={14}
-										color={COLORS.textSecondary}
-										style={styles.distanceIcon}
-									/>
-									<Text style={styles.distanceText}>
-										{distance}
-									</Text>
-								</View>
-							</View>
-
-							<Pressable style={styles.contactButton}>
-								<Ionicons
-									name="call-outline"
-									size={18}
-									color={COLORS.primary}
-									style={styles.contactIcon}
-								/>
-							</Pressable>
-						</View>
-					)}
-
-					<View style={styles.divider} />
-
-					<View style={styles.pickupSection}>
-						<View style={styles.locationRow}>
-							<Ionicons
-								name="location-outline"
-								size={18}
-								color={COLORS.primary}
-								style={styles.locationIcon}
-							/>
-							<View style={styles.locationContent}>
-								<Text style={styles.locationLabel}>
-									Pickup Location
+								<Text style={styles.driverMeta}>
+									{vehicleName}
 								</Text>
-								<Text style={styles.locationName}>
-									{pickupLocation}
+								<Text style={styles.driverMeta}>
+									{licensePlate} • {distance}
 								</Text>
 							</View>
-						</View>
 
-						<View style={{ height: SPACING.md }} />
-
-						<View style={styles.locationRow}>
-							<Ionicons
-								name="navigate-outline"
-								size={18}
-								color={COLORS.primary}
-								style={styles.locationIcon}
-							/>
-							<View style={styles.locationContent}>
-								<Text style={styles.locationLabel}>
-									Destination
-								</Text>
-								<Text style={styles.locationName}>
-									{destination}
-								</Text>
-							</View>
-						</View>
-					</View>
-
-					{pricePerPerson !== null && (
-						<View
-							style={[
-								styles.locationRow,
-								{ marginTop: SPACING.md },
-							]}
-						>
-							<Text style={styles.locationIcon}>💷</Text>
-							<View style={styles.locationContent}>
-								<Text style={styles.locationLabel}>
-									Estimated Price
-								</Text>
-								<Text style={styles.priceBig}>
-									£{pricePerPerson.toFixed(2)}
-								</Text>
-								<Text style={styles.priceSmall}>
-									per person
+							<View style={styles.driverStatusPill}>
+								<Text style={styles.driverStatusText}>
+									{uberStatus.replace("_", " ").toUpperCase()}
 								</Text>
 							</View>
 						</View>
 					)}
 
-					<View style={styles.divider} />
-
-					<View style={styles.partySection}>
+					<View style={styles.partyCard}>
 						<View style={styles.partyHeader}>
-							<Ionicons
-								name="people-outline"
-								size={18}
-								color={COLORS.text}
-								style={styles.partyIcon}
-							/>
-							<Text style={styles.partyTitle}>
-								Your Party ({members.length})
+							<Text style={styles.sectionTitle}>Your party</Text>
+							<Text style={styles.sectionCount}>
+								{members.length}/{maxMembers}
 							</Text>
 						</View>
 
 						<View style={styles.membersList}>
 							{members.map((member) => (
-								<View key={member.id} style={styles.memberCard}>
+								<View key={member.id} style={styles.memberRow}>
 									<View style={styles.memberAvatar}>
 										<Text style={styles.memberAvatarText}>
 											{member.initial}
 										</Text>
-										{member.isLeader && (
-											<View style={styles.leaderBadge}>
-												<Ionicons
-													name="star"
-													size={12}
-													color={COLORS.primary}
-												/>
-											</View>
-										)}
 									</View>
 
 									<View style={styles.memberInfo}>
@@ -631,17 +715,16 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 											<Text style={styles.memberName}>
 												{member.isSelf
 													? member.isLeader
-														? `You (Leader)`
-														: `You`
+														? "You (Leader)"
+														: "You"
 													: member.name}
 											</Text>
+
 											{member.isLeader && (
-												<View
-													style={styles.leaderLabel}
-												>
+												<View style={styles.leaderPill}>
 													<Text
 														style={
-															styles.leaderLabelText
+															styles.leaderPillText
 														}
 													>
 														Leader
@@ -649,110 +732,243 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 												</View>
 											)}
 										</View>
+
 										<Text style={styles.memberStatus}>
 											{member.status}
 										</Text>
 									</View>
 
-									<Ionicons
-										name="checkmark"
-										size={16}
-										color={COLORS.primary}
-										style={styles.checkmark}
-									/>
+									{member.isLeader ? (
+										<Ionicons
+											name="star"
+											size={18}
+											color={COLORS.primary}
+										/>
+									) : paidMemberIds.includes(member.id) ? (
+										<Ionicons
+											name="checkmark-circle"
+											size={18}
+											color={COLORS.success}
+										/>
+									) : (
+										<View style={styles.unpaidPill}>
+											<Text style={styles.unpaidPillText}>
+												Unpaid
+											</Text>
+										</View>
+									)}
 								</View>
 							))}
 						</View>
-
-						<View style={styles.statusMessages}>
-							{allMembersPresent && (
-								<View style={styles.successMessage}>
-									<Ionicons
-										name="checkmark-circle"
-										size={16}
-										color={COLORS.success}
-										style={styles.successIcon}
-									/>
-									<Text style={styles.successText}>
-										Party details loaded
-									</Text>
-								</View>
-							)}
-
-							{isProcessing && (
-								<View style={styles.infoMessage}>
-									<Ionicons
-										name="hourglass-outline"
-										size={16}
-										color={COLORS.textSecondary}
-										style={styles.infoIcon}
-									/>
-									<Text style={styles.infoText}>
-										Finding your driver...
-									</Text>
-								</View>
-							)}
-						</View>
 					</View>
-				</ScrollView>
 
-				{/* If party is full and no uberRide yet, allow user to start searching for a driver */}
-				{!uberRide && (
-					<View style={{ padding: 16 }}>
-						{!allMembersPresent ? (
-							<View style={styles.waitingInfo}>
-								<Text style={styles.waitingText}>
-									Waiting for riders ({members.length}/
-									{maxMembers})
-								</Text>
-							</View>
-						) : isLeader ? (
-							<Pressable
-								style={[
-									styles.confirmButton,
-									isRequestingDriver &&
-										styles.searchButtonDisabled,
-								]}
-								onPress={handleSearchForDriver}
-								disabled={isRequestingDriver}
-							>
-								{isRequestingDriver ? (
-									<ActivityIndicator color="#fff" />
-								) : (
-									<>
-										<Text style={styles.confirmTitle}>
-											Confirm Ride
-										</Text>
-										<Text style={styles.confirmSub}>
-											This will request a driver
-										</Text>
-									</>
-								)}
-							</Pressable>
+					{uberRide && (
+						<View style={styles.infoCard}>
+							<Ionicons
+								name="card-outline"
+								size={16}
+								color={COLORS.textSecondary}
+							/>
+							<Text style={styles.infoText}>
+								{allPayingMembersPaid
+									? "All riders have completed payment."
+									: "Each rider must complete payment before the trip continues."}
+							</Text>
+						</View>
+					)}
+
+					{!uberRide && !isLeader && (
+						<View style={styles.infoCard}>
+							<Ionicons
+								name="hourglass-outline"
+								size={16}
+								color={COLORS.textSecondary}
+							/>
+							<Text style={styles.infoText}>
+								Waiting for party leader to confirm the ride
+							</Text>
+						</View>
+					)}
+
+					{uberRide && (
+						<View style={styles.infoCard}>
+							<Ionicons
+								name="car-outline"
+								size={16}
+								color={COLORS.textSecondary}
+							/>
+							<Text style={styles.infoText}>
+								Driver request started. You can continue once
+								ready.
+							</Text>
+						</View>
+					)}
+				</ScrollView>
+			</View>
+
+			<View style={styles.footer}>
+				{!uberRide && isLeader && canLeaderConfirm && (
+					<Pressable
+						style={[
+							styles.confirmButton,
+							isRequestingDriver && styles.primaryButtonDisabled,
+						]}
+						onPress={handleSearchForDriver}
+						disabled={isRequestingDriver}
+					>
+						{isRequestingDriver ? (
+							<ActivityIndicator color={COLORS.textLight} />
 						) : (
-							<View style={styles.waitingInfo}>
-								<Text style={styles.waitingText}>
-									Waiting for party leader to confirm
+							<>
+								<Text style={styles.confirmTitle}>
+									Confirm Ride
 								</Text>
-							</View>
+								<Text style={styles.confirmSub}>
+									Start searching for a driver
+								</Text>
+							</>
 						)}
+					</Pressable>
+				)}
+
+				{uberRide && !currentUserHasPaid && (
+					<Pressable
+						style={[
+							styles.stripeButton,
+							isPaying && styles.primaryButtonDisabled,
+						]}
+						onPress={() => setPaymentModalVisible(true)}
+						disabled={isPaying}
+					>
+						<Ionicons name="card-outline" size={18} color="#fff" />
+						<Text style={styles.stripeButtonText}>Pay here</Text>
+					</Pressable>
+				)}
+
+				{uberRide && currentUserHasPaid && !isLeader && (
+					<View style={styles.paidBanner}>
+						<Ionicons
+							name="checkmark-circle"
+							size={18}
+							color={COLORS.success}
+						/>
+						<Text style={styles.paidBannerText}>
+							Payment complete
+						</Text>
 					</View>
 				)}
 
+				{uberRide &&
+					isLeader &&
+					!allPayingMembersPaid &&
+					!currentUserHasPaid && (
+						<View style={styles.paidBanner}>
+							<Text style={styles.secondaryActionText}>
+								Waiting for all riders to complete payment
+							</Text>
+						</View>
+					)}
+
 				<Pressable
-					style={styles.continueButton}
-					onPress={() => {
-						// Pass updated rideGroup including current members to next screen
-						const updated = {
-							...rideGroup,
-							members: membersSource,
-						};
-						onContinue && onContinue(updated);
-					}}
+					style={styles.secondaryActionButton}
+					onPress={handleSecondaryAction}
 				>
-					<Text style={styles.continueButtonText}>Continue</Text>
+					<Text style={styles.secondaryActionText}>
+						{isLeader ? "Cancel Group" : "Leave Group"}
+					</Text>
 				</Pressable>
+
+				{uberRide &&
+					(isLeader ? allPayingMembersPaid : currentUserHasPaid) && (
+						<Pressable
+							style={[
+								styles.continueButton,
+								!canContinueToInsights &&
+									styles.continueButtonDisabled,
+							]}
+							onPress={() => {
+								if (!canContinueToInsights) return;
+
+								onContinue({
+									...updatedRideGroup,
+									paidMemberIds,
+								});
+							}}
+							disabled={!canContinueToInsights}
+						>
+							<Text
+								style={[
+									styles.continueButtonText,
+									!canContinueToInsights &&
+										styles.continueButtonTextDisabled,
+								]}
+							>
+								Continue
+							</Text>
+						</Pressable>
+					)}
 			</View>
+
+			<Modal
+				visible={paymentModalVisible}
+				transparent
+				animationType="slide"
+				onRequestClose={() => setPaymentModalVisible(false)}
+			>
+				<View style={styles.modalOverlay}>
+					<View style={styles.paymentModal}>
+						<Text style={styles.paymentModalTitle}>
+							Choose payment method
+						</Text>
+						<Text style={styles.paymentModalSubtitle}>
+							Pay £{pricePerPerson?.toFixed(2) ?? "0.00"}
+						</Text>
+
+						<Pressable
+							style={styles.paymentOption}
+							onPress={async () => {
+								setPaymentModalVisible(false);
+								await handleFakePayment("apple_pay");
+							}}
+						>
+							<Ionicons
+								name="logo-apple"
+								size={20}
+								color={COLORS.text}
+							/>
+							<Text style={styles.paymentOptionText}>
+								Apple Pay
+							</Text>
+						</Pressable>
+
+						<Pressable
+							style={styles.paymentOption}
+							onPress={async () => {
+								setPaymentModalVisible(false);
+								await handleFakePayment("card");
+							}}
+						>
+							<Ionicons
+								name="card-outline"
+								size={20}
+								color={COLORS.text}
+							/>
+							<Text style={styles.paymentOptionText}>
+								Card payment
+							</Text>
+						</Pressable>
+
+						<Pressable
+							style={styles.closeModalButton}
+							onPress={() => setPaymentModalVisible(false)}
+						>
+							<Text style={styles.closeModalButtonText}>
+								Cancel
+							</Text>
+						</Pressable>
+					</View>
+				</View>
+			</Modal>
 		</SafeAreaView>
 	);
 };
@@ -760,223 +976,237 @@ export const WaitScreen: React.FC<WaitScreenProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: COLORS.primaryLight,
+		backgroundColor: "#0F172A",
 	},
-	topSection: {
-		flex: 0.3,
-		justifyContent: "center",
-		alignItems: "center",
-		position: "relative",
-	},
-	pickupMarker: {
-		position: "absolute",
-		left: 30,
-	},
-	pickupMarkerIcon: {
-		fontSize: FONT_SIZES.xxl,
-		color: COLORS.primary,
-	},
-	arrivalCard: {
-		backgroundColor: COLORS.background,
-		borderRadius: BORDER_RADIUS.full,
+	hero: {
 		paddingHorizontal: SPACING.lg,
-		paddingVertical: SPACING.md,
-		alignItems: "center",
-		gap: SPACING.sm,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.1,
-		shadowRadius: 8,
-		elevation: 4,
-	},
-	arrivalLabel: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-	},
-	arrivalTime: {
-		fontSize: FONT_SIZES.xxl,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	vehicleIcon: {
-		position: "absolute",
-		right: 30,
-	},
-	vehicleEmoji: {
-		fontSize: FONT_SIZES.xxl,
-	},
-	bottomSection: {
-		flex: 0.7,
-		backgroundColor: COLORS.background,
-		borderTopLeftRadius: BORDER_RADIUS.xl,
-		borderTopRightRadius: BORDER_RADIUS.xl,
 		paddingTop: SPACING.lg,
-		paddingHorizontal: SPACING.md,
-		paddingBottom: SPACING.lg,
+		paddingBottom: SPACING.xl,
+		backgroundColor: "#0F172A",
 	},
-	driverSection: {
+	heroTopRow: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "center",
+		marginBottom: SPACING.lg,
+	},
+	topPill: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 999,
+		backgroundColor: "rgba(255,255,255,0.12)",
+	},
+	timerPill: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 6,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 999,
+		backgroundColor: "rgba(239,68,68,0.22)",
+	},
+	topPillText: {
+		color: COLORS.textLight,
+		fontSize: FONT_SIZES.xs,
+		fontWeight: "700",
+	},
+	heroTitle: {
+		fontSize: 30,
+		fontWeight: "700",
+		color: COLORS.textLight,
+		marginBottom: 8,
+	},
+	heroSubtitle: {
+		fontSize: FONT_SIZES.sm,
+		lineHeight: 20,
+		color: "rgba(255,255,255,0.75)",
+		marginBottom: SPACING.lg,
+	},
+	routeCard: {
+		backgroundColor: "rgba(255,255,255,0.08)",
+		borderRadius: 22,
+		padding: SPACING.md,
+	},
+	routeRow: {
 		flexDirection: "row",
 		alignItems: "flex-start",
 		gap: SPACING.md,
-		paddingBottom: SPACING.md,
+	},
+	routeIconWrap: {
+		width: 20,
+		alignItems: "center",
+		marginTop: 2,
+	},
+	pickupDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 999,
+		backgroundColor: COLORS.success,
+		marginTop: 4,
+	},
+	routeTextWrap: {
+		flex: 1,
+	},
+	routeLabel: {
+		fontSize: FONT_SIZES.xs,
+		color: "rgba(255,255,255,0.6)",
+		marginBottom: 4,
+	},
+	routeValue: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
+		color: COLORS.textLight,
+		lineHeight: 20,
+	},
+	routeDivider: {
+		height: 1,
+		backgroundColor: "rgba(255,255,255,0.12)",
+		marginVertical: SPACING.md,
+	},
+	sheet: {
+		flex: 1,
+		backgroundColor: COLORS.background,
+		borderTopLeftRadius: 28,
+		borderTopRightRadius: 28,
+	},
+	sheetContent: {
+		padding: SPACING.lg,
+		paddingBottom: 180,
+		gap: SPACING.md,
+	},
+	priceCard: {
+		flexDirection: "row",
+		justifyContent: "space-between",
+		alignItems: "flex-start",
+		padding: SPACING.md,
+		borderRadius: 20,
+		backgroundColor: "#F8FAFC",
+		borderWidth: 1,
+		borderColor: "#E5E7EB",
+	},
+	cardLabel: {
+		fontSize: FONT_SIZES.xs,
+		color: COLORS.textSecondary,
+		marginBottom: 4,
+	},
+	priceValue: {
+		fontSize: 28,
+		fontWeight: "700",
+		color: COLORS.primary,
+	},
+	priceSub: {
+		fontSize: FONT_SIZES.xs,
+		color: COLORS.textSecondary,
+		marginTop: 2,
+	},
+	priceBadge: {
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderRadius: 999,
+		backgroundColor: "#E5E7EB",
+	},
+	priceBadgeText: {
+		fontSize: 11,
+		fontWeight: "700",
+		color: COLORS.textSecondary,
+	},
+	driverCard: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: SPACING.md,
+		padding: SPACING.md,
+		borderRadius: 20,
+		backgroundColor: "#F8FAFC",
+		borderWidth: 1,
+		borderColor: "#E5E7EB",
 	},
 	driverAvatar: {
-		width: 60,
-		height: 60,
-		borderRadius: BORDER_RADIUS.full,
+		width: 56,
+		height: 56,
+		borderRadius: 999,
 		backgroundColor: COLORS.primary,
-		justifyContent: "center",
 		alignItems: "center",
+		justifyContent: "center",
 	},
 	driverAvatarText: {
-		color: COLORS.textLight,
-		fontSize: FONT_SIZES.xxl,
+		fontSize: FONT_SIZES.lg,
 		fontWeight: "700",
+		color: COLORS.textLight,
 	},
 	driverInfo: {
 		flex: 1,
-		gap: SPACING.sm,
+		gap: 4,
 	},
 	driverName: {
 		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
+		fontWeight: "700",
 		color: COLORS.primary,
 	},
-	vehicleDetails: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: SPACING.sm,
-		flexWrap: "wrap",
-	},
-	vehicleModel: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-	},
-	licensePlate: {
-		backgroundColor: COLORS.primaryLight,
-		paddingHorizontal: SPACING.sm,
-		paddingVertical: SPACING.xs,
-		borderRadius: BORDER_RADIUS.md,
-	},
-	licensePlateText: {
-		fontSize: FONT_SIZES.xs,
-		color: COLORS.textSecondary,
-		fontFamily: "Courier New",
-	},
-	distanceRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: SPACING.sm,
-	},
-	distanceIcon: {
-		fontSize: FONT_SIZES.base,
-	},
-	distanceText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.textSecondary,
-	},
-	contactButton: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.primaryLight,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	contactIcon: {
-		fontSize: FONT_SIZES.lg,
-	},
-	divider: {
-		height: 1,
-		backgroundColor: COLORS.border,
-	},
-	pickupSection: {
-		paddingVertical: SPACING.md,
-	},
-	locationRow: {
-		flexDirection: "row",
-		alignItems: "flex-start",
-		gap: SPACING.md,
-	},
-	locationIcon: {
-		fontSize: FONT_SIZES.lg,
-		marginTop: SPACING.xs,
-	},
-	locationContent: {
-		flex: 1,
-		gap: SPACING.xs,
-	},
-	locationLabel: {
+	driverMeta: {
 		fontSize: FONT_SIZES.xs,
 		color: COLORS.textSecondary,
 	},
-	locationName: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.primary,
+	driverStatusPill: {
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderRadius: 999,
+		backgroundColor: "#111827",
 	},
-	partySection: {
-		gap: SPACING.md,
-		paddingVertical: SPACING.md,
+	driverStatusText: {
+		fontSize: 10,
+		fontWeight: "700",
+		color: COLORS.textLight,
+	},
+	partyCard: {
+		padding: SPACING.md,
+		borderRadius: 20,
+		backgroundColor: "#FFFFFF",
+		borderWidth: 1,
+		borderColor: "#E5E7EB",
 	},
 	partyHeader: {
 		flexDirection: "row",
+		justifyContent: "space-between",
 		alignItems: "center",
-		gap: SPACING.sm,
+		marginBottom: SPACING.md,
 	},
-	partyIcon: {
-		fontSize: FONT_SIZES.lg,
-	},
-	partyTitle: {
+	sectionTitle: {
 		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
+		fontWeight: "700",
 		color: COLORS.primary,
+	},
+	sectionCount: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
 	},
 	membersList: {
 		gap: SPACING.sm,
 	},
-	memberCard: {
+	memberRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.success + "15",
-		borderWidth: 1,
-		borderColor: COLORS.success + "40",
 		gap: SPACING.md,
+		paddingVertical: 10,
 	},
 	memberAvatar: {
-		width: 40,
-		height: 40,
-		borderRadius: BORDER_RADIUS.full,
+		width: 42,
+		height: 42,
+		borderRadius: 999,
 		backgroundColor: COLORS.primary,
-		justifyContent: "center",
 		alignItems: "center",
-		position: "relative",
+		justifyContent: "center",
 	},
 	memberAvatarText: {
 		color: COLORS.textLight,
-		fontSize: FONT_SIZES.base,
-		fontWeight: "700",
-	},
-	leaderBadge: {
-		position: "absolute",
-		top: -8,
-		right: -8,
-		width: 28,
-		height: 28,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.accentYellow,
-		justifyContent: "center",
-		alignItems: "center",
-	},
-	leaderBadgeText: {
 		fontSize: FONT_SIZES.sm,
+		fontWeight: "700",
 	},
 	memberInfo: {
 		flex: 1,
-		gap: SPACING.xs,
+		gap: 4,
 	},
 	memberNameRow: {
 		flexDirection: "row",
@@ -989,156 +1219,217 @@ const styles = StyleSheet.create({
 		fontWeight: "600",
 		color: COLORS.primary,
 	},
-	leaderLabel: {
-		backgroundColor: COLORS.accentYellow,
-		paddingHorizontal: SPACING.sm,
-		paddingVertical: SPACING.xs,
-		borderRadius: BORDER_RADIUS.full,
-	},
-	leaderLabelText: {
-		fontSize: FONT_SIZES.xs,
-		color: "#a65f00",
-		fontWeight: "500",
-	},
 	memberStatus: {
 		fontSize: FONT_SIZES.xs,
 		color: COLORS.textSecondary,
 	},
-	checkmark: {
-		fontSize: FONT_SIZES.lg,
-		color: COLORS.success,
+	leaderPill: {
+		backgroundColor: "#FEF3C7",
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
 	},
-	statusMessages: {
-		gap: SPACING.md,
-		marginTop: SPACING.md,
+	leaderPillText: {
+		fontSize: 10,
+		fontWeight: "700",
+		color: "#92400E",
 	},
-	successMessage: {
+	infoCard: {
 		flexDirection: "row",
 		alignItems: "center",
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.success + "15",
+		gap: SPACING.sm,
+		padding: SPACING.md,
+		borderRadius: 18,
+		backgroundColor: "#F8FAFC",
 		borderWidth: 1,
-		borderColor: COLORS.success + "40",
-		gap: SPACING.md,
-	},
-	successIcon: {
-		fontSize: FONT_SIZES.lg,
-		color: COLORS.success,
-	},
-	successText: {
-		fontSize: FONT_SIZES.sm,
-		color: COLORS.success,
-		fontWeight: "600",
-	},
-	infoMessage: {
-		flexDirection: "row",
-		alignItems: "center",
-		paddingHorizontal: SPACING.md,
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.primaryLight,
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		gap: SPACING.md,
-	},
-	infoIcon: {
-		fontSize: FONT_SIZES.lg,
+		borderColor: "#E5E7EB",
 	},
 	infoText: {
+		flex: 1,
 		fontSize: FONT_SIZES.sm,
 		color: COLORS.textSecondary,
+		lineHeight: 20,
 	},
-	statusBadge: {
-		paddingHorizontal: SPACING.sm,
-		paddingVertical: 3,
-		borderRadius: BORDER_RADIUS.full,
-		backgroundColor: COLORS.primaryLight,
-	},
-	statusBadgeText: {
-		fontSize: FONT_SIZES.xs,
-		fontWeight: "700" as const,
-		color: COLORS.primary,
-	},
-	status_processing: { backgroundColor: "#fef3c7" },
-	status_accepted: { backgroundColor: "#d1fae5" },
-	status_arriving: { backgroundColor: "#dbeafe" },
-	status_in_progress: { backgroundColor: "#ede9fe" },
-	status_cancelled: { backgroundColor: "#fee2e2" },
-	status_idle: { backgroundColor: "#eef2ff" },
-	searchButton: {
-		paddingVertical: SPACING.md,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.primary,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	searchButtonDisabled: {
-		opacity: 0.6,
-	},
-	searchButtonText: {
-		color: COLORS.textLight,
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600" as const,
-	},
-	waitingInfo: {
-		padding: SPACING.md,
+	footer: {
+		position: "absolute",
+		left: 0,
+		right: 0,
+		bottom: 0,
+		paddingHorizontal: SPACING.lg,
+		paddingTop: SPACING.md,
+		paddingBottom: SPACING.lg,
 		backgroundColor: COLORS.background,
-		borderRadius: BORDER_RADIUS.md,
-		alignItems: "center",
+		borderTopWidth: 1,
+		borderTopColor: "#E5E7EB",
 	},
-	waitingText: {
-		color: COLORS.textSecondary,
-	},
-	continueButton: {
-		paddingVertical: SPACING.lg,
-		borderRadius: BORDER_RADIUS.lg,
-		backgroundColor: COLORS.primary,
-		alignItems: "center",
-		marginTop: SPACING.md,
-	},
-	continueButtonText: {
-		fontSize: FONT_SIZES.base,
-		fontWeight: "600",
-		color: COLORS.textLight,
-	},
-	priceBig: {
-		fontSize: 22,
-		fontWeight: "700",
-		color: COLORS.primary,
-	},
-	priceSmall: {
-		fontSize: 12,
-		color: COLORS.textSecondary,
-	},
-
-	timer: {
-		fontSize: 18,
-		fontWeight: "600",
-		color: "#ff3b30", // Uber red
-		marginTop: 6,
-	},
-
 	confirmButton: {
 		backgroundColor: COLORS.primary,
-		borderRadius: BORDER_RADIUS.lg,
-		paddingVertical: SPACING.md,
-		paddingHorizontal: SPACING.md,
+		borderRadius: 18,
+		paddingVertical: 16,
 		alignItems: "center",
 		justifyContent: "center",
-		gap: 4,
+		marginBottom: 10,
 	},
-
+	primaryButtonDisabled: {
+		opacity: 0.65,
+	},
 	confirmTitle: {
 		color: COLORS.textLight,
 		fontSize: FONT_SIZES.base,
 		fontWeight: "700",
 	},
-
 	confirmSub: {
 		color: COLORS.textLight,
 		fontSize: FONT_SIZES.xs,
 		opacity: 0.85,
+		marginTop: 2,
+	},
+	secondaryActionButton: {
+		paddingVertical: 14,
+		alignItems: "center",
+		justifyContent: "center",
+		borderRadius: 18,
+		backgroundColor: "#F3F4F6",
+		marginBottom: 10,
+	},
+	secondaryActionText: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
+		color: COLORS.textSecondary,
+	},
+	continueButton: {
+		paddingVertical: 16,
+		borderRadius: 18,
+		backgroundColor: COLORS.primary,
+		alignItems: "center",
+	},
+	continueButtonText: {
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+		color: COLORS.textLight,
+	},
+	applePayButton: {
+		backgroundColor: "#000",
+		borderRadius: 18,
+		paddingVertical: 16,
+		alignItems: "center",
+		justifyContent: "center",
+		marginBottom: 10,
+		flexDirection: "row",
+		gap: 8,
+	},
+	applePayText: {
+		color: "#fff",
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+	},
+	unpaidPill: {
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 999,
+		backgroundColor: "#FEE2E2",
+	},
+
+	unpaidPillText: {
+		fontSize: 10,
+		fontWeight: "700",
+		color: "#B91C1C",
+	},
+
+	paidBanner: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 8,
+		paddingVertical: 14,
+		borderRadius: 18,
+		backgroundColor: "#ECFDF5",
+		marginBottom: 10,
+		borderWidth: 1,
+		borderColor: "#A7F3D0",
+	},
+	paidBannerText: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "700",
+		color: "#047857",
+	},
+	continueButtonDisabled: {
+		backgroundColor: "#CBD5E1",
+	},
+
+	continueButtonTextDisabled: {
+		color: "#64748B",
+	},
+	stripeButton: {
+		backgroundColor: "#635BFF",
+		borderRadius: 18,
+		paddingVertical: 16,
+		alignItems: "center",
+		justifyContent: "center",
+		marginBottom: 10,
+		flexDirection: "row",
+		gap: 8,
+	},
+
+	stripeButtonText: {
+		color: "#fff",
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+	},
+
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: "rgba(0,0,0,0.45)",
+		justifyContent: "flex-end",
+	},
+
+	paymentModal: {
+		backgroundColor: "#fff",
+		padding: 20,
+		borderTopLeftRadius: 24,
+		borderTopRightRadius: 24,
+		gap: 12,
+	},
+
+	paymentModalTitle: {
+		fontSize: FONT_SIZES.base,
+		fontWeight: "700",
+		color: COLORS.primary,
+	},
+
+	paymentModalSubtitle: {
+		fontSize: FONT_SIZES.sm,
+		color: COLORS.textSecondary,
+		marginBottom: 8,
+	},
+
+	paymentOption: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 10,
+		paddingVertical: 16,
+		paddingHorizontal: 14,
+		borderRadius: 14,
+		backgroundColor: "#F8FAFC",
+		borderWidth: 1,
+		borderColor: "#E5E7EB",
+	},
+
+	paymentOptionText: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
+		color: COLORS.text,
+	},
+
+	closeModalButton: {
+		marginTop: 8,
+		paddingVertical: 14,
+		alignItems: "center",
+	},
+
+	closeModalButtonText: {
+		fontSize: FONT_SIZES.sm,
+		fontWeight: "600",
+		color: COLORS.textSecondary,
 	},
 });

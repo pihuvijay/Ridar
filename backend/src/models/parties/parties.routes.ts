@@ -13,3 +13,5 @@ partiesRouter.post("/", requireAuth, validateBody(createPartySchema.shape.body),
 partiesRouter.get("/:partyId", requireAuth, c.getParty);
 partiesRouter.patch("/:partyId/locations", requireAuth, c.updateLocations);
 partiesRouter.post("/:partyId/join", requireAuth, c.join);
+partiesRouter.post("/:partyId/leave", requireAuth, c.leave);
+partiesRouter.post("/:partyId/cancel", requireAuth, c.cancel);

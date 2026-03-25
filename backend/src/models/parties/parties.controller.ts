@@ -117,6 +117,14 @@ export async function join(
 		const { partyId } = req.params;
 		const { dropoff, status } = req.body;
 
+		console.log("[PARTY JOIN REQUEST]", {
+			partyId,
+			userId,
+			dropoff,
+			status,
+			timestamp: new Date().toISOString(),
+		});
+
 		const data = await partiesService.joinParty(partyId, userId, {
 			dropoff,
 			status,
@@ -130,6 +138,68 @@ export async function join(
 				error: { message: "Party not found" },
 			});
 		}
+		next(e);
+	}
+}
+
+export async function leave(
+	req: AuthedRequest,
+	res: Response,
+	next: NextFunction,
+) {
+	try {
+		const userId = req.user!.id;
+		const { partyId } = req.params;
+
+		const data = await partiesService.leaveParty(partyId, userId);
+
+		res.json({ ok: true, data });
+	} catch (e: any) {
+		if (e instanceof Error && e.message === "Party not found") {
+			return res.status(404).json({
+				ok: false,
+				error: { message: "Party not found" },
+			});
+		}
+
+		if (e instanceof Error && e.message === "Leader cannot leave party") {
+			return res.status(400).json({
+				ok: false,
+				error: { message: "Leader cannot leave party" },
+			});
+		}
+
+		next(e);
+	}
+}
+
+export async function cancel(
+	req: AuthedRequest,
+	res: Response,
+	next: NextFunction,
+) {
+	try {
+		const userId = req.user!.id;
+		const { partyId } = req.params;
+
+		const data = await partiesService.cancelParty(partyId, userId);
+
+		res.json({ ok: true, data });
+	} catch (e: any) {
+		if (e instanceof Error && e.message === "Party not found") {
+			return res.status(404).json({
+				ok: false,
+				error: { message: "Party not found" },
+			});
+		}
+
+		if (e instanceof Error && e.message === "Only leader can cancel party") {
+			return res.status(403).json({
+				ok: false,
+				error: { message: "Only leader can cancel party" },
+			});
+		}
+
 		next(e);
 	}
 }

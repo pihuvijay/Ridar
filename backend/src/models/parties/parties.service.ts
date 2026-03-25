@@ -476,4 +476,146 @@ export const partiesService = {
 			status: data.join_status || data.status,
 		};
 	},
+
+		async leaveParty(partyId: string, userId: string) {
+		if (env.MOCK_PARTIES) {
+			const party = mockPartiesStore.get(partyId);
+			if (!party) {
+				throw new Error("Party not found");
+			}
+
+			if (party.leaderUserId === userId) {
+				throw new Error("Leader cannot leave party");
+			}
+
+			let riders = mockPartyRiders.get(partyId);
+			if (!riders) {
+				riders = new Set<string>();
+				mockPartyRiders.set(partyId, riders);
+			}
+
+			const hadUser = riders.has(userId);
+			riders.delete(userId);
+
+			if (hadUser) {
+				const nextCurrentMembers = Math.max(
+					1,
+					party.currentMembers - 1,
+				);
+
+				const updatedParty: Party = {
+					...party,
+					currentMembers: nextCurrentMembers,
+					status: "open",
+				};
+
+				mockPartiesStore.set(partyId, updatedParty);
+			}
+
+			return {
+				partyId,
+				userId,
+				left: true,
+			};
+		}
+
+		const { data: ride, error: rideError } = await supabaseAdmin
+			.from("rides")
+			.select("ride_id, creator_user_id, current_riders")
+			.eq("ride_id", partyId)
+			.single();
+
+		if (rideError || !ride) {
+			throw new Error("Party not found");
+		}
+
+		if (ride.creator_user_id === userId) {
+			throw new Error("Leader cannot leave party");
+		}
+
+		const { error: deleteError } = await supabaseAdmin
+			.from("user_rides")
+			.delete()
+			.eq("ride_id", partyId)
+			.eq("user_id", userId);
+
+		if (deleteError) {
+			throw new Error(`Failed to leave party: ${deleteError.message}`);
+		}
+
+		const nextCurrentRiders = Math.max(1, (ride.current_riders ?? 1) - 1);
+
+		const { error: updateError } = await supabaseAdmin
+			.from("rides")
+			.update({
+				current_riders: nextCurrentRiders,
+				ride_status: "pending",
+			})
+			.eq("ride_id", partyId);
+
+		if (updateError) {
+			throw new Error(`Failed to update ride: ${updateError.message}`);
+		}
+
+		return {
+			partyId,
+			userId,
+			left: true,
+		};
+	},
+
+	async cancelParty(partyId: string, userId: string) {
+		if (env.MOCK_PARTIES) {
+			const party = mockPartiesStore.get(partyId);
+			if (!party) {
+				throw new Error("Party not found");
+			}
+
+			if (party.leaderUserId !== userId) {
+				throw new Error("Only leader can cancel party");
+			}
+
+			const updatedParty: Party = {
+				...party,
+				status: "closed",
+			};
+
+			mockPartiesStore.set(partyId, updatedParty);
+
+			return {
+				partyId,
+				cancelled: true,
+			};
+		}
+
+		const { data: ride, error: rideError } = await supabaseAdmin
+			.from("rides")
+			.select("ride_id, creator_user_id")
+			.eq("ride_id", partyId)
+			.single();
+
+		if (rideError || !ride) {
+			throw new Error("Party not found");
+		}
+
+		if (ride.creator_user_id !== userId) {
+			throw new Error("Only leader can cancel party");
+		}
+
+		const { error: updateError } = await supabaseAdmin
+			.from("rides")
+			.update({
+				ride_status: "closed",
+			})
+			.eq("ride_id", partyId);
+
+		if (updateError) {
+			throw new Error(`Failed to cancel party: ${updateError.message}`);
+		}
+
+		return {
+			partyId,
+			cancelled: true,
+		};
+	},
 };

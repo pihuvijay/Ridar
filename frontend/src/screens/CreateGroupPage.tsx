@@ -59,7 +59,10 @@ export const CreateGroupPage = ({
 	const [finalDestination, setFinalDestination] = useState("");
 	const [maxRiders, setMaxRiders] = useState("4");
 	const [maxWaitTime, setMaxWaitTime] = useState("30");
-	const [pricePerPerson, setPricePerPerson] = useState("5");
+	const [estimatedPricePerPerson, setEstimatedPricePerPerson] = useState<
+		number | null
+	>(null);
+	const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 
 	const [allowCustomStops, setAllowCustomStops] = useState(false);
@@ -172,6 +175,58 @@ export const CreateGroupPage = ({
 	const isFemaleUser = useMemo(() => {
 		return (userGender || "").trim().toLowerCase() === "female";
 	}, [userGender]);
+
+	useEffect(() => {
+		const fetchEstimatedPrice = async () => {
+			if (!selectedPickup || !selectedDestination) {
+				setEstimatedPricePerPerson(null);
+				return;
+			}
+
+			const parsedMaxRiders = Number(maxRiders || "4");
+			if (!Number.isFinite(parsedMaxRiders) || parsedMaxRiders < 1) {
+				setEstimatedPricePerPerson(null);
+				return;
+			}
+
+			setIsEstimatingPrice(true);
+
+			try {
+				const res = await uberService.getPriceEstimates(
+					selectedPickup.lat,
+					selectedPickup.lng,
+					selectedDestination.lat,
+					selectedDestination.lng,
+				);
+
+				if (res.success && res.data?.length > 0) {
+					const uberX =
+						res.data.find((p: any) => p.display_name === "UberX") ||
+						res.data[0];
+
+					const estimatedTotal =
+						(Number(uberX.low_estimate) +
+							Number(uberX.high_estimate)) /
+						2;
+
+					const perPerson =
+						Math.ceil((estimatedTotal / parsedMaxRiders) * 100) /
+						100;
+
+					setEstimatedPricePerPerson(perPerson);
+				} else {
+					setEstimatedPricePerPerson(null);
+				}
+			} catch (err) {
+				console.warn("[CreateGroupPage] estimate error:", err);
+				setEstimatedPricePerPerson(null);
+			} finally {
+				setIsEstimatingPrice(false);
+			}
+		};
+
+		fetchEstimatedPrice();
+	}, [selectedPickup, selectedDestination, maxRiders]);
 
 	const clearSuggestions = () => {
 		setPickupSuggestions([]);
@@ -297,20 +352,15 @@ export const CreateGroupPage = ({
 		}
 
 		const parsedMaxRiders = Number(maxRiders || "4");
-		const parsedPricePerPerson = Number(pricePerPerson || "0");
-
-		if (!Number.isFinite(parsedMaxRiders) || parsedMaxRiders < 2) {
-			Alert.alert("Invalid Riders", "Max riders must be at least 2.");
-			return;
-		}
+		const parsedPricePerPerson = estimatedPricePerPerson ?? 0;
 
 		if (
 			!Number.isFinite(parsedPricePerPerson) ||
 			parsedPricePerPerson <= 0
 		) {
 			Alert.alert(
-				"Invalid Price",
-				"Price per person must be greater than 0.",
+				"Price unavailable",
+				"Could not estimate the fare for this route yet. Please check the route and try again.",
 			);
 			return;
 		}
@@ -379,28 +429,7 @@ export const CreateGroupPage = ({
 				return;
 			}
 
-			// Request an Uber ride immediately after party creation
-			const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
-			let uberRide: any = null;
-			try {
-				const rideResponse = await uberService.requestRide({
-					productId: UBERX_PRODUCT_ID,
-					startLat: selectedPickup!.lat,
-					startLng: selectedPickup!.lng,
-					endLat: selectedDestination!.lat,
-					endLng: selectedDestination!.lng,
-				});
-				if (rideResponse.success) {
-					uberRide = rideResponse.data;
-				}
-			} catch (rideErr) {
-				console.warn(
-					"[uber] ride request failed, continuing without ride:",
-					rideErr,
-				);
-			}
-
-			onCreateGroup({ ...response.data, uberRide });
+			onCreateGroup(response.data);
 		} catch (error) {
 			Alert.alert(
 				"Error",
@@ -658,7 +687,7 @@ export const CreateGroupPage = ({
 									{ color: colors.primary },
 								]}
 							>
-								Price Per Person
+								Estimated Price
 							</Text>
 							<View
 								style={[
@@ -675,18 +704,33 @@ export const CreateGroupPage = ({
 									color={colors.primary}
 									style={styles.inputIcon}
 								/>
-								<TextInput
+								<Text
 									style={[
 										styles.input,
-										{ color: colors.text },
+										{
+											color: estimatedPricePerPerson
+												? colors.text
+												: colors.textSecondary,
+											paddingTop: 14,
+										},
 									]}
-									placeholder="5"
-									placeholderTextColor={colors.textSecondary}
-									value={pricePerPerson}
-									onChangeText={setPricePerPerson}
-									keyboardType="decimal-pad"
-								/>
+								>
+									{isEstimatingPrice
+										? "Calculating..."
+										: estimatedPricePerPerson
+											? `£${estimatedPricePerPerson.toFixed(2)}`
+											: "Select route"}
+								</Text>
 							</View>
+							<Text
+								style={[
+									styles.helpText,
+									{ color: colors.textSecondary },
+								]}
+							>
+								Auto-calculated from UberX estimate split across
+								all riders
+							</Text>
 						</View>
 					</View>
 				</View>
