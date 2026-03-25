@@ -1,6 +1,8 @@
+import { ColorValue } from "react-native";
 import { SPACING, BORDER_RADIUS, FONT_SIZES } from "./colors";
 
 export type ThemeColors = {
+  danger: ColorValue | undefined;
   primary: string;
   background: string;
   cardBackground: string;

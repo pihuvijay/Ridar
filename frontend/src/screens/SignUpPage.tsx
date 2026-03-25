@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/AppNavigator';
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/AppNavigator";
 import { JSX } from "react";
 import {
 	View,
@@ -31,7 +31,8 @@ export const SignUpPage = ({
 	onSignIn,
 	onCreateAccount,
 }: SignUpPageProps): JSX.Element => {
-	const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+	const navigation =
+		useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 	const [formData, setFormData] = useState({
 		fullName: "",
 		courseMajor: "",
@@ -240,11 +241,14 @@ export const SignUpPage = ({
 							<View style={styles.formRow}>
 								{/* Full Name */}
 								<View style={styles.formColumn}>
-									<Text style={styles.label}>
-										Full Name *
-									</Text>
+									<Text style={styles.label}>Full Name</Text>
 									<View style={styles.inputContainer}>
-										<Ionicons name="person-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
+										<Ionicons
+											name="person-outline"
+											size={16}
+											color={COLORS.primary}
+											style={styles.inputIcon}
+										/>
 										<TextInput
 											style={styles.input}
 											placeholder="John Smith"
@@ -266,10 +270,15 @@ export const SignUpPage = ({
 								{/* Course/Major */}
 								<View style={styles.formColumn}>
 									<Text style={styles.label}>
-										Course/Major *
+										Course/Major
 									</Text>
 									<View style={styles.inputContainer}>
-										<Ionicons name="book-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
+										<Ionicons
+											name="book-outline"
+											size={16}
+											color={COLORS.primary}
+											style={styles.inputIcon}
+										/>
 										<TextInput
 											style={styles.input}
 											placeholder="Computer Science"
@@ -293,9 +302,14 @@ export const SignUpPage = ({
 							<View style={styles.formRow}>
 								{/* Age */}
 								<View style={styles.formColumn}>
-									<Text style={styles.label}>Age *</Text>
+									<Text style={styles.label}>Age</Text>
 									<View style={styles.inputContainer}>
-										<Ionicons name={"cake-outline" as any} size={16} color={COLORS.primary} style={styles.inputIcon} />
+										<Ionicons
+											name="calendar-outline"
+											size={16}
+											color={COLORS.primary}
+											style={styles.inputIcon}
+										/>
 										<TextInput
 											style={styles.input}
 											placeholder="21"
@@ -314,7 +328,7 @@ export const SignUpPage = ({
 
 								{/* Gender */}
 								<View style={styles.formColumn}>
-									<Text style={styles.label}>Gender *</Text>
+									<Text style={styles.label}>Gender</Text>
 									<TouchableOpacity
 										style={styles.genderInputContainer}
 										onPress={() =>
@@ -325,7 +339,12 @@ export const SignUpPage = ({
 										<Text style={styles.genderInputText}>
 											{formData.gender || "Select Gender"}
 										</Text>
-										<Ionicons name="chevron-down" size={14} color={COLORS.textSecondary} style={styles.genderDropdownIcon} />
+										<Ionicons
+											name="chevron-down"
+											size={14}
+											color={COLORS.textSecondary}
+											style={styles.genderDropdownIcon}
+										/>
 									</TouchableOpacity>
 
 									{/* Gender Dropdown Modal */}
@@ -375,10 +394,35 @@ export const SignUpPage = ({
 																	styles.genderOptionSelected,
 															]}
 														>
-															<View style={{ flexDirection: "row", alignItems: "center" }}>
-																<Text style={styles.genderOptionText}>{option}</Text>
-																{formData.gender === option && (
-																	<Ionicons name="checkmark" size={14} color={COLORS.primary} style={{ marginLeft: 6 }} />
+															<View
+																style={{
+																	flexDirection:
+																		"row",
+																	alignItems:
+																		"center",
+																}}
+															>
+																<Text
+																	style={
+																		styles.genderOptionText
+																	}
+																>
+																	{option}
+																</Text>
+																{formData.gender ===
+																	option && (
+																	<Ionicons
+																		name="checkmark"
+																		size={
+																			14
+																		}
+																		color={
+																			COLORS.primary
+																		}
+																		style={{
+																			marginLeft: 6,
+																		}}
+																	/>
 																)}
 															</View>
 														</Text>
@@ -443,20 +487,43 @@ export const SignUpPage = ({
 										activeOpacity={0.8}
 									>
 										{isSendingCode ? (
-												<ActivityIndicator
-													size="small"
-													color="#ffffff"
+											<ActivityIndicator
+												size="small"
+												color="#ffffff"
+											/>
+										) : emailVerified ? (
+											<View
+												style={{
+													flexDirection: "row",
+													alignItems: "center",
+													gap: 8,
+												}}
+											>
+												<Ionicons
+													name="checkmark-circle"
+													size={16}
+													color={COLORS.primary}
 												/>
-											) : emailVerified ? (
-												<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-													<Ionicons name="checkmark-circle" size={16} color={COLORS.primary} />
-													<Text style={[styles.verifyButtonText, styles.verifyButtonTextVerified]}>Verified</Text>
-												</View>
-											) : (
-												<Text style={[styles.verifyButtonText]}>
-													{codeSent ? "Resend" : "Send Code"}
+												<Text
+													style={[
+														styles.verifyButtonText,
+														styles.verifyButtonTextVerified,
+													]}
+												>
+													Verified
 												</Text>
-											)}
+											</View>
+										) : (
+											<Text
+												style={[
+													styles.verifyButtonText,
+												]}
+											>
+												{codeSent
+													? "Resend"
+													: "Send Code"}
+											</Text>
+										)}
 									</TouchableOpacity>
 								</View>
 
@@ -525,10 +592,15 @@ export const SignUpPage = ({
 							{/* Password Section */}
 							<View style={{ marginTop: 8 }}>
 								<Text style={styles.label}>
-									Password * (min 8 characters)
+									Password (min 8 characters)
 								</Text>
 								<View style={styles.inputContainer}>
-									<Ionicons name="lock-closed-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
+									<Ionicons
+										name="lock-closed-outline"
+										size={16}
+										color={COLORS.primary}
+										style={styles.inputIcon}
+									/>
 									<TextInput
 										style={styles.input}
 										placeholder="••••••••"
@@ -546,10 +618,15 @@ export const SignUpPage = ({
 							{/* Confirm Password Section */}
 							<View style={{ marginTop: 8 }}>
 								<Text style={styles.label}>
-									Confirm Password *
+									Confirm Password
 								</Text>
 								<View style={styles.inputContainer}>
-									<Ionicons name="lock-closed-outline" size={16} color={COLORS.primary} style={styles.inputIcon} />
+									<Ionicons
+										name="lock-closed-outline"
+										size={16}
+										color={COLORS.primary}
+										style={styles.inputIcon}
+									/>
 									<TextInput
 										style={styles.input}
 										placeholder="••••••••"
@@ -588,7 +665,11 @@ export const SignUpPage = ({
 									}
 								>
 									<Ionicons
-										name={formData.agreedToTerms ? "checkbox" : "square-outline"}
+										name={
+											formData.agreedToTerms
+												? "checkbox"
+												: "square-outline"
+										}
 										size={18}
 										color={COLORS.primary}
 									/>

@@ -23,6 +23,7 @@ export type Party = {
   name: string;
   maxMembers: number;
   currentMembers: number;
+  pricePerPerson: number; // ✅ ADD THIS
   pickup: LocationPoint;
   pickupGeog?: string | null;
   destination: LocationPoint;

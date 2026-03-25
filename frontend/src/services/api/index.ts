@@ -119,6 +119,7 @@ export const partiesService = {
 	async create(payload: {
 		name: string;
 		maxMembers: number;
+		pricePerPerson: number;
 		pickup: {
 			lat: number;
 			lng: number;
@@ -130,6 +131,12 @@ export const partiesService = {
 			label: string;
 		};
 		leaveBy?: string | null;
+		preferences?: {
+			allowCustomStops?: boolean;
+			femaleOnly?: boolean;
+			alcoholFree?: boolean;
+			minRating?: number | null;
+		};
 	}) {
 		const r = await requestJson<any>(`/parties`, {
 			method: "POST",

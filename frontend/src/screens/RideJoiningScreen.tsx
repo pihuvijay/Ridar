@@ -8,7 +8,7 @@ import {
 	FlatList,
 	TextInput,
 } from "react-native";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from "../theme/colors";
 
 interface Rider {
@@ -81,17 +81,9 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 
 		return [
 			{
-				id: rideGroup?.id?.toString() ?? "1",
-				name: rideGroup?.leaderName ?? rideGroup?.driverName ?? rideGroup?.name ?? "Ride Creator",
-				initial: (
-					rideGroup?.driverInitial ??
-					rideGroup?.leaderName ??
-					rideGroup?.driverName ??
-					rideGroup?.name ??
-					"R"
-				)
-					.charAt(0)
-					.toUpperCase(),
+				id: rideGroup?.id?.toString() ?? "leader",
+				name: userName,
+				initial: (userName ?? "U").charAt(0).toUpperCase(),
 				status: "joined",
 				isCreator: true,
 				isVerified: true,
@@ -104,15 +96,12 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 			rideGroup?.destination?.label ||
 			rideGroup?.destination ||
 			"Destination not set",
-		ridersJoined:
-			rideGroup?.currentPassengers ??
-			rideGroup?.currentMembers ??
-			riders.filter((r) => r.status === "joined").length,
-		totalRiders: rideGroup?.maxPassengers ?? rideGroup?.maxMembers ?? 4,
+		ridersJoined: rideGroup?.currentMembers ?? riders.length,
+		totalRiders: rideGroup?.maxMembers ?? 4,
 		pickupLocation:
 			rideGroup?.pickup?.label || rideGroup?.pickup || "Pickup not set",
 		departureTime: `Leaving in ${rideGroup?.leavingIn ?? rideGroup?.leaveBy ?? 5} min`,
-		pricePerPerson: `£${rideGroup?.price ?? 0}/person`,
+		pricePerPerson: `£${rideGroup?.pricePerPerson ?? 0}/person`,
 	};
 
 	const handleSendMessage = () => {
@@ -139,7 +128,12 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 				<Text style={styles.riderAvatarText}>{item.initial}</Text>
 				{item.isVerified && (
 					<View style={styles.verifiedBadge}>
-						<Ionicons name="star" size={12} color={COLORS.primary} style={styles.verifiedIcon} />
+						<Ionicons
+							name="star"
+							size={12}
+							color={COLORS.primary}
+							style={styles.verifiedIcon}
+						/>
 					</View>
 				)}
 			</View>
@@ -153,10 +147,20 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						</View>
 					)}
 				</View>
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-					{item.status === 'joined' ? (
+				<View
+					style={{
+						flexDirection: "row",
+						alignItems: "center",
+						gap: 8,
+					}}
+				>
+					{item.status === "joined" ? (
 						<>
-							<Ionicons name="checkmark" size={14} color={COLORS.success} />
+							<Ionicons
+								name="checkmark"
+								size={14}
+								color={COLORS.success}
+							/>
 							<Text style={styles.riderStatus}>Joined</Text>
 						</>
 					) : (
@@ -165,8 +169,13 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 				</View>
 			</View>
 
-			{item.status === 'joined' && (
-				<Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.confirmedIcon} />
+			{item.status === "joined" && (
+				<Ionicons
+					name="checkmark-circle"
+					size={16}
+					color={COLORS.success}
+					style={styles.confirmedIcon}
+				/>
 			)}
 		</View>
 	);
@@ -184,7 +193,12 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					<View style={styles.messageHeader}>
 						<Text style={styles.messageSender}>{item.author}</Text>
 						{item.isVerified && (
-							<Ionicons name="star" size={14} color={COLORS.primary} style={styles.verifiedCheck} />
+							<Ionicons
+								name="star"
+								size={14}
+								color={COLORS.primary}
+								style={styles.verifiedCheck}
+							/>
 						)}
 					</View>
 				)}
@@ -219,7 +233,11 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 		<SafeAreaView style={styles.container}>
 			<View style={styles.header}>
 				<Pressable style={styles.backButton} onPress={onBack}>
-					<Ionicons name="chevron-back" size={18} color={COLORS.text} />
+					<Ionicons
+						name="chevron-back"
+						size={18}
+						color={COLORS.text}
+					/>
 				</Pressable>
 				<View style={styles.headerContent}>
 					<Text style={styles.headerTitle}>
@@ -234,19 +252,39 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 					style={styles.settingsButton}
 					onPress={onViewSettings}
 				>
-					<Ionicons name="settings-outline" size={18} color={COLORS.text} />
+					<Ionicons
+						name="settings-outline"
+						size={18}
+						color={COLORS.text}
+					/>
 				</Pressable>
 			</View>
 
 			<View style={styles.rideDetailsCard}>
 				<View style={styles.detailRow}>
-					<Ionicons name="location-outline" size={16} color={COLORS.text} style={{ marginRight: 8 }} />
-					<Text style={styles.detailLabel}>{rideDetails.pickupLocation}</Text>
+					<Ionicons
+						name="location-outline"
+						size={16}
+						color={COLORS.text}
+						style={{ marginRight: 8 }}
+					/>
+					<Text style={styles.detailLabel}>
+						{rideDetails.pickupLocation}
+					</Text>
 				</View>
 				<View style={styles.detailRow}>
-					<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-						<Ionicons name="time-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
-						<Text style={styles.detailLabel}>{rideDetails.departureTime}</Text>
+					<View
+						style={{ flexDirection: "row", alignItems: "center" }}
+					>
+						<Ionicons
+							name="time-outline"
+							size={16}
+							color={COLORS.textSecondary}
+							style={{ marginRight: 8 }}
+						/>
+						<Text style={styles.detailLabel}>
+							{rideDetails.departureTime}
+						</Text>
 					</View>
 					<Text style={styles.priceText}>
 						{rideDetails.pricePerPerson}
@@ -255,9 +293,22 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 			</View>
 
 			<View style={styles.section}>
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-					<Ionicons name="people-outline" size={18} color={COLORS.text} />
-					<Text style={styles.sectionTitle}>Riders ({rideDetails.ridersJoined}/{rideDetails.totalRiders})</Text>
+				<View
+					style={{
+						flexDirection: "row",
+						alignItems: "center",
+						gap: 8,
+					}}
+				>
+					<Ionicons
+						name="people-outline"
+						size={18}
+						color={COLORS.text}
+					/>
+					<Text style={styles.sectionTitle}>
+						Riders ({rideDetails.ridersJoined}/
+						{rideDetails.totalRiders})
+					</Text>
 				</View>
 				<FlatList
 					data={riders}
@@ -293,14 +344,24 @@ export const RideJoiningScreen: React.FC<RideJoiningScreenProps> = ({
 						onPress={handleSendMessage}
 						disabled={!newMessage.trim()}
 					>
-						<Ionicons name="send" size={18} color={COLORS.primary} style={styles.sendIcon} />
+						<Ionicons
+							name="send"
+							size={18}
+							color={COLORS.primary}
+							style={styles.sendIcon}
+						/>
 					</Pressable>
 				</View>
 			</View>
 
 			<View style={styles.footer}>
 				<Pressable style={styles.joinButton} onPress={handleJoinRide}>
-					<Ionicons name="people-outline" size={18} color={COLORS.textLight} style={styles.joinButtonIcon} />
+					<Ionicons
+						name="people-outline"
+						size={18}
+						color={COLORS.textLight}
+						style={styles.joinButtonIcon}
+					/>
 					<Text style={styles.joinButtonText}>
 						Join This Ride - {rideDetails.pricePerPerson}
 					</Text>

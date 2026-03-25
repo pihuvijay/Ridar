@@ -1,5 +1,15 @@
-import React, { useMemo, useRef, useState, useCallback, useEffect } from "react";
-import { useRoute, useFocusEffect, useNavigation } from "@react-navigation/native";
+import React, {
+	useMemo,
+	useRef,
+	useState,
+	useCallback,
+	useEffect,
+} from "react";
+import {
+	useRoute,
+	useFocusEffect,
+	useNavigation,
+} from "@react-navigation/native";
 import { useSearchContext } from "../contexts/SearchContexts";
 import { partiesService, uberService } from "../services/api";
 import type { JSX } from "react";
@@ -15,7 +25,7 @@ import {
 	SafeAreaView,
 	Switch,
 } from "react-native";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Picker } from "@react-native-picker/picker";
 import { COLORS } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
@@ -48,8 +58,8 @@ export const CreateGroupPage = ({
 	const [pickupPoint, setPickupPoint] = useState("");
 	const [finalDestination, setFinalDestination] = useState("");
 	const [maxRiders, setMaxRiders] = useState("4");
-	const [minRating, setMinRating] = useState("3");
 	const [maxWaitTime, setMaxWaitTime] = useState("30");
+	const [pricePerPerson, setPricePerPerson] = useState("5");
 	const [isCreating, setIsCreating] = useState(false);
 
 	const [allowCustomStops, setAllowCustomStops] = useState(false);
@@ -79,12 +89,20 @@ export const CreateGroupPage = ({
 	const navigation = useNavigation();
 
 	useEffect(() => {
-		if (navigation && typeof (navigation as any).setOptions === "function") {
+		if (
+			navigation &&
+			typeof (navigation as any).setOptions === "function"
+		) {
 			(navigation as any).setOptions({ headerShown: false });
 		}
 	}, [navigation]);
 
-	const { startLocation: ctxStart, endLocation: ctxEnd, startCoords: ctxStartCoords, endCoords: ctxEndCoords } = useSearchContext();
+	const {
+		startLocation: ctxStart,
+		endLocation: ctxEnd,
+		startCoords: ctxStartCoords,
+		endCoords: ctxEndCoords,
+	} = useSearchContext();
 
 	// If navigated with preloaded params, or context has saved search, apply them when screen focuses
 	useFocusEffect(
@@ -113,7 +131,10 @@ export const CreateGroupPage = ({
 				}
 
 				// clear params so they don't persist
-				navigation.setParams({ preloadedRoute: undefined, stamp: undefined } as any);
+				navigation.setParams({
+					preloadedRoute: undefined,
+					stamp: undefined,
+				} as any);
 				return;
 			}
 
@@ -138,7 +159,14 @@ export const CreateGroupPage = ({
 					});
 				}
 			}
-		}, [route.params, navigation, ctxStart, ctxEnd, ctxStartCoords, ctxEndCoords])
+		}, [
+			route.params,
+			navigation,
+			ctxStart,
+			ctxEnd,
+			ctxStartCoords,
+			ctxEndCoords,
+		]),
 	);
 
 	const isFemaleUser = useMemo(() => {
@@ -269,9 +297,21 @@ export const CreateGroupPage = ({
 		}
 
 		const parsedMaxRiders = Number(maxRiders || "4");
+		const parsedPricePerPerson = Number(pricePerPerson || "0");
 
 		if (!Number.isFinite(parsedMaxRiders) || parsedMaxRiders < 2) {
 			Alert.alert("Invalid Riders", "Max riders must be at least 2.");
+			return;
+		}
+
+		if (
+			!Number.isFinite(parsedPricePerPerson) ||
+			parsedPricePerPerson <= 0
+		) {
+			Alert.alert(
+				"Invalid Price",
+				"Price per person must be greater than 0.",
+			);
 			return;
 		}
 
@@ -290,6 +330,7 @@ export const CreateGroupPage = ({
 		const payload = {
 			name: `${selectedPickup.label} → ${selectedDestination.label}`,
 			maxMembers: parsedMaxRiders,
+			pricePerPerson: parsedPricePerPerson,
 			pickup: {
 				lat: selectedPickup.lat,
 				lng: selectedPickup.lng,
@@ -305,13 +346,17 @@ export const CreateGroupPage = ({
 				allowCustomStops,
 				femaleOnly: isFemaleUser ? femaleOnly : false,
 				alcoholFree,
-				minRating: minRating ? Number(minRating) : null,
 			},
 		};
 
 		setIsCreating(true);
 
 		try {
+			console.log(
+				"CREATE PARTY PAYLOAD:",
+				JSON.stringify(payload, null, 2),
+			);
+
 			const response = await partiesService.create(payload);
 
 			if (!response.success) {
@@ -334,9 +379,28 @@ export const CreateGroupPage = ({
 				return;
 			}
 
-			// Do NOT request an Uber ride yet. We'll let the user gather their party
-			// and explicitly start driver search from the Wait screen.
-			onCreateGroup({ ...response.data });
+			// Request an Uber ride immediately after party creation
+			const UBERX_PRODUCT_ID = "a1111c8c-c720-46c3-8534-2fcdd730040d";
+			let uberRide: any = null;
+			try {
+				const rideResponse = await uberService.requestRide({
+					productId: UBERX_PRODUCT_ID,
+					startLat: selectedPickup!.lat,
+					startLng: selectedPickup!.lng,
+					endLat: selectedDestination!.lat,
+					endLng: selectedDestination!.lng,
+				});
+				if (rideResponse.success) {
+					uberRide = rideResponse.data;
+				}
+			} catch (rideErr) {
+				console.warn(
+					"[uber] ride request failed, continuing without ride:",
+					rideErr,
+				);
+			}
+
+			onCreateGroup({ ...response.data, uberRide });
 		} catch (error) {
 			Alert.alert(
 				"Error",
@@ -356,28 +420,69 @@ export const CreateGroupPage = ({
 		if (activeField !== field || suggestions.length === 0) return null;
 
 		return (
-			<View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-					{suggestions.map((item) => (
-						<TouchableOpacity
-							key={item.placeId}
-							style={[styles.suggestionItem, { borderTopColor: colors.border, backgroundColor: colors.cardBackground }]}
-							onPress={() => handlePlaceSelection(item, field)}
-							activeOpacity={0.8}
+			<View
+				style={[
+					styles.suggestionsContainer,
+					{
+						backgroundColor: colors.cardBackground,
+						borderColor: colors.border,
+					},
+				]}
+			>
+				{suggestions.map((item) => (
+					<TouchableOpacity
+						key={item.placeId}
+						style={[
+							styles.suggestionItem,
+							{
+								borderTopColor: colors.border,
+								backgroundColor: colors.cardBackground,
+							},
+						]}
+						onPress={() => handlePlaceSelection(item, field)}
+						activeOpacity={0.8}
+					>
+						<View
+							style={[
+								styles.suggestionIcon,
+								{ backgroundColor: colors.primary },
+							]}
+						/>
+						<Text
+							style={[
+								styles.suggestionText,
+								{ color: colors.text },
+							]}
 						>
-							<View style={[styles.suggestionIcon, { backgroundColor: colors.primary }]} />
-							<Text style={[styles.suggestionText, { color: colors.text }] }>
-								{item.description}
-							</Text>
-						</TouchableOpacity>
-					))}
+							{item.description}
+						</Text>
+					</TouchableOpacity>
+				))}
 			</View>
 		);
 	};
 
 	return (
-		<SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-			<View style={[styles.header, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-				<Text style={[styles.headerTitle, { color: colors.text, textAlign: "center", flex: 1 }]}>Create Ride Group</Text>
+		<SafeAreaView
+			style={[styles.container, { backgroundColor: colors.background }]}
+		>
+			<View
+				style={[
+					styles.header,
+					{
+						backgroundColor: colors.cardBackground,
+						borderColor: colors.border,
+					},
+				]}
+			>
+				<Text
+					style={[
+						styles.headerTitle,
+						{ color: colors.text, textAlign: "center", flex: 1 },
+					]}
+				>
+					Create Ride Group
+				</Text>
 			</View>
 
 			<ScrollView
@@ -385,74 +490,158 @@ export const CreateGroupPage = ({
 				contentContainerStyle={styles.scrollContent}
 				keyboardShouldPersistTaps="handled"
 			>
-					<View style={[styles.heroCard, { backgroundColor: colors.cardBackground }]}> 
-						<Text style={[styles.heroTitle, { color: colors.textLight }]}>Set up your route</Text>
-						<Text style={[styles.heroSubtitle, { color: colors.textSecondary }] }>
-							Choose exact pickup and destination places so riders can
-							find your trip easily.
-						</Text>
+				<View
+					style={[
+						styles.heroCard,
+						{ backgroundColor: colors.cardBackground },
+					]}
+				>
+					<Text
+						style={[styles.heroTitle, { color: colors.textLight }]}
+					>
+						Set up your route
+					</Text>
+					<Text
+						style={[
+							styles.heroSubtitle,
+							{ color: colors.textSecondary },
+						]}
+					>
+						Choose exact pickup and destination places so riders can
+						find your trip easily.
+					</Text>
 
-						{/* Inner white box with inputs to match design */}
-						<View style={[styles.innerBox, { backgroundColor: colors.cardBackground }]}> 
-							<View style={[styles.searchBox, { backgroundColor: colors.cardBackground }]}> 
-								<View style={styles.searchField}>
-									<View style={styles.dotOuter}>
-										<View style={styles.dotInnerActive} />
-									</View>
-									<TextInput
-										style={[styles.searchInput, { color: colors.text }]}
-										placeholder="Start point"
-											placeholderTextColor={colors.textSecondary}
-										value={pickupPoint}
-										onChangeText={(text) =>
-											handleInputChange(text, "pickup")
-										}
-										onFocus={() => setActiveField("pickup")}
-									/>
+					{/* Inner white box with inputs to match design */}
+					<View
+						style={[
+							styles.innerBox,
+							{ backgroundColor: colors.cardBackground },
+						]}
+					>
+						<View
+							style={[
+								styles.searchBox,
+								{ backgroundColor: colors.cardBackground },
+							]}
+						>
+							<View style={styles.searchField}>
+								<View style={styles.dotOuter}>
+									<View style={styles.dotInnerActive} />
 								</View>
-
-								<View style={[styles.searchDivider, { backgroundColor: colors.border }]} />
-
-								<View style={styles.searchField}>
-									<View style={styles.dotOuter}>
-										<View style={styles.dotInner} />
-									</View>
-									<TextInput
-										style={[styles.searchInput, { color: colors.text }]}
-										placeholder="Destination"
-										placeholderTextColor={colors.textSecondary}
-										value={finalDestination}
-										onChangeText={(text) =>
-											handleInputChange(text, "destination")
-										}
-										onFocus={() => setActiveField("destination")}
-									/>
-								</View>
-
-								{renderSuggestions("pickup")}
-								{renderSuggestions("destination")}
-
-								{selectedPickup && (
-									<Text style={[styles.selectedText, { color: colors.primary }]}>Selected: {selectedPickup.label}</Text>
-								)}
-
-								{selectedDestination && (
-									<Text style={[styles.selectedText, { color: colors.primary } ]}>Selected: {selectedDestination.label}</Text>
-								)}
+								<TextInput
+									style={[
+										styles.searchInput,
+										{ color: colors.text },
+									]}
+									placeholder="Start point"
+									placeholderTextColor={colors.textSecondary}
+									value={pickupPoint}
+									onChangeText={(text) =>
+										handleInputChange(text, "pickup")
+									}
+									onFocus={() => setActiveField("pickup")}
+								/>
 							</View>
+
+							<View
+								style={[
+									styles.searchDivider,
+									{ backgroundColor: colors.border },
+								]}
+							/>
+
+							<View style={styles.searchField}>
+								<View style={styles.dotOuter}>
+									<View style={styles.dotInner} />
+								</View>
+								<TextInput
+									style={[
+										styles.searchInput,
+										{ color: colors.text },
+									]}
+									placeholder="Destination"
+									placeholderTextColor={colors.textSecondary}
+									value={finalDestination}
+									onChangeText={(text) =>
+										handleInputChange(text, "destination")
+									}
+									onFocus={() =>
+										setActiveField("destination")
+									}
+								/>
+							</View>
+
+							{renderSuggestions("pickup")}
+							{renderSuggestions("destination")}
+
+							{selectedPickup && (
+								<Text
+									style={[
+										styles.selectedText,
+										{ color: colors.primary },
+									]}
+								>
+									Selected: {selectedPickup.label}
+								</Text>
+							)}
+
+							{selectedDestination && (
+								<Text
+									style={[
+										styles.selectedText,
+										{ color: colors.primary },
+									]}
+								>
+									Selected: {selectedDestination.label}
+								</Text>
+							)}
 						</View>
+					</View>
 				</View>
 
-				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
-					<Text style={[styles.cardTitle, { color: colors.primary }]}>Trip Settings</Text>
+				<View
+					style={[
+						styles.card,
+						{
+							backgroundColor: colors.cardBackground,
+							borderColor: colors.border,
+						},
+					]}
+				>
+					<Text style={[styles.cardTitle, { color: colors.primary }]}>
+						Trip Settings
+					</Text>
 
 					<View style={styles.rowContainer}>
 						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={[styles.label, { color: colors.primary }]}>Max Riders *</Text>
-							<View style={[styles.inputContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-								<Ionicons name="people-outline" size={16} color={colors.primary} style={styles.inputIcon} />
+							<Text
+								style={[
+									styles.label,
+									{ color: colors.primary },
+								]}
+							>
+								Max Riders *
+							</Text>
+							<View
+								style={[
+									styles.inputContainer,
+									{
+										backgroundColor: colors.cardBackground,
+										borderColor: colors.border,
+									},
+								]}
+							>
+								<Ionicons
+									name="people-outline"
+									size={16}
+									color={colors.primary}
+									style={styles.inputIcon}
+								/>
 								<TextInput
-									style={[styles.input, { color: colors.text }]}
+									style={[
+										styles.input,
+										{ color: colors.text },
+									]}
 									placeholder="4"
 									placeholderTextColor={colors.textSecondary}
 									value={maxRiders}
@@ -463,73 +652,117 @@ export const CreateGroupPage = ({
 						</View>
 
 						<View style={[styles.inputGroup, styles.halfWidth]}>
-							<Text style={[styles.label, { color: colors.primary }]}>Max Wait Time</Text>
-							<View style={[styles.pickerContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-								<Picker
-									selectedValue={maxWaitTime}
-									onValueChange={setMaxWaitTime}
-									style={[styles.picker, { color: colors.text }]}
-								>
-									<Picker.Item label="15 min" value="15" />
-									<Picker.Item label="30 min" value="30" />
-									<Picker.Item label="1 hour" value="60" />
-									<Picker.Item label="2 hours" value="120" />
-								</Picker>
+							<Text
+								style={[
+									styles.label,
+									{ color: colors.primary },
+								]}
+							>
+								Price Per Person
+							</Text>
+							<View
+								style={[
+									styles.inputContainer,
+									{
+										backgroundColor: colors.cardBackground,
+										borderColor: colors.border,
+									},
+								]}
+							>
+								<Ionicons
+									name="cash-outline"
+									size={16}
+									color={colors.primary}
+									style={styles.inputIcon}
+								/>
+								<TextInput
+									style={[
+										styles.input,
+										{ color: colors.text },
+									]}
+									placeholder="5"
+									placeholderTextColor={colors.textSecondary}
+									value={pricePerPerson}
+									onChangeText={setPricePerPerson}
+									keyboardType="decimal-pad"
+								/>
 							</View>
 						</View>
 					</View>
-
-					<View style={styles.inputGroup}>
-						<Text style={[styles.label, { color: colors.primary }]}>Minimum Rider Rating</Text>
-						<View style={[styles.pickerContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
-							<Picker
-								selectedValue={minRating}
-								onValueChange={setMinRating}
-								style={[styles.picker, { color: colors.text }]}
-							>
-								<Picker.Item label="No Rating" value="" />
-								<Picker.Item label="1 Star" value="1" />
-								<Picker.Item label="2 Stars" value="2" />
-								<Picker.Item label="3 Stars" value="3" />
-								<Picker.Item label="4 Stars" value="4" />
-								<Picker.Item label="5 Stars" value="5" />
-							</Picker>
-						</View>
-						<Text style={[styles.helpText, { color: colors.textSecondary }]}> 
-							Only riders with this rating or higher can join
-						</Text>
-					</View>
 				</View>
 
-				<View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }] }>
-					<Text style={[styles.cardTitle, { color: colors.primary }]}>Ride Preferences</Text>
+				<View
+					style={[
+						styles.card,
+						{
+							backgroundColor: colors.cardBackground,
+							borderColor: colors.border,
+						},
+					]}
+				>
+					<Text style={[styles.cardTitle, { color: colors.primary }]}>
+						Ride Preferences
+					</Text>
 
-					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground }] }>
+					<View
+						style={[
+							styles.preferenceItem,
+							{ backgroundColor: colors.cardBackground },
+						]}
+					>
 						<View style={styles.preferenceContent}>
-							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
-								Allow custom stops
+							<Text
+								style={[
+									styles.preferenceTitleText,
+									{ color: colors.primary },
+								]}
+							>
+								Allow custom stops (Coming Soon)
 							</Text>
-							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
+							<Text
+								style={[
+									styles.preferenceDescriptionText,
+									{ color: colors.textSecondary },
+								]}
+							>
 								Let riders request different drop-off points
+								(Coming Soon)
 							</Text>
 						</View>
 						<Switch
-							value={allowCustomStops}
-							onValueChange={setAllowCustomStops}
+							value={false}
+							onValueChange={() => {}}
+							disabled={true}
 						/>
 					</View>
 
-					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}> 
+					<View
+						style={[
+							styles.preferenceItem,
+							{
+								backgroundColor: colors.cardBackground,
+								borderColor: colors.border,
+							},
+						]}
+					>
 						<View style={styles.preferenceContent}>
-							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
+							<Text
+								style={[
+									styles.preferenceTitleText,
+									{ color: colors.primary },
+								]}
+							>
 								Female only
 							</Text>
-							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
-								Only female riders can join
-							</Text>
+
 							{!isFemaleUser && (
-								<Text style={[styles.restrictionText, { color: colors.danger }]}>
-									Only female users can enable this option
+								<Text
+									style={[
+										styles.preferenceDescriptionText,
+										{ color: colors.textSecondary },
+									]}
+								>
+									Available for female users only
 								</Text>
 							)}
 						</View>
@@ -539,17 +772,35 @@ export const CreateGroupPage = ({
 								if (isFemaleUser) setFemaleOnly(value);
 							}}
 							disabled={!isFemaleUser}
-							trackColor={{ false: colors.border, true: colors.primary }}
-							thumbColor={isFemaleUser ? colors.textLight : colors.textSecondary}
+							trackColor={{
+								false: colors.border,
+								true: colors.primary,
+							}}
+							thumbColor={colors.textLight}
 						/>
 					</View>
 
-					<View style={[styles.preferenceItem, { backgroundColor: colors.cardBackground }]}> 
+					<View
+						style={[
+							styles.preferenceItem,
+							{ backgroundColor: colors.cardBackground },
+						]}
+					>
 						<View style={styles.preferenceContent}>
-							<Text style={[styles.preferenceTitleText, { color: colors.primary }] }>
+							<Text
+								style={[
+									styles.preferenceTitleText,
+									{ color: colors.primary },
+								]}
+							>
 								Alcohol free
 							</Text>
-							<Text style={[styles.preferenceDescriptionText, { color: colors.textSecondary }] }>
+							<Text
+								style={[
+									styles.preferenceDescriptionText,
+									{ color: colors.textSecondary },
+								]}
+							>
 								No alcohol consumption during ride
 							</Text>
 						</View>
@@ -561,50 +812,114 @@ export const CreateGroupPage = ({
 				</View>
 
 				<TouchableOpacity
-					style={[styles.createButton, { backgroundColor: colors.primary }]}
+					style={[
+						styles.createButton,
+						{ backgroundColor: colors.primary },
+					]}
 					onPress={handleCreateGroup}
 					disabled={isCreating}
 					activeOpacity={0.85}
 				>
 					{isCreating ? (
-							<ActivityIndicator size="small" color={colors.textLight} />
-						) : (
-							<Text style={[styles.createButtonText, { color: colors.background }] }>
-								Create Ride Group
-							</Text>
-						)}
+						<ActivityIndicator
+							size="small"
+							color={colors.textLight}
+						/>
+					) : (
+						<Text
+							style={[
+								styles.createButtonText,
+								{ color: colors.background },
+							]}
+						>
+							Create Ride Group
+						</Text>
+					)}
 				</TouchableOpacity>
 			</ScrollView>
 
-					{/* Bottom tab replica so navigation remains available */}
-					<View style={[styles.bottomNavBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}> 
-						<TouchableOpacity
-							style={styles.tabButton}
-							onPress={() => navigation.navigate("MainTabs", { screen: "Map" })}
-							activeOpacity={0.8}
-						>
-							<Ionicons name="map-outline" size={22} color={colors.primary} />
-							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Map</Text>
-						</TouchableOpacity>
+			{/* Bottom tab replica so navigation remains available */}
+			<View
+				style={[
+					styles.bottomNavBar,
+					{
+						backgroundColor: colors.cardBackground,
+						borderTopColor: colors.border,
+					},
+				]}
+			>
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() =>
+						(navigation as any).navigate("MainTabs", {
+							screen: "Map",
+						})
+					}
+					activeOpacity={0.8}
+				>
+					<Ionicons
+						name="map-outline"
+						size={22}
+						color={colors.primary}
+					/>
+					<Text
+						style={[
+							styles.tabButtonText,
+							{ color: colors.textSecondary },
+						]}
+					>
+						Map
+					</Text>
+				</TouchableOpacity>
 
-						<TouchableOpacity
-							style={styles.tabButton}
-							onPress={() => navigation.navigate("MainTabs", { screen: "RideGroups" })}
-							activeOpacity={0.8}
-						>
-							<Ionicons name="people-outline" size={22} color={colors.textSecondary} />
-							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Ride Groups</Text>
-						</TouchableOpacity>
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() =>
+						(navigation as any).navigate("MainTabs", {
+							screen: "RideGroups",
+						})
+					}
+					activeOpacity={0.8}
+				>
+					<Ionicons
+						name="people-outline"
+						size={22}
+						color={colors.textSecondary}
+					/>
+					<Text
+						style={[
+							styles.tabButtonText,
+							{ color: colors.textSecondary },
+						]}
+					>
+						Ride Groups
+					</Text>
+				</TouchableOpacity>
 
-						<TouchableOpacity
-							style={styles.tabButton}
-							onPress={() => navigation.navigate("MainTabs", { screen: "Profile" })}
-							activeOpacity={0.8}
-						>
-							<Ionicons name="person-outline" size={22} color={colors.textSecondary} />
-							<Text style={[styles.tabButtonText, { color: colors.textSecondary }]}>Profile</Text>
-						</TouchableOpacity>
-					</View>
+				<TouchableOpacity
+					style={styles.tabButton}
+					onPress={() =>
+						(navigation as any).navigate("MainTabs", {
+							screen: "Profile",
+						})
+					}
+					activeOpacity={0.8}
+				>
+					<Ionicons
+						name="person-outline"
+						size={22}
+						color={colors.textSecondary}
+					/>
+					<Text
+						style={[
+							styles.tabButtonText,
+							{ color: colors.textSecondary },
+						]}
+					>
+						Profile
+					</Text>
+				</TouchableOpacity>
+			</View>
 		</SafeAreaView>
 	);
 };

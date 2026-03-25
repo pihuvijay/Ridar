@@ -29,7 +29,20 @@ function parseWktPoint(point: any): { lat: number; lng: number } | null {
 export const partiesService = {
 	async listParties(_userId: string): Promise<Party[]> {
 		if (env.MOCK_PARTIES) {
-			return Array.from(mockPartiesStore.values());
+			return Array.from(mockPartiesStore.values()).filter((party) => {
+				const isClosed =
+					party.status === "closed" ||
+					party.status === "completed" ||
+					party.status === "full";
+
+				const isExpired =
+					party.leaveBy &&
+					new Date(party.leaveBy).getTime() < Date.now();
+
+				const isFull = party.currentMembers >= party.maxMembers;
+
+				return !isClosed && !isExpired && !isFull;
+			});
 		}
 
 		const { data, error } = await supabaseAdmin
@@ -41,32 +54,55 @@ export const partiesService = {
 			throw new Error(`Failed to list parties: ${error.message}`);
 		}
 
-		const rows = (data ?? []);
+		const visibleRows = (data ?? []).filter((row: any) => {
+			const isClosed =
+				row.ride_status === "closed" ||
+				row.ride_status === "completed" ||
+				row.ride_status === "full";
 
-		// gather unique creator ids to fetch display names
-		const creatorIds = Array.from(new Set(rows.map((r: any) => r.creator_user_id).filter(Boolean)));
+			const isExpired =
+				row.departure_time &&
+				new Date(row.departure_time).getTime() < Date.now();
+
+			const isFull =
+				typeof row.current_riders === "number" &&
+				typeof row.max_riders === "number" &&
+				row.current_riders >= row.max_riders;
+
+			return !isClosed && !isExpired && !isFull;
+		});
+
+		const creatorIds = Array.from(
+			new Set(
+				visibleRows.map((r: any) => r.creator_user_id).filter(Boolean),
+			),
+		);
 
 		let profilesMap: Record<string, any> = {};
 		if (creatorIds.length > 0) {
 			const { data: profiles } = await supabaseAdmin
-				.from('profiles')
-				.select('id,full_name,email')
-				.in('id', creatorIds as string[]);
+				.from("profiles")
+				.select("id,full_name,email")
+				.in("id", creatorIds as string[]);
 
 			if (profiles && Array.isArray(profiles)) {
-				profilesMap = profiles.reduce((acc: any, p: any) => {
-					acc[p.id] = p;
-					return acc;
-				}, {} as Record<string, any>);
+				profilesMap = profiles.reduce(
+					(acc: any, p: any) => {
+						acc[p.id] = p;
+						return acc;
+					},
+					{} as Record<string, any>,
+				);
 			}
 		}
 
-		return rows.map((row: any) => {
+		return visibleRows.map((row: any) => {
 			const pickupCoords = parseWktPoint(row.pickup_geog);
 			const destCoords = parseWktPoint(row.destination_geog);
 
 			const leaderProfile = profilesMap[row.creator_user_id];
-			const leaderName = leaderProfile?.full_name || leaderProfile?.email || null;
+			const leaderName =
+				leaderProfile?.full_name || leaderProfile?.email || null;
 
 			return {
 				id: row.ride_id,
@@ -75,6 +111,10 @@ export const partiesService = {
 				name: row.course ?? "Ride Group",
 				maxMembers: row.max_riders,
 				currentMembers: row.current_riders ?? 1,
+				pricePerPerson:
+					row.total_cost && row.max_riders
+						? Number(row.total_cost) / row.max_riders
+						: 0,
 				pickup: {
 					lat: pickupCoords?.lat ?? 0,
 					lng: pickupCoords?.lng ?? 0,
@@ -102,9 +142,17 @@ export const partiesService = {
 			pickup: LocationPoint;
 			destination: LocationPoint;
 			leaveBy?: string | null;
+			pricePerPerson?: number;
 		},
 	): Promise<Party> {
-		const { name, maxMembers, pickup, destination, leaveBy } = params;
+		const {
+			name,
+			maxMembers,
+			pickup,
+			destination,
+			leaveBy,
+			pricePerPerson,
+		} = params;
 
 		if (env.MOCK_PARTIES) {
 			const party: Party = {
@@ -113,6 +161,7 @@ export const partiesService = {
 				name,
 				maxMembers,
 				currentMembers: 1,
+				pricePerPerson: pricePerPerson ?? 0,
 				pickup: { ...pickup },
 				destination: { ...destination },
 				leaveBy: leaveBy ?? null,
@@ -122,7 +171,6 @@ export const partiesService = {
 			return party;
 		}
 
-		// some schemas don't auto‑generate a ride_id
 		const rideId = crypto.randomUUID();
 		const pickPoint = `POINT(${pickup.lng} ${pickup.lat})`;
 		const destPoint = `POINT(${destination.lng} ${destination.lat})`;
@@ -132,7 +180,7 @@ export const partiesService = {
 			.insert({
 				ride_id: rideId,
 				creator_user_id: leaderUserId,
-				course: name, // store ride name in course field for now (fix later)
+				course: name,
 				max_riders: maxMembers,
 				current_riders: 1,
 				pickup_location: pickup.label,
@@ -141,6 +189,7 @@ export const partiesService = {
 				destination_geog: destPoint,
 				departure_time: leaveBy ?? null,
 				ride_status: "pending",
+				total_cost: (pricePerPerson ?? 0) * maxMembers,
 			})
 			.select()
 			.single();
@@ -160,7 +209,8 @@ export const partiesService = {
 				.eq("id", leaderUserId)
 				.single();
 
-			if (profile) leaderName = profile.full_name || profile.email || null;
+			if (profile)
+				leaderName = profile.full_name || profile.email || null;
 		} catch {}
 
 		return {
@@ -170,6 +220,10 @@ export const partiesService = {
 			name: data.course,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders ?? 1,
+			pricePerPerson:
+				data.total_cost && data.max_riders
+					? Number(data.total_cost) / data.max_riders
+					: 0,
 			pickup: { lat: pickup.lat, lng: pickup.lng, label: pickup.label },
 			pickupGeog: data.pickup_geog ?? null,
 			destination: {
@@ -212,7 +266,8 @@ export const partiesService = {
 				.eq("id", data.creator_user_id)
 				.single();
 
-			if (profile) leaderName = profile.full_name || profile.email || null;
+			if (profile)
+				leaderName = profile.full_name || profile.email || null;
 		} catch {}
 
 		return {
@@ -222,6 +277,10 @@ export const partiesService = {
 			leaderName,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders,
+			pricePerPerson:
+				data.total_cost && data.max_riders
+					? Number(data.total_cost) / data.max_riders
+					: 0,
 			pickup: {
 				lat: pickupCoords?.lat ?? 0,
 				lng: pickupCoords?.lng ?? 0,
@@ -283,7 +342,6 @@ export const partiesService = {
 		const updatedPickupCoords = parseWktPoint(data.pickup_geog);
 		const updatedDestCoords = parseWktPoint(data.destination_geog);
 
-
 		// try to fetch leader display name
 		let leaderName: string | null = null;
 		try {
@@ -293,7 +351,8 @@ export const partiesService = {
 				.eq("id", data.creator_user_id)
 				.single();
 
-			if (profile) leaderName = profile.full_name || profile.email || null;
+			if (profile)
+				leaderName = profile.full_name || profile.email || null;
 		} catch {}
 
 		return {
@@ -303,6 +362,10 @@ export const partiesService = {
 			name: data.course,
 			maxMembers: data.max_riders,
 			currentMembers: data.current_riders,
+			pricePerPerson:
+				data.total_cost && data.max_riders
+					? Number(data.total_cost) / data.max_riders
+					: 0,
 			pickup: {
 				lat: updatedPickupCoords?.lat ?? 0,
 				lng: updatedPickupCoords?.lng ?? 0,
@@ -340,18 +403,14 @@ export const partiesService = {
 			const alreadyJoined = riders.has(userId);
 			riders.add(userId);
 
-			if (party && !alreadyJoined) {
-				const updatedParty: Party = {
-					...party,
-					currentMembers: party.currentMembers + 1,
-				};
-				mockPartiesStore.set(rideId, updatedParty);
-			}
-
 			if (!alreadyJoined) {
 				const updatedParty: Party = {
 					...party,
 					currentMembers: party.currentMembers + 1,
+					status:
+						party.currentMembers + 1 >= party.maxMembers
+							? "full"
+							: party.status,
 				};
 				mockPartiesStore.set(rideId, updatedParty);
 			}
@@ -389,14 +448,21 @@ export const partiesService = {
 		try {
 			const { data: rideData } = await supabaseAdmin
 				.from("rides")
-				.select("current_riders")
+				.select("current_riders, max_riders")
 				.eq("ride_id", rideId)
 				.single();
 
 			if (rideData) {
+				const nextCurrentRiders = (rideData.current_riders ?? 0) + 1;
 				await supabaseAdmin
 					.from("rides")
-					.update({ current_riders: rideData.current_riders + 1 })
+					.update({
+						current_riders: nextCurrentRiders,
+						ride_status:
+							nextCurrentRiders >= (rideData.max_riders ?? 0)
+								? "full"
+								: "pending",
+					})
 					.eq("ride_id", rideId);
 			}
 		} catch {}

@@ -99,10 +99,13 @@ export default function AppNavigator({
 					{({ navigation }) => (
 						<CreateGroupPage
 							onBack={() => navigation.goBack()}
-							userGender={"female"} // replace with real user gender from your profile/session
+							userGender={"male"} // replace with real user gender from your profile/session
 							onCreateGroup={(rideData: any) => {
 								const { uberRide, ...rideGroup } = rideData;
-								navigation.navigate("Wait", { rideGroup, uberRide });
+								navigation.navigate("Wait", {
+									rideGroup,
+									uberRide,
+								});
 							}}
 						/>
 					)}
