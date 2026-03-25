@@ -28,7 +28,7 @@ const EnvSchema = z.object({
   MOCK_UBER: z
     .string()
     .optional()
-    .transform((v) => v === 'true' || v === '1'),
+    .transform((v) => v === "true" || v === "1"),
 
   // Optional: use in-memory store for parties (no Supabase table required). For local testing only.
   MOCK_PARTIES: z

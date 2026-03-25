@@ -48,11 +48,11 @@ export const CreateGroupPage = ({
       femaleOnly,
       alcoholFree,
     });
-    if (onCreateGroup) onCreateGroup();
+    if (onCreateGroup) {onCreateGroup();}
   };
 
   const handleBack = () => {
-    if (onBack) onBack();
+    if (onBack) {onBack();}
   };
 
   return (

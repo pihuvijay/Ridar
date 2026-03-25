@@ -74,7 +74,7 @@ export const ConnectAccountsPage = ({
       // TODO: Implement proper OAuth flow with Uber
       // Get auth URL from backend
       // const authUrlResponse = await uberService.initiateUberAuth();
-      
+
       // For demonstration, simulating the connection
       setTimeout(() => {
         setUberConnected(true);
@@ -127,7 +127,7 @@ export const ConnectAccountsPage = ({
       if (response.success) {
         console.log("Payment method created successfully");
         Alert.alert("Success", "Payment method added successfully");
-        if (onNavigateHome) onNavigateHome();
+        if (onNavigateHome) {onNavigateHome();}
       } else {
         Alert.alert("Error", response.message || "Failed to add payment method. Please try again.");
       }

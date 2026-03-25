@@ -1,12 +1,12 @@
-import { Router } from 'express';
-import { uberController } from './uber.controller';
-import { validate } from '../../middleware/validate';
+import { Router } from "express";
+import { uberController } from "./uber.controller";
+import { validate } from "../../middleware/validate";
 import {
     getPriceEstimatesSchema,
     requestRideSchema,
     rideIdParamSchema,
-} from './uber.schemas';
-import { protect } from '../../middleware/auth';
+} from "./uber.schemas";
+import { protect } from "../../middleware/auth";
 
 export const uberRidesRouter = Router();
 
@@ -15,7 +15,7 @@ export const uberRidesRouter = Router();
  * Returns price estimates from Uber sandbox (real API call)
  */
 uberRidesRouter.get(
-    '/estimates',
+    "/estimates",
     /* protect, */
     validate(getPriceEstimatesSchema),
     uberController.getPriceEstimates
@@ -26,7 +26,7 @@ uberRidesRouter.get(
  * Request a ride (mocked — real API requires restricted scopes)
  */
 uberRidesRouter.post(
-    '/request',
+    "/request",
     /* protect, */
     validate(requestRideSchema),
     uberController.requestRide
@@ -37,7 +37,7 @@ uberRidesRouter.post(
  * Get ride status (mocked, auto-progresses over time)
  */
 uberRidesRouter.get(
-    '/ride/:rideId',
+    "/ride/:rideId",
     /* protect, */
     validate(rideIdParamSchema),
     uberController.getRideStatus
@@ -48,7 +48,7 @@ uberRidesRouter.get(
  * Cancel a ride (mocked)
  */
 uberRidesRouter.delete(
-    '/ride/:rideId',
+    "/ride/:rideId",
     /* protect, */
     validate(rideIdParamSchema),
     uberController.cancelRide

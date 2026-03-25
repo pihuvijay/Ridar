@@ -67,8 +67,8 @@ export const authService = {
     async signOut(token: string): Promise<void> {
         // Get the user from the token first, then revoke their sessions
         const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-        if (userError || !user) throw new Error("Invalid token");
+        if (userError || !user) {throw new Error("Invalid token");}
         const { error } = await supabaseAdmin.auth.admin.signOut(user.id);
-        if (error) throw new Error(error.message);
+        if (error) {throw new Error(error.message);}
     },
 };

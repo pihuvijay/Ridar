@@ -109,7 +109,7 @@ export const SignUpPage = ({
 
       if (response.success) {
         Alert.alert("Success", "Account created successfully");
-        if (onCreateAccount) onCreateAccount();
+        if (onCreateAccount) {onCreateAccount();}
       } else {
         Alert.alert("Error", response.message || "Failed to create account");
       }
@@ -124,7 +124,7 @@ export const SignUpPage = ({
   };
 
   const handleSignIn = () => {
-    if (onSignIn) onSignIn();
+    if (onSignIn) {onSignIn();}
   };
 
   const isFormValid =

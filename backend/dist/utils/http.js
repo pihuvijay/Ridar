@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ok = exports.AppError = void 0;
 class AppError extends Error {

@@ -1,6 +1,6 @@
 // API client and service functions for backend communication
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
 // ==================== TYPES ====================
 
@@ -54,7 +54,7 @@ const handleResponse = async (response: Response) => {
     const error = await response.json().catch(() => ({
       message: `HTTP ${response.status}: ${response.statusText}`,
     }));
-    throw new Error(error.message || 'API request failed');
+    throw new Error(error.message || "API request failed");
   }
   return response.json();
 };
@@ -67,9 +67,9 @@ export const authService = {
    */
   async signIn(credentials: AuthCredentials): Promise<AuthResponse> {
     const response = await fetch(`${API_URL}/api/auth/signin`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(credentials),
     });
@@ -81,9 +81,9 @@ export const authService = {
    */
   async signUp(data: SignUpData): Promise<AuthResponse> {
     const response = await fetch(`${API_URL}/api/auth/signup`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
@@ -95,9 +95,9 @@ export const authService = {
    */
   async verifyEmail(email: string): Promise<EmailVerificationResponse> {
     const response = await fetch(`${API_URL}/api/auth/verify-email`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email }),
     });
@@ -117,10 +117,10 @@ export const paymentService = {
     userId: string
   ): Promise<PaymentMethodResponse> {
     const response = await fetch(`${API_URL}/api/payment/add-method`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`, // Replace with actual auth token
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userId}`, // Replace with actual auth token
       },
       body: JSON.stringify({
         token,
@@ -135,9 +135,9 @@ export const paymentService = {
    */
   async getPaymentMethods(userId: string): Promise<any> {
     const response = await fetch(`${API_URL}/api/payment/methods`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${userId}`,
+        "Authorization": `Bearer ${userId}`,
       },
     });
     return handleResponse(response);
@@ -152,9 +152,9 @@ export const uberService = {
    */
   async initiateUberAuth(): Promise<any> {
     const response = await fetch(`${API_URL}/api/uber/auth-url`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
     return handleResponse(response);
@@ -168,10 +168,10 @@ export const uberService = {
     userId: string
   ): Promise<UberConnectionResponse> {
     const response = await fetch(`${API_URL}/api/uber/connect`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`,
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userId}`,
       },
       body: JSON.stringify({ authCode }),
     });
@@ -183,9 +183,9 @@ export const uberService = {
    */
   async isConnected(userId: string): Promise<{ connected: boolean }> {
     const response = await fetch(`${API_URL}/api/uber/connected`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${userId}`,
+        "Authorization": `Bearer ${userId}`,
       },
     });
     return handleResponse(response);
@@ -208,10 +208,10 @@ export const rideService = {
     userId: string
   ): Promise<any> {
     const response = await fetch(`${API_URL}/api/rides/group`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userId}`,
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userId}`,
       },
       body: JSON.stringify(data),
     });
@@ -223,9 +223,9 @@ export const rideService = {
    */
   async getRideGroups(userId: string): Promise<any> {
     const response = await fetch(`${API_URL}/api/rides/groups`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${userId}`,
+        "Authorization": `Bearer ${userId}`,
       },
     });
     return handleResponse(response);
@@ -236,9 +236,9 @@ export const rideService = {
    */
   async joinRideGroup(groupId: string, userId: string): Promise<any> {
     const response = await fetch(`${API_URL}/api/rides/group/${groupId}/join`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${userId}`,
+        "Authorization": `Bearer ${userId}`,
       },
     });
     return handleResponse(response);

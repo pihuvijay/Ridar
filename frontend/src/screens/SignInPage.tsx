@@ -66,15 +66,15 @@ export const SignInPage = ({
   };
 
   const handleSignUp = () => {
-    if (onSignUp) onSignUp();
+    if (onSignUp) {onSignUp();}
   };
 
   const handleForgotPassword = () => {
-    if (onForgotPassword) onForgotPassword();
+    if (onForgotPassword) {onForgotPassword();}
   };
 
   const handleModeratorLogin = () => {
-    if (onModeratorLogin) onModeratorLogin();
+    if (onModeratorLogin) {onModeratorLogin();}
   };
 
   return (

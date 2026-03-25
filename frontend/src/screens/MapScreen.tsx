@@ -17,7 +17,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
 interface MapScreenProps {
   onViewRideGroups?: () => void;
@@ -70,27 +70,27 @@ export const MapScreen = ({
 
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
-    if (onMenuPress) onMenuPress();
+    if (onMenuPress) {onMenuPress();}
   };
 
   const handleSettingsClick = () => {
     console.log("Settings clicked");
-    if (onSettingsPress) onSettingsPress();
+    if (onSettingsPress) {onSettingsPress();}
   };
 
   const handleProfileClick = () => {
     console.log("Profile clicked");
-    if (onProfilePress) onProfilePress();
+    if (onProfilePress) {onProfilePress();}
   };
 
   const handleViewRideGroups = () => {
     console.log("View Available Ride Groups clicked");
-    if (onViewRideGroups) onViewRideGroups();
+    if (onViewRideGroups) {onViewRideGroups();}
   };
 
   const handleCreateRideGroup = () => {
     console.log("Create New Ride Group clicked");
-    if (onCreateRideGroup) onCreateRideGroup();
+    if (onCreateRideGroup) {onCreateRideGroup();}
   };
 
   const geocodeLocation = async (location: string): Promise<{ latitude: number; longitude: number } | null> => {

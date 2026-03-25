@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validate = void 0;
 const zod_1 = require("zod");
@@ -12,11 +12,11 @@ const validate = (schema) => (req, _res, next) => {
             headers: req.headers,
         });
         if (parsed.body !== undefined)
-            req.body = parsed.body;
+            {req.body = parsed.body;}
         if (parsed.query !== undefined)
-            req.query = parsed.query;
+            {req.query = parsed.query;}
         if (parsed.params !== undefined)
-            req.params = parsed.params;
+            {req.params = parsed.params;}
         next();
     }
     catch (err) {

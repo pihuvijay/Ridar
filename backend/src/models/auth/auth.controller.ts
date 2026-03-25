@@ -28,7 +28,7 @@ export const authController = {
     signOut: async (req: Request, res: Response, next: NextFunction) => {
         try {
             const token = req.headers.authorization?.split(" ")[1];
-            if (!token) return res.status(400).json({ ok: false, error: "No token" });
+            if (!token) {return res.status(400).json({ ok: false, error: "No token" });}
             await authService.signOut(token);
             res.json({ ok: true });
         } catch (err) {

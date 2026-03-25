@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.partiesService = void 0;
 const supabase_1 = require("../../lib/supabase");
@@ -83,7 +83,7 @@ exports.partiesService = {
             throw new Error(`Failed to fetch party: ${error.message}`);
         }
         if (!data)
-            return null;
+            {return null;}
         return {
             id: data.ride_id,
             leaderUserId: data.creator_user_id,
@@ -108,7 +108,7 @@ exports.partiesService = {
         if (env_1.env.MOCK_PARTIES) {
             const existing = mockPartiesStore.get(partyId);
             if (!existing)
-                throw new Error("Party not found");
+                {throw new Error("Party not found");}
             const updated = {
                 ...existing,
                 pickup: updates.pickup ?? existing.pickup,

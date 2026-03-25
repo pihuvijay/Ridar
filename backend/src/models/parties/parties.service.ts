@@ -13,11 +13,11 @@ function generateId(): string {
 }
 
 function parseWktPoint(point: any): { lat: number; lng: number } | null {
-  if (!point) return null;
+  if (!point) {return null;}
   const s = typeof point === "string" ? point : point?.toString?.();
-  if (!s) return null;
+  if (!s) {return null;}
   const m = s.match(/POINT\((-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\)/);
-  if (!m) return null;
+  if (!m) {return null;}
   return { lat: parseFloat(m[2]), lng: parseFloat(m[1]) };
 }
 
@@ -61,7 +61,7 @@ export const partiesService = {
       .insert({
         ride_id: rideId,
         creator_user_id: leaderUserId,
-        course: name,                        // store ride name in course field for now (fix later)
+        course: name, // store ride name in course field for now (fix later)
         max_riders: maxMembers,
         pickup_location: pickup.label,
         pickup_geog: pickPoint,
@@ -107,7 +107,7 @@ export const partiesService = {
       throw new Error(`Failed to fetch party: ${error.message}`);
     }
 
-    if (!data) return null;
+    if (!data) {return null;}
 
     const pickupCoords = parseWktPoint(data.pickup_geog);
     const destCoords = parseWktPoint(data.destination_geog);
@@ -141,7 +141,7 @@ export const partiesService = {
   ): Promise<Party> {
     if (env.MOCK_PARTIES) {
       const existing = mockPartiesStore.get(partyId);
-      if (!existing) throw new Error("Party not found");
+      if (!existing) {throw new Error("Party not found");}
       const updated: Party = {
         ...existing,
         pickup: updates.pickup ?? existing.pickup,

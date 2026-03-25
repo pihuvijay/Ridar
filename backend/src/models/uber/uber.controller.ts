@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { uberService } from './uber.service';
-import { ok } from '../../utils/http';
+import { Request, Response, NextFunction } from "express";
+import { uberService } from "./uber.service";
+import { ok } from "../../utils/http";
 
 export const uberController = {
     getPriceEstimates: async (req: Request, res: Response, next: NextFunction) => {

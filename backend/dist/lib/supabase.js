@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.supabaseAdmin = void 0;
 const supabase_js_1 = require("@supabase/supabase-js");

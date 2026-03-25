@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.partiesController = void 0;
 const parties_service_1 = require("./parties.service");

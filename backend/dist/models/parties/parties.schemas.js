@@ -1,4 +1,4 @@
-"use strict";
+
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.joinPartySchema = exports.updatePartyLocationsSchema = exports.createPartySchema = void 0;
 const zod_1 = require("zod");
