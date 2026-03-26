@@ -1,0 +1,1 @@
+export type WalletBalance = { balance: number; currency: string };

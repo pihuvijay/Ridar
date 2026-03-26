@@ -1,19 +1,19 @@
 import { Router } from "express";
-import { authController } from "./auth.controller";
-import { validate } from "../../middleware/validate";
-import { signUpSchema, signInSchema } from "./auth.schemas";
-import { protect } from "../../middleware/auth";
+import { validateBody } from "../../middleware/validate";
+import { authController as c } from "./auth.controller";
+import {
+  LoginSchema,
+  RegisterSchema,
+  VerifyEmailSchema,
+} from "./auth.schemas";
 
 export const authRouter = Router();
 
-// POST /auth/signup
-authRouter.post("/signup", validate(signUpSchema), authController.signUp);
+// Keep the routes your frontend already uses
+authRouter.post("/register", validateBody(RegisterSchema), c.signUp);
+authRouter.post("/login", validateBody(LoginSchema), c.signIn);
+authRouter.post("/verify-email", validateBody(VerifyEmailSchema), c.verifyEmail);
 
-// POST /auth/signin
-authRouter.post("/signin", validate(signInSchema), authController.signIn);
-
-// POST /auth/signout  (requires a valid token to revoke it)
-authRouter.post("/signout", authController.signOut);
-
-// GET /auth/me  (protected — good for testing your JWT works)
-authRouter.get("/me", protect, authController.me);
+// Optional aliases to match the other branch
+authRouter.post("/signup", validateBody(RegisterSchema), c.signUp);
+authRouter.post("/signin", validateBody(LoginSchema), c.signIn);

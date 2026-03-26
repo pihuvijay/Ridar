@@ -1,0 +1,1 @@
+export type ReportStatus = { uptime: number; timestamp: string };

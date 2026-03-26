@@ -1,34 +1,17 @@
 import { Router } from "express";
-import { partiesController } from "./parties.controller";
-import { validate } from "../../middleware/validate";
-import { createPartySchema, updatePartyLocationsSchema, joinPartySchema } from "./parties.schemas";
-import { protect } from "../../middleware/auth";
+import { requireAuth } from "../../middleware/auth";
+import { validateBody } from "../../middleware/validate";
+import * as c from "./parties.controller";
+import {
+  createPartySchema,
+} from "./parties.schemas";
 
 export const partiesRouter = Router();
 
-partiesRouter.post(
-  "/",
-  protect,
-  validate(createPartySchema),
-  partiesController.createParty
-);
-
-partiesRouter.get(
-  "/:partyId",
-  protect,
-  partiesController.getParty
-);
-
-partiesRouter.patch(
-  "/:partyId/locations",
-  protect,
-  validate(updatePartyLocationsSchema),
-  partiesController.updatePartyLocations
-);
-
-partiesRouter.post(
-  "/:partyId/join",
-  protect,
-  validate(joinPartySchema),
-  partiesController.joinParty
-);
+partiesRouter.get("/", requireAuth, c.list);
+partiesRouter.post("/", requireAuth, validateBody(createPartySchema.shape.body), c.create);
+partiesRouter.get("/:partyId", requireAuth, c.getParty);
+partiesRouter.patch("/:partyId/locations", requireAuth, c.updateLocations);
+partiesRouter.post("/:partyId/join", requireAuth, c.join);
+partiesRouter.post("/:partyId/leave", requireAuth, c.leave);
+partiesRouter.post("/:partyId/cancel", requireAuth, c.cancel);

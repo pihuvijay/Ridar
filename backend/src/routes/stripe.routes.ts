@@ -211,3 +211,32 @@ stripeRouter.get("/ride/:rideId/payment-status", async (req, res, next) => {
     next(err);
   }
 });
+
+
+stripeRouter.post('/demo-pay', async (req, res, next) => {
+  try {
+    const { rideId, userId, amount, method } = req.body;
+
+    console.log('[STRIPE DEMO] Payment request received');
+    console.log({
+      rideId,
+      userId,
+      amount,
+      method,
+      timestamp: new Date().toISOString(),
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    res.json({
+      success: true,
+      status: 'succeeded',
+      paymentIntentId: `pi_demo_${Date.now()}`,
+      message: 'Demo payment successful',
+      method,
+      amount,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
