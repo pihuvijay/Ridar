@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const getPriceEstimatesSchema = z.object({
     start_lat: z.coerce.number(),

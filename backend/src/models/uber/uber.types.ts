@@ -10,8 +10,8 @@ export interface UberPriceEstimate {
     low_estimate: number;
     high_estimate: number;
     surge_multiplier: number;
-    duration: number;   // seconds
-    distance: number;   // miles
+    duration: number; // seconds
+    distance: number; // miles
 }
 
 export interface UberRideRequest {
@@ -21,12 +21,12 @@ export interface UberRideRequest {
 }
 
 export type UberRideStatus =
-    | 'processing'
-    | 'accepted'
-    | 'arriving'
-    | 'in_progress'
-    | 'completed'
-    | 'cancelled';
+    | "processing"
+    | "accepted"
+    | "arriving"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
 
 export interface UberDriver {
     name: string;
@@ -47,9 +47,9 @@ export interface UberRideResponse {
     product_id: string;
     driver: UberDriver | null;
     vehicle: UberVehicle | null;
-    eta: number;          // minutes until pickup
+    eta: number; // minutes until pickup
     fare_estimate: string; // e.g. "$12–$16"
     pickup: UberCoordinates;
     dropoff: UberCoordinates;
-    request_time: string;  // ISO timestamp
+    request_time: string; // ISO timestamp
 }
