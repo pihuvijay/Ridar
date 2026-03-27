@@ -1,0 +1,1098 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders CreateGroupPage correctly (snapshot test) 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#f3f4f6",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#fff",
+        "elevation": 3,
+        "flexDirection": "row",
+        "gap": 12,
+        "paddingHorizontal": 16,
+        "paddingVertical": 16,
+        "shadowColor": "#000",
+        "shadowOffset": {
+          "height": 2,
+          "width": 0,
+        },
+        "shadowOpacity": 0.1,
+        "shadowRadius": 4,
+      }
+    }
+  >
+    <View
+      accessibilityLabel="Go back"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "borderRadius": 10,
+          "height": 40,
+          "justifyContent": "center",
+          "opacity": 1,
+          "width": 40,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 24,
+          }
+        }
+      >
+        ←
+      </Text>
+    </View>
+    <Text
+      style={
+        {
+          "color": "#1a4d2e",
+          "fontSize": 16,
+          "fontWeight": "600",
+        }
+      }
+    >
+      Create Ride Group
+    </Text>
+  </View>
+  <RCTScrollView
+    contentContainerStyle={
+      {
+        "gap": 16,
+        "paddingHorizontal": 16,
+        "paddingVertical": 16,
+      }
+    }
+    style={
+      {
+        "flex": 1,
+      }
+    }
+  >
+    <View>
+      <View
+        style={
+          {
+            "backgroundColor": "#fff",
+            "borderRadius": 16,
+            "elevation": 3,
+            "gap": 16,
+            "padding": 24,
+            "shadowColor": "#000",
+            "shadowOffset": {
+              "height": 2,
+              "width": 0,
+            },
+            "shadowOpacity": 0.1,
+            "shadowRadius": 4,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#1a4d2e",
+              "fontSize": 16,
+              "fontWeight": "600",
+            }
+          }
+        >
+          Route Details
+        </Text>
+        <View
+          style={
+            {
+              "gap": 8,
+              "marginBottom": 8,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#1a4d2e",
+                "fontSize": 14,
+                "fontWeight": "500",
+              }
+            }
+          >
+            Pickup Point *
+          </Text>
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#1a4d2e33",
+                "borderRadius": 10,
+                "borderWidth": 1.4,
+                "flexDirection": "row",
+                "gap": 8,
+                "height": 48,
+                "paddingHorizontal": 12,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+            >
+              📍
+            </Text>
+            <TextInput
+              accessibilityLabel="Pickup point"
+              onChangeText={[Function]}
+              placeholder="Where will you pick up riders?"
+              placeholderTextColor="#1a4d2e70"
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "flex": 1,
+                  "fontSize": 14,
+                  "paddingVertical": 8,
+                }
+              }
+              value=""
+            />
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "gap": 8,
+              "marginBottom": 8,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "flexDirection": "row",
+                "justifyContent": "space-between",
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "500",
+                }
+              }
+            >
+              Optional Stops Along the Way
+            </Text>
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={false}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "opacity": 1,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "600",
+                  }
+                }
+              >
+                + Add Stop
+              </Text>
+            </View>
+          </View>
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#1a4d2e33",
+                "borderRadius": 10,
+                "borderWidth": 1.4,
+                "flexDirection": "row",
+                "gap": 8,
+                "height": 48,
+                "paddingHorizontal": 12,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+            >
+              🛑
+            </Text>
+            <TextInput
+              accessibilityLabel="Optional stops"
+              onChangeText={[Function]}
+              placeholder="Add intermediate stops"
+              placeholderTextColor="#1a4d2e70"
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "flex": 1,
+                  "fontSize": 14,
+                  "paddingVertical": 8,
+                }
+              }
+              value=""
+            />
+          </View>
+          <Text
+            style={
+              {
+                "color": "#1a4d2e70",
+                "fontSize": 12,
+                "marginTop": 4,
+              }
+            }
+          >
+            Riders can request to be dropped off at these stops
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "gap": 8,
+              "marginBottom": 8,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#1a4d2e",
+                "fontSize": 14,
+                "fontWeight": "500",
+              }
+            }
+          >
+            Final Destination *
+          </Text>
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#1a4d2e33",
+                "borderRadius": 10,
+                "borderWidth": 1.4,
+                "flexDirection": "row",
+                "gap": 8,
+                "height": 48,
+                "paddingHorizontal": 12,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+            >
+              📌
+            </Text>
+            <TextInput
+              accessibilityLabel="Final destination"
+              onChangeText={[Function]}
+              placeholder="Where are you heading?"
+              placeholderTextColor="#1a4d2e70"
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "flex": 1,
+                  "fontSize": 14,
+                  "paddingVertical": 8,
+                }
+              }
+              value=""
+            />
+          </View>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "backgroundColor": "#fff",
+            "borderRadius": 16,
+            "elevation": 3,
+            "gap": 16,
+            "padding": 24,
+            "shadowColor": "#000",
+            "shadowOffset": {
+              "height": 2,
+              "width": 0,
+            },
+            "shadowOpacity": 0.1,
+            "shadowRadius": 4,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#1a4d2e",
+              "fontSize": 16,
+              "fontWeight": "600",
+            }
+          }
+        >
+          Trip Details
+        </Text>
+        <View
+          style={
+            {
+              "gap": 8,
+              "marginBottom": 8,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#1a4d2e",
+                "fontSize": 14,
+                "fontWeight": "500",
+              }
+            }
+          >
+            Departure Time *
+          </Text>
+          <View
+            style={
+              {
+                "alignItems": "center",
+                "borderColor": "#1a4d2e33",
+                "borderRadius": 10,
+                "borderWidth": 1.4,
+                "flexDirection": "row",
+                "gap": 8,
+                "height": 48,
+                "paddingHorizontal": 12,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "fontSize": 16,
+                }
+              }
+            >
+              🕐
+            </Text>
+            <TextInput
+              accessibilityLabel="Departure time"
+              onChangeText={[Function]}
+              placeholder="Select departure time"
+              placeholderTextColor="#1a4d2e70"
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "flex": 1,
+                  "fontSize": 14,
+                  "paddingVertical": 8,
+                }
+              }
+              value=""
+            />
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "flexDirection": "row",
+              "gap": 12,
+            }
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "gap": 8,
+                  "marginBottom": 8,
+                },
+                {
+                  "flex": 1,
+                },
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "500",
+                }
+              }
+            >
+              Max Riders *
+            </Text>
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 10,
+                  "borderWidth": 1.4,
+                  "flexDirection": "row",
+                  "gap": 8,
+                  "height": 48,
+                  "paddingHorizontal": 12,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "fontSize": 16,
+                  }
+                }
+              >
+                👥
+              </Text>
+              <TextInput
+                accessibilityLabel="Maximum riders"
+                keyboardType="number-pad"
+                onChangeText={[Function]}
+                placeholder="4"
+                placeholderTextColor="#1a4d2e70"
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "flex": 1,
+                    "fontSize": 14,
+                    "paddingVertical": 8,
+                  }
+                }
+                value=""
+              />
+            </View>
+          </View>
+          <View
+            style={
+              [
+                {
+                  "gap": 8,
+                  "marginBottom": 8,
+                },
+                {
+                  "flex": 1,
+                },
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "500",
+                }
+              }
+            >
+              Price/Person *
+            </Text>
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 10,
+                  "borderWidth": 1.4,
+                  "flexDirection": "row",
+                  "gap": 8,
+                  "height": 48,
+                  "paddingHorizontal": 12,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "fontSize": 16,
+                  }
+                }
+              >
+                💵
+              </Text>
+              <TextInput
+                accessibilityLabel="Price per person"
+                keyboardType="decimal-pad"
+                onChangeText={[Function]}
+                placeholder="10"
+                placeholderTextColor="#1a4d2e70"
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "flex": 1,
+                    "fontSize": 14,
+                    "paddingVertical": 8,
+                  }
+                }
+                value="10"
+              />
+            </View>
+          </View>
+        </View>
+        <View
+          style={
+            {
+              "flexDirection": "row",
+              "gap": 12,
+            }
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "gap": 8,
+                  "marginBottom": 8,
+                },
+                {
+                  "flex": 1,
+                },
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "500",
+                }
+              }
+            >
+              Minimum Rider Rating
+            </Text>
+            <View
+              style={
+                {
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 10,
+                  "borderWidth": 1.4,
+                  "height": 48,
+                  "justifyContent": "center",
+                  "overflow": "hidden",
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "height": 48,
+                  }
+                }
+              >
+                <RNCPicker
+                  items={
+                    [
+                      {
+                        "label": "No Rating",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "",
+                      },
+                      {
+                        "label": "1 Star",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "1",
+                      },
+                      {
+                        "label": "2 Stars",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "2",
+                      },
+                      {
+                        "label": "3 Stars",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "3",
+                      },
+                      {
+                        "label": "4 Stars",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "4",
+                      },
+                      {
+                        "label": "5 Stars",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "5",
+                      },
+                    ]
+                  }
+                  numberOfLines={1}
+                  onChange={[Function]}
+                  selectedIndex={3}
+                  style={
+                    [
+                      {
+                        "height": 216,
+                      },
+                      undefined,
+                    ]
+                  }
+                />
+              </View>
+            </View>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 12,
+                  "marginTop": 4,
+                }
+              }
+            >
+              Only riders with this rating or higher can join
+            </Text>
+          </View>
+          <View
+            style={
+              [
+                {
+                  "gap": 8,
+                  "marginBottom": 8,
+                },
+                {
+                  "flex": 1,
+                },
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "500",
+                }
+              }
+            >
+              Max Wait Time
+            </Text>
+            <View
+              style={
+                {
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 10,
+                  "borderWidth": 1.4,
+                  "height": 48,
+                  "justifyContent": "center",
+                  "overflow": "hidden",
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "height": 48,
+                  }
+                }
+              >
+                <RNCPicker
+                  items={
+                    [
+                      {
+                        "label": "15 min",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "15",
+                      },
+                      {
+                        "label": "30 min",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "30",
+                      },
+                      {
+                        "label": "1 hour",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "60",
+                      },
+                      {
+                        "label": "2 hours",
+                        "testID": undefined,
+                        "textColor": undefined,
+                        "value": "120",
+                      },
+                    ]
+                  }
+                  numberOfLines={1}
+                  onChange={[Function]}
+                  selectedIndex={1}
+                  style={
+                    [
+                      {
+                        "height": 216,
+                      },
+                      undefined,
+                    ]
+                  }
+                />
+              </View>
+            </View>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 12,
+                  "marginTop": 4,
+                }
+              }
+            >
+              How long to advertise before departure
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "backgroundColor": "#fff",
+            "borderRadius": 16,
+            "elevation": 3,
+            "gap": 16,
+            "padding": 24,
+            "shadowColor": "#000",
+            "shadowOffset": {
+              "height": 2,
+              "width": 0,
+            },
+            "shadowOpacity": 0.1,
+            "shadowRadius": 4,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#1a4d2e",
+              "fontSize": 16,
+              "fontWeight": "600",
+            }
+          }
+        >
+          Ride Preferences
+        </Text>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#f3f4f6",
+              "borderRadius": 10,
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginBottom": 12,
+              "paddingHorizontal": 12,
+              "paddingVertical": 12,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "flex": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "600",
+                  "marginBottom": 4,
+                }
+              }
+            >
+              Allow custom stops
+            </Text>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 13,
+                }
+              }
+            >
+              Let riders request different drop-off points
+            </Text>
+          </View>
+          <RCTSwitch
+            accessibilityLabel="Allow custom stops toggle"
+            accessibilityRole="switch"
+            onChange={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignSelf": "flex-start",
+              }
+            }
+            value={false}
+          />
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#f3f4f6",
+              "borderRadius": 10,
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginBottom": 12,
+              "paddingHorizontal": 12,
+              "paddingVertical": 12,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "flex": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "600",
+                  "marginBottom": 4,
+                }
+              }
+            >
+              Female only
+            </Text>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 13,
+                }
+              }
+            >
+              Only female riders can join
+            </Text>
+          </View>
+          <RCTSwitch
+            accessibilityLabel="Female only toggle"
+            accessibilityRole="switch"
+            onChange={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignSelf": "flex-start",
+              }
+            }
+            value={false}
+          />
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#f3f4f6",
+              "borderRadius": 10,
+              "flexDirection": "row",
+              "justifyContent": "space-between",
+              "marginBottom": 12,
+              "paddingHorizontal": 12,
+              "paddingVertical": 12,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "flex": 1,
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e",
+                  "fontSize": 14,
+                  "fontWeight": "600",
+                  "marginBottom": 4,
+                }
+              }
+            >
+              Alcohol free
+            </Text>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 13,
+                }
+              }
+            >
+              No alcohol consumption during ride
+            </Text>
+          </View>
+          <RCTSwitch
+            accessibilityLabel="Alcohol free toggle"
+            accessibilityRole="switch"
+            onChange={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignSelf": "flex-start",
+              }
+            }
+            value={false}
+          />
+        </View>
+      </View>
+      <View
+        accessibilityLabel="Create ride group"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#1a4d2e",
+            "borderRadius": 10,
+            "elevation": 3,
+            "marginBottom": 20,
+            "opacity": 1,
+            "paddingVertical": 14,
+            "shadowColor": "#000",
+            "shadowOffset": {
+              "height": 2,
+              "width": 0,
+            },
+            "shadowOpacity": 0.1,
+            "shadowRadius": 4,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#fff",
+              "fontSize": 16,
+              "fontWeight": "600",
+            }
+          }
+        >
+          Create Ride Group
+        </Text>
+      </View>
+    </View>
+  </RCTScrollView>
+</RCTSafeAreaView>
+`;

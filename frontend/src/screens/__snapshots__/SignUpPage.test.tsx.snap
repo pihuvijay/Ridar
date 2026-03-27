@@ -1,0 +1,894 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders SignUpPage correctly (snapshot test) 1`] = `
+<RNCSafeAreaView
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "flex": 1,
+    }
+  }
+>
+  <ViewManagerAdapter_ExpoLinearGradient
+    colors={
+      [
+        4279913774,
+        4281170514,
+      ]
+    }
+    endPoint={
+      [
+        1,
+        1,
+      ]
+    }
+    startPoint={
+      [
+        0,
+        0,
+      ]
+    }
+    style={
+      {
+        "flex": 1,
+      }
+    }
+  >
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "paddingBottom": 32,
+          "paddingHorizontal": 16,
+          "paddingTop": 24,
+        }
+      }
+      showsVerticalScrollIndicator={false}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    >
+      <View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "marginBottom": 32,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "marginBottom": 20,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "rgba(255, 255, 255, 0.3)",
+                  "borderRadius": 44,
+                  "height": 88,
+                  "justifyContent": "center",
+                  "width": 88,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#ffffff",
+                    "fontSize": 40,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                R
+              </Text>
+            </View>
+          </View>
+          <Text
+            style={
+              {
+                "color": "#ffffff",
+                "fontSize": 20,
+                "fontWeight": "600",
+                "marginBottom": 8,
+              }
+            }
+          >
+            Join Ridar
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#e8ede8",
+                "fontSize": 14,
+              }
+            }
+          >
+            Student carpooling made easy
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "backgroundColor": "#ffffff",
+              "borderRadius": 24,
+              "elevation": 8,
+              "marginBottom": 32,
+              "padding": 24,
+              "shadowColor": "#000000",
+              "shadowOffset": {
+                "height": 25,
+                "width": 0,
+              },
+              "shadowOpacity": 0.1,
+              "shadowRadius": 50,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#1a4d2e",
+                "fontSize": 20,
+                "fontWeight": "600",
+                "marginBottom": 8,
+              }
+            }
+          >
+            Create Account
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#1a4d2e70",
+                "fontSize": 14,
+                "marginBottom": 24,
+              }
+            }
+          >
+            Verify your student email to get started
+          </Text>
+          <View
+            style={
+              {
+                "gap": 16,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "flexDirection": "row",
+                  "gap": 11.99,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "flex": 1,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "500",
+                      "marginBottom": 8,
+                    }
+                  }
+                >
+                  Full Name *
+                </Text>
+                <View
+                  style={
+                    {
+                      "alignItems": "center",
+                      "borderColor": "#1a4d2e33",
+                      "borderRadius": 10,
+                      "borderWidth": 0.95,
+                      "flexDirection": "row",
+                      "gap": 8,
+                      "height": 38,
+                      "paddingHorizontal": 10,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      {
+                        "fontSize": 16,
+                        "marginRight": 4,
+                      }
+                    }
+                  >
+                    👤
+                  </Text>
+                  <TextInput
+                    accessibilityLabel="Full Name"
+                    onChangeText={[Function]}
+                    placeholder="John Smith"
+                    placeholderTextColor="#1a4d2e70"
+                    style={
+                      {
+                        "color": "#1a4d2e",
+                        "flex": 1,
+                        "fontSize": 14,
+                        "paddingVertical": 8,
+                      }
+                    }
+                    value=""
+                  />
+                </View>
+              </View>
+              <View
+                style={
+                  {
+                    "flex": 1,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "500",
+                      "marginBottom": 8,
+                    }
+                  }
+                >
+                  Course/Major *
+                </Text>
+                <View
+                  style={
+                    {
+                      "alignItems": "center",
+                      "borderColor": "#1a4d2e33",
+                      "borderRadius": 10,
+                      "borderWidth": 0.95,
+                      "flexDirection": "row",
+                      "gap": 8,
+                      "height": 38,
+                      "paddingHorizontal": 10,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      {
+                        "fontSize": 16,
+                        "marginRight": 4,
+                      }
+                    }
+                  >
+                    📚
+                  </Text>
+                  <TextInput
+                    accessibilityLabel="Course/Major"
+                    onChangeText={[Function]}
+                    placeholder="Computer Science"
+                    placeholderTextColor="#1a4d2e70"
+                    style={
+                      {
+                        "color": "#1a4d2e",
+                        "flex": 1,
+                        "fontSize": 14,
+                        "paddingVertical": 8,
+                      }
+                    }
+                    value=""
+                  />
+                </View>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "flexDirection": "row",
+                  "gap": 11.99,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "flex": 1,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "500",
+                      "marginBottom": 8,
+                    }
+                  }
+                >
+                  Age *
+                </Text>
+                <View
+                  style={
+                    {
+                      "alignItems": "center",
+                      "borderColor": "#1a4d2e33",
+                      "borderRadius": 10,
+                      "borderWidth": 0.95,
+                      "flexDirection": "row",
+                      "gap": 8,
+                      "height": 38,
+                      "paddingHorizontal": 10,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      {
+                        "fontSize": 16,
+                        "marginRight": 4,
+                      }
+                    }
+                  >
+                    🎂
+                  </Text>
+                  <TextInput
+                    accessibilityLabel="Age"
+                    keyboardType="number-pad"
+                    onChangeText={[Function]}
+                    placeholder="21"
+                    placeholderTextColor="#1a4d2e70"
+                    style={
+                      {
+                        "color": "#1a4d2e",
+                        "flex": 1,
+                        "fontSize": 14,
+                        "paddingVertical": 8,
+                      }
+                    }
+                    value=""
+                  />
+                </View>
+              </View>
+              <View
+                style={
+                  {
+                    "flex": 1,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "500",
+                      "marginBottom": 8,
+                    }
+                  }
+                >
+                  Gender *
+                </Text>
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "alignItems": "center",
+                      "backgroundColor": "#ffffff",
+                      "borderColor": "#1a4d2e33",
+                      "borderRadius": 10,
+                      "borderWidth": 0.95,
+                      "flexDirection": "row",
+                      "height": 38,
+                      "justifyContent": "space-between",
+                      "opacity": 1,
+                      "paddingHorizontal": 12,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      {
+                        "color": "#1a4d2e",
+                        "flex": 1,
+                        "fontSize": 14,
+                        "fontWeight": "400",
+                      }
+                    }
+                  >
+                    Select Gender
+                  </Text>
+                  <Text
+                    style={
+                      {
+                        "color": "#1a4d2e70",
+                        "fontSize": 12,
+                        "marginLeft": 8,
+                      }
+                    }
+                  >
+                    ▼
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "gap": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "500",
+                    "marginBottom": 8,
+                  }
+                }
+              >
+                University Email * (must end in .ac.uk)
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "flexDirection": "row",
+                    "gap": 8,
+                  }
+                }
+              >
+                <TextInput
+                  accessibilityLabel="University Email"
+                  keyboardType="email-address"
+                  onChangeText={[Function]}
+                  placeholder="your.name@university.ac.uk"
+                  placeholderTextColor="#1a4d2e70"
+                  style={
+                    {
+                      "borderColor": "#1a4d2e33",
+                      "borderRadius": 10,
+                      "borderWidth": 0.95,
+                      "color": "#1a4d2e",
+                      "flex": 1,
+                      "fontSize": 14,
+                      "height": 38,
+                      "paddingHorizontal": 12,
+                    }
+                  }
+                  value=""
+                />
+                <View
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": true,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={false}
+                  onClick={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    {
+                      "alignItems": "center",
+                      "backgroundColor": "#f0f4f1",
+                      "borderRadius": 10,
+                      "flexDirection": "row",
+                      "height": 38,
+                      "justifyContent": "center",
+                      "minWidth": 87,
+                      "opacity": 1,
+                      "paddingHorizontal": 12,
+                      "paddingVertical": 8,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      [
+                        {
+                          "color": "#1a4d2e70",
+                          "fontSize": 14,
+                          "fontWeight": "600",
+                        },
+                        false,
+                      ]
+                    }
+                  >
+                    Send Code
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "marginTop": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "500",
+                    "marginBottom": 8,
+                  }
+                }
+              >
+                Password * (min 8 characters)
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderColor": "#1a4d2e33",
+                    "borderRadius": 10,
+                    "borderWidth": 0.95,
+                    "flexDirection": "row",
+                    "gap": 8,
+                    "height": 38,
+                    "paddingHorizontal": 10,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 16,
+                      "marginRight": 4,
+                    }
+                  }
+                >
+                  🔒
+                </Text>
+                <TextInput
+                  accessibilityLabel="Password"
+                  onChangeText={[Function]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#0a0a0a80"
+                  secureTextEntry={true}
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "flex": 1,
+                      "fontSize": 14,
+                      "paddingVertical": 8,
+                    }
+                  }
+                  value=""
+                />
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "marginTop": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "500",
+                    "marginBottom": 8,
+                  }
+                }
+              >
+                Confirm Password *
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "borderColor": "#1a4d2e33",
+                    "borderRadius": 10,
+                    "borderWidth": 0.95,
+                    "flexDirection": "row",
+                    "gap": 8,
+                    "height": 38,
+                    "paddingHorizontal": 10,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 16,
+                      "marginRight": 4,
+                    }
+                  }
+                >
+                  🔒
+                </Text>
+                <TextInput
+                  accessibilityLabel="Confirm Password"
+                  onChangeText={[Function]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#0a0a0a80"
+                  secureTextEntry={true}
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "flex": 1,
+                      "fontSize": 14,
+                      "paddingVertical": 8,
+                    }
+                  }
+                  value=""
+                />
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "flexDirection": "row",
+                  "gap": 12,
+                  "marginVertical": 8,
+                  "paddingHorizontal": 4,
+                }
+              }
+            >
+              <View
+                accessibilityState={
+                  {
+                    "busy": undefined,
+                    "checked": undefined,
+                    "disabled": undefined,
+                    "expanded": undefined,
+                    "selected": undefined,
+                  }
+                }
+                accessibilityValue={
+                  {
+                    "max": undefined,
+                    "min": undefined,
+                    "now": undefined,
+                    "text": undefined,
+                  }
+                }
+                accessible={true}
+                collapsable={false}
+                focusable={true}
+                onClick={[Function]}
+                onResponderGrant={[Function]}
+                onResponderMove={[Function]}
+                onResponderRelease={[Function]}
+                onResponderTerminate={[Function]}
+                onResponderTerminationRequest={[Function]}
+                onStartShouldSetResponder={[Function]}
+                style={
+                  {
+                    "alignItems": "center",
+                    "height": 24,
+                    "justifyContent": "center",
+                    "marginTop": 2,
+                    "opacity": 1,
+                    "width": 24,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 18,
+                    }
+                  }
+                >
+                  ☐
+                </Text>
+              </View>
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e70",
+                    "flex": 1,
+                    "fontSize": 12,
+                    "lineHeight": 16,
+                  }
+                }
+              >
+                I agree to the Terms of Service and Privacy Policy, and confirm I am a university student
+              </Text>
+            </View>
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": true,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={false}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#d1d5dc",
+                  "borderRadius": 10,
+                  "elevation": 3,
+                  "marginVertical": 12,
+                  "opacity": 0.6,
+                  "paddingVertical": 12,
+                  "shadowColor": "#000000",
+                  "shadowOffset": {
+                    "height": 2,
+                    "width": 0,
+                  },
+                  "shadowOpacity": 0.1,
+                  "shadowRadius": 4,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#ffffff",
+                    "fontSize": 14,
+                    "fontWeight": "600",
+                  }
+                }
+              >
+                Create Account & Connect Uber
+              </Text>
+            </View>
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "flexDirection": "row",
+                  "gap": 4,
+                  "justifyContent": "center",
+                  "marginTop": 8,
+                  "paddingTop": 12,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e70",
+                    "fontSize": 14,
+                  }
+                }
+              >
+                Already have an account?
+              </Text>
+              <View
+                accessibilityState={
+                  {
+                    "busy": undefined,
+                    "checked": undefined,
+                    "disabled": undefined,
+                    "expanded": undefined,
+                    "selected": undefined,
+                  }
+                }
+                accessibilityValue={
+                  {
+                    "max": undefined,
+                    "min": undefined,
+                    "now": undefined,
+                    "text": undefined,
+                  }
+                }
+                accessible={true}
+                collapsable={false}
+                focusable={true}
+                onClick={[Function]}
+                onResponderGrant={[Function]}
+                onResponderMove={[Function]}
+                onResponderRelease={[Function]}
+                onResponderTerminate={[Function]}
+                onResponderTerminationRequest={[Function]}
+                onStartShouldSetResponder={[Function]}
+                style={
+                  {
+                    "opacity": 1,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                    }
+                  }
+                >
+                  Sign in
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </RCTScrollView>
+  </ViewManagerAdapter_ExpoLinearGradient>
+</RNCSafeAreaView>
+`;

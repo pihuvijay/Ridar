@@ -1,0 +1,932 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders RideJoiningScreen correctly (snapshot) 1`] = `
+<RCTSafeAreaView
+  style={
+    {
+      "backgroundColor": "#ffffff",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#ffffff",
+        "borderBottomColor": "#1a4d2e33",
+        "borderBottomWidth": 1,
+        "flexDirection": "row",
+        "gap": 12,
+        "paddingHorizontal": 12,
+        "paddingVertical": 12,
+      }
+    }
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "backgroundColor": "#f0f4f1",
+          "borderRadius": 12,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 20,
+          }
+        }
+      >
+        ←
+      </Text>
+    </View>
+    <View
+      style={
+        {
+          "flex": 1,
+          "gap": 4,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 16,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Downtown Financial District
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#1a4d2e70",
+            "fontSize": 14,
+          }
+        }
+      >
+        1
+        /
+        4
+         riders joined
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "backgroundColor": "#f0f4f1",
+          "borderRadius": 12,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "fontSize": 18,
+          }
+        }
+      >
+        ⚙️
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#f0f4f1",
+        "borderRadius": 12,
+        "gap": 12,
+        "marginHorizontal": 12,
+        "marginVertical": 12,
+        "padding": 12,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 14,
+            "fontWeight": "500",
+          }
+        }
+      >
+        📍 
+        North Station - Main Entrance
+      </Text>
+    </View>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "justifyContent": "space-between",
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 14,
+            "fontWeight": "500",
+          }
+        }
+      >
+        ⏱ 
+        Leaving in 5 min
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#1a4d2e",
+            "fontSize": 14,
+            "fontWeight": "600",
+          }
+        }
+      >
+        £8/person
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "gap": 12,
+        "marginHorizontal": 12,
+        "marginVertical": 12,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#1a4d2e",
+          "fontSize": 16,
+          "fontWeight": "600",
+        }
+      }
+    >
+      👥 Riders (
+      1
+      /
+      4
+      )
+    </Text>
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "gap": 8,
+        }
+      }
+      data={
+        [
+          {
+            "id": "1",
+            "initial": "S",
+            "isCreator": true,
+            "isVerified": true,
+            "name": "Sarah M.",
+            "status": "joined",
+          },
+          {
+            "id": "2",
+            "initial": "A",
+            "isCreator": false,
+            "isVerified": false,
+            "name": "Alex P.",
+            "status": "waiting",
+          },
+          {
+            "id": "3",
+            "initial": "n",
+            "isCreator": false,
+            "isVerified": false,
+            "name": "ndfjv",
+            "status": "waiting",
+          },
+        ]
+      }
+      getItem={[Function]}
+      getItemCount={[Function]}
+      keyExtractor={[Function]}
+      onContentSizeChange={[Function]}
+      onLayout={[Function]}
+      onMomentumScrollBegin={[Function]}
+      onMomentumScrollEnd={[Function]}
+      onScroll={[Function]}
+      onScrollBeginDrag={[Function]}
+      onScrollEndDrag={[Function]}
+      removeClippedSubviews={false}
+      renderItem={[Function]}
+      scrollEnabled={false}
+      scrollEventThrottle={0.0001}
+      stickyHeaderIndices={[]}
+      viewabilityConfigCallbackPairs={[]}
+    >
+      <View>
+        <View
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
+        >
+          <View
+            style={
+              [
+                {
+                  "alignItems": "center",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 12,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                  "gap": 12,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 12,
+                },
+                {
+                  "backgroundColor": "#0ea57415",
+                },
+              ]
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#1a4d2e",
+                  "borderRadius": 999,
+                  "height": 40,
+                  "justifyContent": "center",
+                  "width": 40,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#ffffff",
+                    "fontSize": 16,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                S
+              </Text>
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "backgroundColor": "#fcd34d",
+                    "borderRadius": 999,
+                    "height": 28,
+                    "justifyContent": "center",
+                    "position": "absolute",
+                    "right": -8,
+                    "top": -8,
+                    "width": 28,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "fontSize": 14,
+                    }
+                  }
+                >
+                  ⭐
+                </Text>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                  "gap": 4,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "flexDirection": "row",
+                    "gap": 8,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                    }
+                  }
+                >
+                  Sarah M.
+                </Text>
+                <View
+                  style={
+                    {
+                      "backgroundColor": "#fcd34d",
+                      "borderRadius": 999,
+                      "paddingHorizontal": 8,
+                      "paddingVertical": 4,
+                    }
+                  }
+                >
+                  <Text
+                    style={
+                      {
+                        "color": "#a65f00",
+                        "fontSize": 12,
+                        "fontWeight": "500",
+                      }
+                    }
+                  >
+                    Creator
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e70",
+                    "fontSize": 12,
+                  }
+                }
+              >
+                ✓ Joined
+              </Text>
+            </View>
+            <Text
+              style={
+                {
+                  "color": "#0ea574",
+                  "fontSize": 16,
+                }
+              }
+            >
+              ✓
+            </Text>
+          </View>
+        </View>
+        <View
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
+        >
+          <View
+            style={
+              [
+                {
+                  "alignItems": "center",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 12,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                  "gap": 12,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 12,
+                },
+                {
+                  "backgroundColor": "#f0f4f1",
+                },
+              ]
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#1a4d2e",
+                  "borderRadius": 999,
+                  "height": 40,
+                  "justifyContent": "center",
+                  "width": 40,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#ffffff",
+                    "fontSize": 16,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                A
+              </Text>
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                  "gap": 4,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "flexDirection": "row",
+                    "gap": 8,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                    }
+                  }
+                >
+                  Alex P.
+                </Text>
+              </View>
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e70",
+                    "fontSize": 12,
+                  }
+                }
+              >
+                Waiting...
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
+        >
+          <View
+            style={
+              [
+                {
+                  "alignItems": "center",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 12,
+                  "borderWidth": 1,
+                  "flexDirection": "row",
+                  "gap": 12,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 12,
+                },
+                {
+                  "backgroundColor": "#f0f4f1",
+                },
+              ]
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#1a4d2e",
+                  "borderRadius": 999,
+                  "height": 40,
+                  "justifyContent": "center",
+                  "width": 40,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#ffffff",
+                    "fontSize": 16,
+                    "fontWeight": "700",
+                  }
+                }
+              >
+                n
+              </Text>
+            </View>
+            <View
+              style={
+                {
+                  "flex": 1,
+                  "gap": 4,
+                }
+              }
+            >
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "flexDirection": "row",
+                    "gap": 8,
+                  }
+                }
+              >
+                <Text
+                  style={
+                    {
+                      "color": "#1a4d2e",
+                      "fontSize": 14,
+                      "fontWeight": "600",
+                    }
+                  }
+                >
+                  ndfjv
+                </Text>
+              </View>
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e70",
+                    "fontSize": 12,
+                  }
+                }
+              >
+                Waiting...
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </RCTScrollView>
+  </View>
+  <View
+    style={
+      {
+        "flex": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 12,
+      }
+    }
+  >
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "gap": 12,
+        }
+      }
+      data={
+        [
+          {
+            "author": "Sarah M.",
+            "content": "Hey everyone! Heading to Downtown Financial District. Join the ride!",
+            "id": "1",
+            "isVerified": true,
+            "timestamp": "Just now",
+          },
+        ]
+      }
+      getItem={[Function]}
+      getItemCount={[Function]}
+      keyExtractor={[Function]}
+      onContentSizeChange={[Function]}
+      onLayout={[Function]}
+      onMomentumScrollBegin={[Function]}
+      onMomentumScrollEnd={[Function]}
+      onScroll={[Function]}
+      onScrollBeginDrag={[Function]}
+      onScrollEndDrag={[Function]}
+      removeClippedSubviews={false}
+      renderItem={[Function]}
+      scrollEnabled={false}
+      scrollEventThrottle={0.0001}
+      stickyHeaderIndices={[]}
+      viewabilityConfigCallbackPairs={[]}
+    >
+      <View>
+        <View
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
+        >
+          <View
+            style={
+              {
+                "gap": 4,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "flexDirection": "row",
+                  "gap": 8,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 14,
+                    "fontWeight": "600",
+                  }
+                }
+              >
+                Sarah M.
+              </Text>
+              <Text
+                style={
+                  {
+                    "fontSize": 14,
+                  }
+                }
+              >
+                ⭐
+              </Text>
+            </View>
+            <View
+              style={
+                {
+                  "backgroundColor": "#ffffff",
+                  "borderColor": "#1a4d2e33",
+                  "borderRadius": 16,
+                  "borderWidth": 1,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 12,
+                }
+              }
+            >
+              <Text
+                style={
+                  {
+                    "color": "#1a4d2e",
+                    "fontSize": 16,
+                    "lineHeight": 24,
+                  }
+                }
+              >
+                Hey everyone! Heading to Downtown Financial District. Join the ride!
+              </Text>
+            </View>
+            <Text
+              style={
+                {
+                  "color": "#1a4d2e70",
+                  "fontSize": 12,
+                }
+              }
+            >
+              Just now
+            </Text>
+          </View>
+        </View>
+      </View>
+    </RCTScrollView>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderTopColor": "#1a4d2e33",
+        "borderTopWidth": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 12,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "flex-end",
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="Send a message..."
+        placeholderTextColor="#1a4d2e70"
+        style={
+          {
+            "borderColor": "#1a4d2e33",
+            "borderRadius": 12,
+            "borderWidth": 1,
+            "color": "#1a4d2e",
+            "flex": 1,
+            "fontSize": 14,
+            "maxHeight": 100,
+            "paddingHorizontal": 12,
+            "paddingVertical": 8,
+          }
+        }
+        value=""
+      />
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": true,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#1a4d2e",
+            "borderRadius": 12,
+            "height": 40,
+            "justifyContent": "center",
+            "width": 40,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "fontSize": 18,
+            }
+          }
+        >
+          ➤
+        </Text>
+      </View>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#ffffff",
+        "borderTopColor": "#1a4d2e33",
+        "borderTopWidth": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 12,
+      }
+    }
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "alignItems": "center",
+          "backgroundColor": "#1a4d2e",
+          "borderRadius": 12,
+          "flexDirection": "row",
+          "gap": 12,
+          "justifyContent": "center",
+          "paddingVertical": 16,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "fontSize": 18,
+          }
+        }
+      >
+        👥
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#ffffff",
+            "fontSize": 16,
+            "fontWeight": "600",
+          }
+        }
+      >
+        Join This Ride - 
+        £8/person
+      </Text>
+    </View>
+  </View>
+</RCTSafeAreaView>
+`;
