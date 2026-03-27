@@ -330,13 +330,12 @@ export const rideService = {
 } as any;
 
 export const stripeService = {
-	async demoPay(payload: {
+	async chargePartySafe(payload: {
 		rideId: string;
 		userId: string;
 		amount: number;
-		method: "apple_pay" | "card";
 	}) {
-		return await requestJson<any>(`/stripe/demo-pay`, {
+		return await requestJson<any>(`/stripe/charge-party-safe`, {
 			method: "POST",
 			body: JSON.stringify(payload),
 		});

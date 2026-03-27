@@ -176,6 +176,13 @@ export const CreateGroupPage = ({
 		return (userGender || "").trim().toLowerCase() === "female";
 	}, [userGender]);
 
+	console.log(
+		"[CreateGroupPage] User gender:",
+		userGender,
+		"isFemaleUser:",
+		isFemaleUser,
+	);
+
 	useEffect(() => {
 		const fetchEstimatedPrice = async () => {
 			if (!selectedPickup || !selectedDestination) {
