@@ -189,7 +189,7 @@ test('If they press the back icon they go there', () => {
     const { getByText } = render(<RideGroupsScreen userName = {mockUserName} onBack = {mockOnBack} onJoinRide = {mockOnJoinRide} onViewProfile = {mockOnViewProfile} onViewSettings = {mockOnViewSettings}/>);
     const headerText = getByText('Current Ride Groups');
 
-    fireEvent.press(headerText.parent!); // bro why is our code so janky, no accessibility label no text literally no nothing dawg. mfw my groupmembers using genAI fucks ME over like bruh what i didnt even do anything
+    fireEvent.press(headerText.parent!); 
     expect(mockOnBack).toHaveBeenCalledTimes(1);
 });
 
