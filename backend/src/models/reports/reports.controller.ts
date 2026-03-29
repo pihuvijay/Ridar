@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import * as service from "./reports.service";
+import * as service from "./reports.service"
 
 export async function status(_req: Request, res: Response, next: NextFunction) {
   try {

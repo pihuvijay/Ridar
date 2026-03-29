@@ -1,59 +1,5 @@
 # Uber Integration
 
-## Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  FRONTEND (React Native)                                                    │
-│                                                                             │
-│  ┌──────────────────┐     calls     ┌────────────────────┐                 │
-│  │  Connect Uber    │ ───────────►  │  useUberConnect    │                 │
-│  │  Button          │               │  hook              │                 │
-│  │                  │ ◄───────────  │                    │                 │
-│  │  Shows ✓ green   │   returns     │  - connect()       │                 │
-│  │  when connected  │   connected   │  - checkStatus()   │                 │
-│  └──────────────────┘   true/false  └─────────┬──────────┘                 │
-│                                               │                             │
-│                                               │ fetch()                     │
-└───────────────────────────────────────────────┼─────────────────────────────┘
-                                                │
-                                                ▼  HTTP request
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  BACKEND (Node.js)                                                          │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────┐               │
-│  │  uber.routes.ts                                          │               │
-│  │                                                          │               │
-│  │  GET /uber/connect?userId=xxx                            │               │
-│  │    → Returns { authUrl } to open in browser              │               │
-│  │                                                          │               │
-│  │  GET /uber/callback                                      │               │
-│  │    → Uber redirects here after user logs in              │               │
-│  │    → Saves tokens to database                            │               │
-│  │                                                          │               │
-│  │  GET /uber/status?userId=xxx                             │               │
-│  │    → Returns { connected: true/false }                   │               │
-│  └─────────────────────────────────────────────────────────┘               │
-│                                               │                             │
-│                                               │ supabaseAdmin               │
-└───────────────────────────────────────────────┼─────────────────────────────┘
-                                                │
-                                                ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  DATABASE (Supabase)                                                        │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────┐               │
-│  │  users table                                             │               │
-│  │                                                          │               │
-│  │  - user_id                                               │               │
-│  │  - uber_access_token                                     │               │
-│  │  - uber_refresh_token                                    │               │
-│  │  - uber_token_expires_at                                 │               │
-│  │  - uber_connected (true/false)                           │               │
-│  └─────────────────────────────────────────────────────────┘               │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
 ## Frontend Instructions
 
 ### Step 1: Check if connected
@@ -86,7 +32,7 @@ Backend handles everything else (token exchange, saving to database).
 
 2. **In the button component:**
    - Call `checkStatus()` when screen loads
-   - If `connected === true` → show green tick ✓ or change button color
+   - If `connected === true` → show green tick or change button color
    - If `connected === false` → show "Connect Uber" button
    - When button pressed → call `connect()`
 

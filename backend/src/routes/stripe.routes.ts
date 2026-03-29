@@ -4,10 +4,6 @@ import { supabaseAdmin } from "../lib/supabase";
 
 export const stripeRouter = Router();
 
-/**
- * POST /stripe/create-accounts (TEST ONLY)
- * Creates Stripe Customer + Connect account for a user
- */
 stripeRouter.post("/create-accounts", async (req, res, next) => {
   try {
     const { userId, email, name } = req.body;
@@ -23,10 +19,6 @@ stripeRouter.post("/create-accounts", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/setup-intent
- * Creates a SetupIntent for the frontend to save a card
- */
 stripeRouter.post("/setup-intent", async (req, res, next) => {
   try {
     const { userId } = req.body;
@@ -53,10 +45,6 @@ stripeRouter.post("/setup-intent", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/connect-link
- * Generates a Connect Express onboarding link for the user to add bank details
- */
 stripeRouter.post("/connect-link", async (req, res, next) => {
   try {
     const { userId, returnUrl, refreshUrl } = req.body;
@@ -87,10 +75,6 @@ stripeRouter.post("/connect-link", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/charge-members
- * Charges each party member's saved card when a ride is confirmed
- */
 stripeRouter.post("/charge-members", async (req, res, next) => {
   try {
     const { members } = req.body;
@@ -112,10 +96,7 @@ stripeRouter.post("/charge-members", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/payout-leader
- * Transfers collected amount to the Party Leader's Connect account
- */
+
 stripeRouter.post("/payout-leader", async (req, res, next) => {
   try {
     const { userId, amount, platformFeePercent } = req.body;
@@ -147,10 +128,6 @@ stripeRouter.post("/payout-leader", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/refund
- * Refunds a payment if a ride is cancelled
- */
 stripeRouter.post("/refund", async (req, res, next) => {
   try {
     const { paymentIntentId } = req.body;
@@ -166,11 +143,6 @@ stripeRouter.post("/refund", async (req, res, next) => {
   }
 });
 
-/**
- * POST /stripe/charge-party
- * Charges all party members and tracks payments in party_payments table
- * Called when Party Leader presses "Ride Ready to Book"
- */
 stripeRouter.post("/charge-party", async (req, res, next) => {
   try {
     const { rideId, members } = req.body;

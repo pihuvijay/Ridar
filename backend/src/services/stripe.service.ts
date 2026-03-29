@@ -2,26 +2,20 @@ import { stripe } from "../lib/stripe";
 import { supabaseAdmin } from "../lib/supabase";
 
 export const stripeService = {
-  /**
-   * Creates Stripe Customer + Connect Express account for a new user
-   * Called automatically during user signup
-   */
+
   async createStripeAccountsForUser(userId: string, email: string, name?: string) {
-    // 1. Create Stripe Customer (for paying as a member)
     const customer = await stripe.customers.create({
       email,
       name: name || undefined,
       metadata: { supabase_user_id: userId },
     });
 
-    // 2. Create Connect Express account (for receiving payouts as a leader)
     const account = await stripe.accounts.create({
       type: "express",
       email,
       metadata: { supabase_user_id: userId },
     });
 
-    // 3. Save both IDs to the users table
     const { error } = await supabaseAdmin
       .from("users")
       .update({
@@ -40,10 +34,6 @@ export const stripeService = {
     };
   },
 
-  /**
-   * Creates a SetupIntent for saving a card
-   * Frontend uses this to trigger the card saving flow
-   */
   async createSetupIntent(stripeCustomerId: string) {
     const setupIntent = await stripe.setupIntents.create({
       customer: stripeCustomerId,
@@ -55,10 +45,6 @@ export const stripeService = {
     };
   },
 
-  /**
-   * Generates a Connect Express onboarding link
-   * User clicks this to add their bank details
-   */
   async createConnectOnboardingLink(stripeConnectId: string, returnUrl: string, refreshUrl: string) {
     const accountLink = await stripe.accountLinks.create({
       account: stripeConnectId,
@@ -72,10 +58,6 @@ export const stripeService = {
     };
   },
 
-  /**
-   * Charges each party member's saved card
-   * Called when a ride is confirmed
-   */
   async chargeMembers(members: { stripeCustomerId: string; amount: number }[]) {
     const results = [];
 
@@ -115,10 +97,6 @@ export const stripeService = {
     return results;
   },
 
-  /**
-   * Charges party members and tracks payments in party_payments table
-   * Called when Party Leader presses "Ride Ready to Book"
-   */
   async chargePartyMembers(
     rideId: string,
     members: { userId: string; stripeCustomerId: string; amount: number }[]
@@ -200,10 +178,7 @@ export const stripeService = {
     return results;
   },
 
-  /**
-   * Gets payment status for a ride
-   * Used to check if all members have paid before booking
-   */
+
   async getPartyPaymentStatus(rideId: string) {
     const { data: payments, error } = await supabaseAdmin
       .from("party_payments")
@@ -229,10 +204,6 @@ export const stripeService = {
     };
   },
 
-  /**
-   * Transfers funds to the Party Leader's Connect account
-   * Called after the ride is completed
-   */
   async payoutLeader(stripeConnectId: string, amount: number, platformFeePercent: number = 10) {
     const platformFee = Math.round(amount * (platformFeePercent / 100));
     const leaderPayout = amount - platformFee;
@@ -250,10 +221,6 @@ export const stripeService = {
     };
   },
 
-  /**
-   * Refunds a payment
-   * Called if a ride is cancelled after payments are collected
-   */
   async refundPayment(paymentIntentId: string) {
     const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,

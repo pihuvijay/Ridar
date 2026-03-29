@@ -38,7 +38,6 @@ export async function updateMyProfile(userId: string, patch: { full_name?: strin
 }
 
 export async function rateUser(targetUserId: string, raterId: string, rating: number) {
-  // Fetch existing rating aggregate from profiles
   const { data: existing, error: selErr } = await supabaseAdmin
     .from("profiles")
     .select("id,rating,rating_count")
