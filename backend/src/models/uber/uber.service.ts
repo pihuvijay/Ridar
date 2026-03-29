@@ -29,10 +29,9 @@ const MOCK_PRODUCTS = [
 
 export const uberService = {
     /**
-   * Get price estimates.
    *
-   * NOTE: Uber deprecated Server Tokens in 2023–2025 and now requires OAuth Bearer
-   * tokens for ALL endpoints — including price estimates. Since Uber hasn't approved
+   *Uber deprecated Server Tokens in 2023–2025 and now requires OAuth Bearer
+   * tokens for ALL endpoints. Since Uber hasn't approved
    * our app's OAuth scopes, we always return realistic mock estimates here.
    */
     async getPriceEstimates(
@@ -42,10 +41,6 @@ export const uberService = {
         return buildMockEstimates(start, end);
     },
 
-    /**
-     * Request a ride. Always mocked — real Uber ride ordering requires
-     * restricted OAuth scopes not available without business approval.
-     */
     async requestRide(params: {
         productId: string;
         start: UberCoordinates;
@@ -74,10 +69,7 @@ export const uberService = {
         return ride;
     },
 
-    /**
-     * Get the status of a mocked ride.
-     * Progresses status automatically based on elapsed time.
-     */
+// status
     async getRideStatus(rideId: string): Promise<UberRideResponse> {
         const ride = mockRideStore.get(rideId);
         if (!ride) {
@@ -106,9 +98,6 @@ export const uberService = {
         return ride;
     },
 
-    /**
-     * Cancel a mocked ride.
-     */
     async cancelRide(rideId: string): Promise<{ cancelled: boolean; rideId: string }> {
         const ride = mockRideStore.get(rideId);
         if (!ride) {
@@ -120,7 +109,6 @@ export const uberService = {
     },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildMockEstimates(
     start: UberCoordinates,

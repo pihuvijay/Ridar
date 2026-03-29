@@ -13,7 +13,7 @@ export function protect(
 	_res: Response,
 	next: NextFunction,
 ) {
-	// temporary placeholder auth
+	// used during dev
 	req.user = { id: "dev-user" };
 	next();
 }

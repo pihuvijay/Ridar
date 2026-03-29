@@ -107,10 +107,6 @@ uberRouter.get("/callback", async (req, res) => {
   }
 });
 
-/**
- * GET /uber/status?userId=xxx
- * Check if user has connected Uber account
- */
 uberRouter.get("/status", async (req, res) => {
   const { userId } = req.query;
 
