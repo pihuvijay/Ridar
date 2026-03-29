@@ -32,6 +32,7 @@ type AppNavigatorProps = {
 	isAuthed: boolean;
 	isModerator: boolean;
 	userName: string;
+	userGender?: string;
 	justSignedUp?: boolean;
 	setJustSignedUp?: (v: boolean) => void;
 	onLogin: (name: string) => void;
@@ -44,6 +45,7 @@ export default function AppNavigator({
 	isAuthed,
 	isModerator,
 	userName,
+	userGender,
 	justSignedUp,
 	setJustSignedUp,
 	onLogin,
@@ -99,7 +101,7 @@ export default function AppNavigator({
 					{({ navigation }) => (
 						<CreateGroupPage
 							onBack={() => navigation.goBack()}
-							userGender={"male"} // replace with real user gender from your profile/session
+							userGender={"female"}
 							onCreateGroup={(rideData: any) => {
 								navigation.navigate("Wait", {
 									rideGroup: rideData,
@@ -174,7 +176,18 @@ export default function AppNavigator({
 				<Stack.Screen name="ModeratorDashboard">
 					{({ navigation }) => (
 						<ModeratorDashboard
-							reports={[]}
+							reports={[
+								{
+									id: "report-demo-1",
+									reporterName: "Emily Johnson",
+									reportedUserName: "Samantha Patel",
+									reason: "Aggressive Behavior",
+									timestamp: "Just now",
+									status: "pending",
+									description:
+										"Passenger became verbally aggressive during the ride and made others uncomfortable.",
+								},
+							]}
 							onUpdateReport={() => {}}
 							onLogout={() => navigation.replace("MainTabs")}
 						/>

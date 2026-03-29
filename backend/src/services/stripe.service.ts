@@ -210,7 +210,7 @@ export const stripeService = {
 
     const transfer = await stripe.transfers.create({
       amount: leaderPayout, // in cents
-      currency: "usd",
+      currency: "gbp",
       destination: stripeConnectId,
     });
 
